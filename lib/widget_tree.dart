@@ -21,8 +21,23 @@ class WidgetTree extends StatelessWidget {
     return Scaffold(
       body: ValueListenableBuilder(
         valueListenable: selectedPageNotifier,
-        builder: (context, selectedPage, child) {
-          return pages.elementAt(selectedPage);
+        builder: (BuildContext context, dynamic selectedPage, Widget? child) {
+          return AnimatedSwitcher(
+            duration: const Duration(milliseconds: 300),
+            transitionBuilder: (Widget child, Animation<double> animation) {
+              return FadeTransition(
+                opacity: animation,
+                child: SlideTransition(
+                  position: Tween<Offset>(
+                    begin: const Offset(0.05, 0), // slight horizontal slide
+                    end: Offset.zero,
+                  ).animate(animation),
+                  child: child,
+                ),
+              );
+            },
+            child: pages[selectedPage],
+          );
         },
       ),
       bottomNavigationBar: NavBarWidget(),
