@@ -6,7 +6,12 @@ import 'package:courses_app/main%20pages/search/presentation/pages/search_page.d
 import 'package:courses_app/navbar/presentation/main_navbar_page.dart';
 import 'package:flutter/material.dart';
 
-List<Widget> pages = [HomePage(), SearchPage(), CourseDetailsPage(), ProfilePage()];
+List<Widget> pages = [
+  HomePage(),
+  SearchPage(),
+  CourseDetailsPage(),
+  ProfilePage(),
+];
 
 class WidgetTree extends StatelessWidget {
   const WidgetTree({super.key});
@@ -14,7 +19,6 @@ class WidgetTree extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Courses App'), centerTitle: true),
       body: ValueListenableBuilder(
         valueListenable: selectedPageNotifier,
         builder: (context, selectedPage, child) {
