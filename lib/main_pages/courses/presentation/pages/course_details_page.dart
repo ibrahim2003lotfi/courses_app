@@ -1,0 +1,79 @@
+import 'package:courses_app/main_pages/courses/presentation/widgets/courses_details_widgets.dart';
+import 'package:flutter/material.dart';
+
+class CourseDetailsPage extends StatefulWidget {
+  final Map<String, dynamic> course;
+
+  const CourseDetailsPage({super.key, required this.course});
+
+  @override
+  State<CourseDetailsPage> createState() => _CourseDetailsPageState();
+}
+
+class _CourseDetailsPageState extends State<CourseDetailsPage> {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC),
+      body: CustomScrollView(
+        slivers: [
+          CourseHeader(course: widget.course),
+          CourseInfoCard(course: widget.course),
+          CourseTabs(course: widget.course),
+          RelatedCourses(relatedCourses: _getRelatedCourses()),
+          const SliverToBoxAdapter(
+            child: SizedBox(height: 40),
+          ),
+        ],
+      ),
+    );
+  }
+
+  List<Map<String, dynamic>> _getRelatedCourses() {
+    return [
+      {
+        'title': 'تعلم Flutter من الصفر إلى الاحتراف',
+        'image': 'https://picsum.photos/seed/flutter/400/300',
+        'rating': 4.8,
+        'price': '₪199',
+      },
+      {
+        'title': 'UI/UX Design للمبتدئين',
+        'image': 'https://picsum.photos/seed/design/400/300',
+        'rating': 4.6,
+        'price': '₪149',
+      },
+      {
+        'title': 'التسويق الرقمي الشامل',
+        'image': 'https://picsum.photos/seed/marketing/400/300',
+        'rating': 4.9,
+        'price': '₪299',
+      },
+      {
+        'title': 'إدارة المشاريع الاحترافية',
+        'image': 'https://picsum.photos/seed/project/400/300',
+        'rating': 4.7,
+        'price': '₪249',
+      },
+    ];
+  }
+}
+
+// Sample course data for testing
+Map<String, dynamic> sampleCourse = {
+  'title': 'دورة Flutter المتقدمة - بناء تطبيقات احترافية',
+  'image': 'https://picsum.photos/seed/course/800/600',
+  'teacher': 'أحمد محمد',
+  'category': 'برمجة',
+  'rating': 4.8,
+  'reviews': 1247,
+  'students': '10,258',
+  'duration': 28,
+  'lessons': 45,
+  'level': 'متقدم',
+  'lastUpdated': 'ديسمبر 2024',
+  'price': '₪299',
+  'description': 'هذه الدورة الشاملة تغطي جميع جوانب تطوير تطبيقات Flutter بشكل احترافي. ستتعلم كيفية بناء تطبيقات متقدمة باستخدام أحدث التقنيات والممارسات. تشمل الدورة مشاريع عملية وأمثلة واقعية.',
+  'tags': ['Flutter', 'Dart', 'Mobile', 'Firebase', 'API'],
+  'instructorImage': 'https://picsum.photos/seed/instructor/200/200',
+};

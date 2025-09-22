@@ -26,7 +26,12 @@ class _NavBarWidgetState extends State<NavBarWidget> {
               label: 'Courses',
             ),
             NavigationDestination(
-              icon: Icon(Icons.account_circle_outlined),
+              icon: Icon(Icons.notifications_active_outlined,),
+              label: 'Notifications',
+            ),
+          
+            NavigationDestination(
+              icon: Icon(Icons.account_circle_outlined,),
               label: 'Profile',
             ),
           ],
