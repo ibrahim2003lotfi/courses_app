@@ -26,7 +26,7 @@ class _NavBarWidgetState extends State<NavBarWidget> {
               label: 'Courses',
             ),
             NavigationDestination(
-              icon: Icon(Icons.receipt_long_rounded),
+              icon: Icon(Icons.account_circle_outlined),
               label: 'Profile',
             ),
           ],
