@@ -6,7 +6,12 @@ import 'package:courses_app/main%20pages/search/presentation/pages/search_page.d
 import 'package:courses_app/navbar/presentation/main_navbar_page.dart';
 import 'package:flutter/material.dart';
 
-List<Widget> pages = [HomePage(), SearchPage(), CourseDetailsPage(), ProfilePage()];
+List<Widget> pages = [
+  HomePage(),
+  SearchPage(),
+  CourseDetailsPage(),
+  ProfilePage(),
+];
 
 class WidgetTree extends StatelessWidget {
   const WidgetTree({super.key});
@@ -17,8 +22,23 @@ class WidgetTree extends StatelessWidget {
       appBar: AppBar(title: Text('Courses App'), centerTitle: true),
       body: ValueListenableBuilder(
         valueListenable: selectedPageNotifier,
-        builder: (context, selectedPage, child) {
-          return pages.elementAt(selectedPage);
+        builder: (BuildContext context, dynamic selectedPage, Widget? child) {
+          return AnimatedSwitcher(
+            duration: const Duration(milliseconds: 300),
+            transitionBuilder: (Widget child, Animation<double> animation) {
+              return FadeTransition(
+                opacity: animation,
+                child: SlideTransition(
+                  position: Tween<Offset>(
+                    begin: const Offset(0.05, 0), // slight horizontal slide
+                    end: Offset.zero,
+                  ).animate(animation),
+                  child: child,
+                ),
+              );
+            },
+            child: pages[selectedPage],
+          );
         },
       ),
       bottomNavigationBar: NavBarWidget(),
