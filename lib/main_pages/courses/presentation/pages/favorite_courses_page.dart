@@ -1,6 +1,8 @@
 // courses_page.dart
 import 'package:courses_app/main_pages/courses/presentation/pages/course_details_page.dart';
+import 'package:courses_app/main_pages/home/presentation/widgets/home_page_widgets.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class CoursesPage extends StatefulWidget {
   const CoursesPage({super.key});
@@ -167,65 +169,147 @@ class _CoursesPageState extends State<CoursesPage>
     super.dispose();
   }
 
+  // Helper method to get responsive font size
+  double _getResponsiveFontSize(BuildContext context) {
+    double width = MediaQuery.of(context).size.width;
+    if (width > 600) {
+      // Tablet
+      return 26;
+    } else if (width > 400) {
+      // Large phone
+      return 22;
+    } else {
+      // Small phone
+      return 18;
+    }
+  }
+
+  // Helper method to get responsive small font size
+  double _getResponsiveSmallFontSize(BuildContext context) {
+    double width = MediaQuery.of(context).size.width;
+    if (width > 600) {
+      return 18;
+    } else if (width > 400) {
+      return 16;
+    } else {
+      return 14;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final baseFontSize = _getResponsiveFontSize(context);
+    final smallFontSize = _getResponsiveSmallFontSize(context);
+
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
-      appBar: AppBar(
-        title: const Align(
-          alignment: Alignment.centerRight, // 👈 moves to far right
-          child: Text(
-            'دوراتي',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
-          ),
-        ),
-        backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF1E293B),
-        elevation: 0,
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: const [
-            Tab(icon: Icon(Icons.school), text: 'المشتركة'),
-            Tab(icon: Icon(Icons.favorite), text: 'المفضلة'),
-            Tab(icon: Icon(Icons.watch_later), text: 'لاحقاً'),
-          ],
-          labelColor:
-              Colors.blue, // safer than Theme.of(context).primaryColor here
-          unselectedLabelColor: Colors.grey,
-          indicatorColor: Colors.blue,
-          indicatorWeight: 3,
-        ),
-      ),
+      body: SafeArea(
+        child: Column(
+          children: [
+            // TopSearchBar widget
+            const TopSearchBar(),
 
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          CoursesListView(
-            courses: subscribedCourses,
-            showProgress: true,
-            emptyMessage: 'لم تشترك في أي دورة بعد',
-            emptyDescription: 'ابدأ رحلتك التعليمية واشترك في دورة جديدة!',
-            emptyIcon: Icons.school_outlined,
-          ),
-          CoursesListView(
-            courses: favoriteCourses,
-            showProgress: false,
-            emptyMessage: 'لا توجد دورات مفضلة',
-            emptyDescription: 'أضف دوراتك المفضلة لتجدها هنا بسهولة!',
-            emptyIcon: Icons.favorite_outline,
-          ),
-          CoursesListView(
-            courses: watchLaterCourses,
-            showProgress: false,
-            emptyMessage: 'لا توجد دورات محفوظة',
-            emptyDescription: 'احفظ الدورات التي تود مشاهدتها لاحقاً!',
-            emptyIcon: Icons.watch_later_outlined,
-          ),
-        ],
+            // Custom AppBar with Tabs - without nested Scaffold
+            Container(
+              color: Colors.white,
+              child: Column(
+                children: [
+                  // Title
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16.0,
+                    ),
+                    
+                  ),
+
+                  // TabBar
+                  TabBar(
+                    controller: _tabController,
+                    tabs: [
+                      Tab(
+                        icon: const Icon(Icons.school),
+                        child: Text(
+                          'المشتركة',
+                          style: GoogleFonts.tajawal(
+                            fontSize: smallFontSize,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                      Tab(
+                        icon: const Icon(Icons.favorite),
+                        child: Text(
+                          'المفضلة',
+                          style: GoogleFonts.tajawal(
+                            fontSize: smallFontSize,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                      Tab(
+                        icon: const Icon(Icons.watch_later),
+                        child: Text(
+                          'لاحقاً',
+                          style: GoogleFonts.tajawal(
+                            fontSize: smallFontSize,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ],
+                    labelColor: Colors.blue,
+                    unselectedLabelColor: Colors.grey,
+                    indicatorColor: Colors.blue,
+                    indicatorWeight: 3,
+                  ),
+                ],
+              ),
+            ),
+
+            // TabBarView
+            Expanded(
+              child: TabBarView(
+                controller: _tabController,
+                children: [
+                  CoursesListView(
+                    courses: subscribedCourses,
+                    showProgress: true,
+                    emptyMessage: 'لم تشترك في أي دورة بعد',
+                    emptyDescription:
+                        'ابدأ رحلتك التعليمية واشترك في دورة جديدة!',
+                    emptyIcon: Icons.school_outlined,
+                    baseFontSize: baseFontSize,
+                    smallFontSize: smallFontSize,
+                  ),
+                  CoursesListView(
+                    courses: favoriteCourses,
+                    showProgress: false,
+                    emptyMessage: 'لا توجد دورات مفضلة',
+                    emptyDescription: 'أضف دوراتك المفضلة لتجدها هنا بسهولة!',
+                    emptyIcon: Icons.favorite_outline,
+                    baseFontSize: baseFontSize,
+                    smallFontSize: smallFontSize,
+                  ),
+                  CoursesListView(
+                    courses: watchLaterCourses,
+                    showProgress: false,
+                    emptyMessage: 'لا توجد دورات محفوظة',
+                    emptyDescription: 'احفظ الدورات التي تود مشاهدتها لاحقاً!',
+                    emptyIcon: Icons.watch_later_outlined,
+                    baseFontSize: baseFontSize,
+                    smallFontSize: smallFontSize,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
+
+// ... Rest of the code remains the same (CoursesListView, CourseCard, EmptyState classes)
 
 class CoursesListView extends StatelessWidget {
   final List<Map<String, dynamic>> courses;
@@ -233,6 +317,8 @@ class CoursesListView extends StatelessWidget {
   final String emptyMessage;
   final String emptyDescription;
   final IconData emptyIcon;
+  final double baseFontSize;
+  final double smallFontSize;
 
   const CoursesListView({
     super.key,
@@ -241,6 +327,8 @@ class CoursesListView extends StatelessWidget {
     required this.emptyMessage,
     required this.emptyDescription,
     required this.emptyIcon,
+    required this.baseFontSize,
+    required this.smallFontSize,
   });
 
   @override
@@ -250,6 +338,8 @@ class CoursesListView extends StatelessWidget {
         icon: emptyIcon,
         message: emptyMessage,
         description: emptyDescription,
+        baseFontSize: baseFontSize,
+        smallFontSize: smallFontSize,
       );
     }
 
@@ -273,6 +363,8 @@ class CoursesListView extends StatelessWidget {
                   course: courses[index],
                   showProgress: showProgress,
                   isGridView: true,
+                  baseFontSize: baseFontSize,
+                  smallFontSize: smallFontSize,
                 );
               },
             ),
@@ -288,6 +380,8 @@ class CoursesListView extends StatelessWidget {
                   course: courses[index],
                   showProgress: showProgress,
                   isGridView: false,
+                  baseFontSize: baseFontSize,
+                  smallFontSize: smallFontSize,
                 ),
               );
             },
@@ -302,12 +396,16 @@ class CourseCard extends StatefulWidget {
   final Map<String, dynamic> course;
   final bool showProgress;
   final bool isGridView;
+  final double baseFontSize;
+  final double smallFontSize;
 
   const CourseCard({
     super.key,
     required this.course,
     required this.showProgress,
     required this.isGridView,
+    required this.baseFontSize,
+    required this.smallFontSize,
   });
 
   @override
@@ -315,7 +413,7 @@ class CourseCard extends StatefulWidget {
 }
 
 class _CourseCardState extends State<CourseCard> {
-  bool isSaved = false; // 👈 bookmark state
+  bool isSaved = false;
 
   @override
   Widget build(BuildContext context) {
@@ -334,7 +432,13 @@ class _CourseCardState extends State<CourseCard> {
       onDismissed: (direction) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('تم حذف "${widget.course['title']}" من القائمة'),
+            content: Text(
+              'تم حذف "${widget.course['title']}" من القائمة',
+              style: GoogleFonts.tajawal(
+                fontSize: widget.smallFontSize,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
             action: SnackBarAction(
               label: 'تراجع',
               onPressed: () {
@@ -401,9 +505,10 @@ class _CourseCardState extends State<CourseCard> {
               children: [
                 Text(
                   widget.course['title'],
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
+                  style: GoogleFonts.tajawal(
+                    fontSize: widget.baseFontSize * 0.7,
+                    fontWeight: FontWeight.w900,
+                    color: const Color(0xFF1F2937),
                   ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -411,7 +516,11 @@ class _CourseCardState extends State<CourseCard> {
                 const SizedBox(height: 4),
                 Text(
                   widget.course['teacher'],
-                  style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                  style: GoogleFonts.tajawal(
+                    fontSize: widget.smallFontSize * 0.8,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.grey[600],
+                  ),
                 ),
                 const Spacer(),
                 if (widget.showProgress && widget.course['progress'] != null)
@@ -454,9 +563,10 @@ class _CourseCardState extends State<CourseCard> {
               children: [
                 Text(
                   widget.course['title'],
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
+                  style: GoogleFonts.tajawal(
+                    fontSize: widget.baseFontSize * 0.8,
+                    fontWeight: FontWeight.w900,
+                    color: const Color(0xFF1F2937),
                   ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -464,7 +574,11 @@ class _CourseCardState extends State<CourseCard> {
                 const SizedBox(height: 4),
                 Text(
                   widget.course['teacher'],
-                  style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                  style: GoogleFonts.tajawal(
+                    fontSize: widget.smallFontSize,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.grey[600],
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Row(
@@ -473,14 +587,21 @@ class _CourseCardState extends State<CourseCard> {
                     const SizedBox(width: 4),
                     Text(
                       widget.course['rating'].toString(),
-                      style: const TextStyle(fontSize: 12),
+                      style: GoogleFonts.tajawal(
+                        fontSize: widget.smallFontSize * 0.8,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                     const SizedBox(width: 8),
                     Icon(Icons.people, size: 16, color: Colors.grey[600]),
                     const SizedBox(width: 4),
                     Text(
                       widget.course['students'],
-                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                      style: GoogleFonts.tajawal(
+                        fontSize: widget.smallFontSize * 0.8,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.grey[600],
+                      ),
                     ),
                   ],
                 ),
@@ -509,13 +630,17 @@ class _CourseCardState extends State<CourseCard> {
           children: [
             Text(
               'التقدم',
-              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+              style: GoogleFonts.tajawal(
+                fontSize: widget.smallFontSize * 0.8,
+                fontWeight: FontWeight.w500,
+                color: Colors.grey[600],
+              ),
             ),
             Text(
               '${(progress * 100).round()}%',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
+              style: GoogleFonts.tajawal(
+                fontSize: widget.smallFontSize * 0.8,
+                fontWeight: FontWeight.w900,
                 color: Colors.blue[600],
               ),
             ),
@@ -541,7 +666,13 @@ class _CourseCardState extends State<CourseCard> {
               // Handle play action
             },
             icon: const Icon(Icons.play_arrow, size: 18),
-            label: const Text('تشغيل', style: TextStyle(fontSize: 12)),
+            label: Text(
+              'تشغيل',
+              style: GoogleFonts.tajawal(
+                fontSize: widget.smallFontSize * 0.8,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.blue[600],
               foregroundColor: Colors.white,
@@ -553,19 +684,6 @@ class _CourseCardState extends State<CourseCard> {
           ),
         ),
         const SizedBox(width: 8),
-        /* IconButton(
-          onPressed: () {
-            setState(() {
-              isSaved = !isSaved; // 👈 toggle
-            });
-          },
-          icon: Icon(
-            isSaved ? Icons.bookmark : Icons.bookmark_border,
-            size: 20,
-            color: isSaved ? Colors.blue : Colors.grey[600],
-          ),
-          constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-        ),*/
       ],
     );
   }
@@ -575,12 +693,16 @@ class EmptyState extends StatelessWidget {
   final IconData icon;
   final String message;
   final String description;
+  final double baseFontSize;
+  final double smallFontSize;
 
   const EmptyState({
     super.key,
     required this.icon,
     required this.message,
     required this.description,
+    required this.baseFontSize,
+    required this.smallFontSize,
   });
 
   @override
@@ -603,17 +725,21 @@ class EmptyState extends StatelessWidget {
             const SizedBox(height: 24),
             Text(
               message,
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF1E293B),
+              style: GoogleFonts.tajawal(
+                fontSize: baseFontSize,
+                fontWeight: FontWeight.w900,
+                color: const Color(0xFF1E293B),
               ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
             Text(
               description,
-              style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+              style: GoogleFonts.tajawal(
+                fontSize: smallFontSize,
+                fontWeight: FontWeight.w500,
+                color: Colors.grey[600],
+              ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
@@ -622,7 +748,13 @@ class EmptyState extends StatelessWidget {
                 // Navigate to explore courses
               },
               icon: const Icon(Icons.explore),
-              label: const Text('استكشف الدورات'),
+              label: Text(
+                'استكشف الدورات',
+                style: GoogleFonts.tajawal(
+                  fontSize: smallFontSize,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.blue[600],
                 foregroundColor: Colors.white,
@@ -641,3 +773,5 @@ class EmptyState extends StatelessWidget {
     );
   }
 }
+
+// Placeholder for TopSearchBar widget - replace with your actual implementation
