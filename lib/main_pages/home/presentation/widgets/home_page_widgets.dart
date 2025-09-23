@@ -1,6 +1,7 @@
 import 'package:courses_app/main_pages/courses/presentation/pages/course_details_page.dart';
 import 'package:courses_app/main_pages/home/presentation/side%20pages/category_page.dart';
 import 'package:courses_app/main_pages/home/presentation/side%20pages/recommended_page.dart';
+import 'package:courses_app/main_pages/home/presentation/side%20pages/univiersities_page.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -914,7 +915,7 @@ class ExtrasSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Blog
+        // University Lectures Section
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
           child: Container(
@@ -927,50 +928,71 @@ class ExtrasSection extends StatelessWidget {
               borderRadius: BorderRadius.circular(16),
             ),
             padding: const EdgeInsets.all(20),
-            child: Row(
+            child: Column(
               children: [
-                const Icon(
-                  Icons.article_outlined,
-                  size: 40,
-                  color: Colors.white,
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'تعلم مهارة جديدة كل يوم',
-                        style: GoogleFonts.tajawal(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w800,
-                        ),
+                // الكتابة مع الأيقونة في السطر الأول
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.school_outlined,
+                      size: 40,
+                      color: Colors.white,
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'طور مهاراتك الجامعية',
+                            style: GoogleFonts.tajawal(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'محاضرات ومواد دراسية متقدمة',
+                            style: GoogleFonts.tajawal(
+                              color: Colors.white.withOpacity(0.9),
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'مقالات ونصائح للتعلم السريع',
-                        style: GoogleFonts.tajawal(
-                          color: Colors.white.withOpacity(0.9),
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
+                const SizedBox(height: 16),
+                // الزر في السطر الثاني
                 ElevatedButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => UniversitiesPage(),
+                      ),
+                    );
+                  },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.white,
                     foregroundColor: const Color(0xFF667EEA),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
+                    minimumSize: const Size(
+                      double.infinity,
+                      48,
+                    ), // يجعل الزر عريض بالكامل
                   ),
                   child: Text(
-                    'عرض المقالات',
-                    style: GoogleFonts.tajawal(fontWeight: FontWeight.w700),
+                    'عرض المحاضرات',
+                    style: GoogleFonts.tajawal(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 16,
+                    ),
                   ),
                 ),
               ],
@@ -978,11 +1000,11 @@ class ExtrasSection extends StatelessWidget {
           ),
         ),
 
-        // Top instructors
+        // أفضل الأساتذة (بدلاً من أفضل المدربين)
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: Text(
-            'أفضل المدربين',
+            'أفضل الأساتذة',
             style: Theme.of(
               context,
             ).textTheme.titleLarge!.copyWith(fontWeight: FontWeight.w800),
@@ -992,9 +1014,7 @@ class ExtrasSection extends StatelessWidget {
         SizedBox(
           height: 120,
           child: ListView.separated(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 20,
-            ), // 👈 يضمن تباعد متساوي يمين/يسار
+            padding: const EdgeInsets.symmetric(horizontal: 20),
             scrollDirection: Axis.horizontal,
             itemCount: 6,
             separatorBuilder: (_, __) => const SizedBox(width: 12),
@@ -1023,7 +1043,7 @@ class ExtrasSection extends StatelessWidget {
                       child: CircleAvatar(
                         radius: 28,
                         backgroundImage: NetworkImage(
-                          'https://picsum.photos/seed/mentor${i}/100/100',
+                          'https://picsum.photos/seed/professor${i}/100/100',
                         ),
                       ),
                     ),
