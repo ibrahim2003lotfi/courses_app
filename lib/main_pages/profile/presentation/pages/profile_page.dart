@@ -1,3 +1,4 @@
+import 'package:courses_app/main_pages/profile/presentation/pages/settings_page.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -517,7 +518,10 @@ class _ProfilePageState extends State<ProfilePage> {
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: () {
-                    _showSettingsDialog();
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => SettingsPage()),
+                    );
                   },
                   icon: const Icon(Icons.settings),
                   label: const Text('الإعدادات'),
