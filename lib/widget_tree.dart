@@ -10,7 +10,7 @@ import 'package:flutter/material.dart';
 List<Widget> pages = [
   HomePage(),
   SearchPage(),
-  FavoriteCoursesPage(),
+  CoursesPage(),
   NotificationsPage(),
   ProfilePage(),
 ];
