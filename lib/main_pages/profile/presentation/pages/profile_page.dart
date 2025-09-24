@@ -611,22 +611,6 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  void _showSettingsDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('الإعدادات'),
-        content: const Text('سيتم فتح صفحة الإعدادات.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('إغلاق'),
-          ),
-        ],
-      ),
-    );
-  }
-
   void _showHelpDialog() {
     showDialog(
       context: context,

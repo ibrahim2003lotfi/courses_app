@@ -1,7 +1,7 @@
 import 'package:courses_app/main_pages/courses/presentation/pages/course_details_page.dart';
 import 'package:courses_app/main_pages/home/presentation/side%20pages/category_page.dart';
 import 'package:courses_app/main_pages/home/presentation/side%20pages/recommended_page.dart';
-import 'package:courses_app/main_pages/home/presentation/side%20pages/univiersities_page.dart';
+import 'package:courses_app/main_pages/home/presentation/side%20pages/university_pages/univiersities_page.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -121,7 +121,7 @@ class _SearchFieldState extends State<SearchField> {
             color: const Color(0xFF1F2937),
           ),
           decoration: InputDecoration(
-            hintText: 'ابحث عن الكورسات، المدربين، المهارات...',
+            hintText: 'ابحث عن الكورسات, المحاضرات, و الدروس',
             hintStyle: GoogleFonts.tajawal(
               fontWeight: FontWeight.w500, // Normal weight for hint
               color: const Color(0xFF6B7280),
