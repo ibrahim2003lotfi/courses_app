@@ -1,5 +1,11 @@
+// lib/main_pages/.../settings_page.dart
+import 'package:courses_app/main_pages/auth/presentation/pages/login_page.dart';
+import 'package:courses_app/core/utils/theme_manager.dart';
+import 'package:courses_app/theme_cubit/theme_cubit.dart';
+import 'package:courses_app/theme_cubit/theme_state.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -9,7 +15,6 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-  bool isDarkMode = false;
   bool notificationsEnabled = true;
   bool twoFactorAuth = false;
   bool dataSharing = true;
@@ -22,195 +27,231 @@ class _SettingsPageState extends State<SettingsPage> {
     final screenWidth = MediaQuery.of(context).size.width;
     final isTablet = screenWidth > 600;
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
-      appBar: _buildAppBar(context, isTablet),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.all(isTablet ? 24.0 : 16.0),
-          child: Column(
-            children: [
-              // Account Section
-              _buildSectionCard(
-                title: 'الحساب',
-                icon: Icons.person,
+    return BlocBuilder<ThemeCubit, ThemeState>(
+      builder: (context, state) {
+        final isDarkMode = state.isDarkMode;
+
+        return Scaffold(
+          backgroundColor: isDarkMode 
+              ? ThemeManager.darkTheme.scaffoldBackgroundColor
+              : ThemeManager.lightTheme.scaffoldBackgroundColor,
+          appBar: _buildAppBar(context, isTablet, isDarkMode),
+          body: SafeArea(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.all(isTablet ? 24.0 : 16.0),
+              child: Column(
                 children: [
-                  _buildListTile(
-                    icon: Icons.lock_outline,
-                    title: 'تغيير كلمة المرور',
-                    subtitle: 'تحديث كلمة المرور الخاصة بك',
-                    onTap: () => _showChangePasswordDialog(),
-                    trailing: const Icon(Icons.chevron_right),
+                  // Account Section
+                  _buildSectionCard(
+                    title: 'الحساب',
+                    icon: Icons.person,
+                    isDarkMode: isDarkMode,
+                    children: [
+                      _buildListTile(
+                        icon: Icons.lock_outline,
+                        title: 'تغيير كلمة المرور',
+                        subtitle: 'تحديث كلمة المرور الخاصة بك',
+                        onTap: () => _showChangePasswordDialog(),
+                        trailing: const Icon(Icons.chevron_right),
+                        isDarkMode: isDarkMode,
+                      ),
+                      _buildDivider(isDarkMode),
+                      _buildListTile(
+                        icon: Icons.email_outlined,
+                        title: 'إدارة البريد الإلكتروني',
+                        subtitle: 'تحديث عنوان البريد الإلكتروني',
+                        onTap: () => _showEmailManagementDialog(),
+                        trailing: const Icon(Icons.chevron_right),
+                        isDarkMode: isDarkMode,
+                      ),
+                      _buildDivider(isDarkMode),
+                      _buildListTile(
+                        icon: Icons.delete_outline,
+                        title: 'حذف الحساب',
+                        subtitle: 'حذف حسابك نهائياً',
+                        onTap: () => _showDeleteAccountDialog(),
+                        trailing: const Icon(Icons.chevron_right),
+                        titleColor: Colors.red,
+                        isDarkMode: isDarkMode,
+                      ),
+                    ],
                   ),
-                  _buildDivider(),
-                  _buildListTile(
-                    icon: Icons.email_outlined,
-                    title: 'إدارة البريد الإلكتروني',
-                    subtitle: 'تحديث عنوان البريد الإلكتروني',
-                    onTap: () => _showEmailManagementDialog(),
-                    trailing: const Icon(Icons.chevron_right),
-                  ),
-                  _buildDivider(),
-                  _buildListTile(
-                    icon: Icons.delete_outline,
-                    title: 'حذف الحساب',
-                    subtitle: 'حذف حسابك نهائياً',
-                    onTap: () => _showDeleteAccountDialog(),
-                    trailing: const Icon(Icons.chevron_right),
-                    titleColor: Colors.red,
-                  ),
-                ],
-              ),
 
-              const SizedBox(height: 20),
+                  const SizedBox(height: 20),
 
-              // Personalization Section
-              _buildSectionCard(
-                title: 'التخصيص',
-                icon: Icons.palette,
-                children: [
-                  _buildSwitchTile(
-                    icon: Icons.dark_mode,
-                    title: 'الوضع الليلي',
-                    subtitle: 'تفعيل المظهر المظلم',
-                    value: isDarkMode,
-                    onChanged: (value) => setState(() => isDarkMode = value),
+                  // Personalization Section
+                  _buildSectionCard(
+                    title: 'التخصيص',
+                    icon: Icons.palette,
+                    isDarkMode: isDarkMode,
+                    children: [
+                      _buildSwitchTile(
+                        icon: Icons.dark_mode,
+                        title: 'الوضع الليلي',
+                        subtitle: 'تفعيل المظهر المظلم',
+                        value: isDarkMode,
+                        onChanged: (value) =>
+                            context.read<ThemeCubit>().toggleTheme(),
+                        isDarkMode: isDarkMode,
+                      ),
+                      _buildDivider(isDarkMode),
+                      _buildListTile(
+                        icon: Icons.language,
+                        title: 'لغة التطبيق',
+                        subtitle: selectedLanguage,
+                        onTap: () => _showLanguageDialog(),
+                        trailing: const Icon(Icons.chevron_right),
+                        isDarkMode: isDarkMode,
+                      ),
+                      _buildDivider(isDarkMode),
+                      _buildSwitchTile(
+                        icon: Icons.notifications,
+                        title: 'الإشعارات',
+                        subtitle: 'تلقي إشعارات التطبيق',
+                        value: notificationsEnabled,
+                        onChanged: (value) =>
+                            setState(() => notificationsEnabled = value),
+                        isDarkMode: isDarkMode,
+                      ),
+                    ],
                   ),
-                  _buildDivider(),
-                  _buildListTile(
-                    icon: Icons.language,
-                    title: 'لغة التطبيق',
-                    subtitle: selectedLanguage,
-                    onTap: () => _showLanguageDialog(),
-                    trailing: const Icon(Icons.chevron_right),
-                  ),
-                  _buildDivider(),
-                  _buildSwitchTile(
-                    icon: Icons.notifications,
-                    title: 'الإشعارات',
-                    subtitle: 'تلقي إشعارات التطبيق',
-                    value: notificationsEnabled,
-                    onChanged: (value) =>
-                        setState(() => notificationsEnabled = value),
-                  ),
-                ],
-              ),
 
-              const SizedBox(height: 20),
+                  const SizedBox(height: 20),
 
-              // Privacy & Security Section
-              _buildSectionCard(
-                title: 'الأمان والخصوصية',
-                icon: Icons.security,
-                children: [
-                  _buildListTile(
-                    icon: Icons.devices,
-                    title: 'إدارة الأجهزة',
-                    subtitle: 'عرض الأجهزة المرتبطة بحسابك',
-                    onTap: () => _showDeviceManagementDialog(),
-                    trailing: const Icon(Icons.chevron_right),
+                  // Privacy & Security Section
+                  _buildSectionCard(
+                    title: 'الأمان والخصوصية',
+                    icon: Icons.security,
+                    isDarkMode: isDarkMode,
+                    children: [
+                      _buildListTile(
+                        icon: Icons.devices,
+                        title: 'إدارة الأجهزة',
+                        subtitle: 'عرض الأجهزة المرتبطة بحسابك',
+                        onTap: () => _showDeviceManagementDialog(),
+                        trailing: const Icon(Icons.chevron_right),
+                        isDarkMode: isDarkMode,
+                      ),
+                      _buildDivider(isDarkMode),
+                      _buildSwitchTile(
+                        icon: Icons.verified_user,
+                        title: 'التحقق بخطوتين',
+                        subtitle: 'تأمين إضافي لحسابك',
+                        value: twoFactorAuth,
+                        onChanged: (value) => setState(() => twoFactorAuth = value),
+                        isDarkMode: isDarkMode,
+                      ),
+                      _buildDivider(isDarkMode),
+                      _buildSwitchTile(
+                        icon: Icons.share,
+                        title: 'مشاركة البيانات',
+                        subtitle: 'السماح بمشاركة البيانات لتحسين الخدمة',
+                        value: dataSharing,
+                        onChanged: (value) => setState(() => dataSharing = value),
+                        isDarkMode: isDarkMode,
+                      ),
+                    ],
                   ),
-                  _buildDivider(),
-                  _buildSwitchTile(
-                    icon: Icons.verified_user,
-                    title: 'التحقق بخطوتين',
-                    subtitle: 'تأمين إضافي لحسابك',
-                    value: twoFactorAuth,
-                    onChanged: (value) => setState(() => twoFactorAuth = value),
-                  ),
-                  _buildDivider(),
-                  _buildSwitchTile(
-                    icon: Icons.share,
-                    title: 'مشاركة البيانات',
-                    subtitle: 'السماح بمشاركة البيانات لتحسين الخدمة',
-                    value: dataSharing,
-                    onChanged: (value) => setState(() => dataSharing = value),
-                  ),
-                ],
-              ),
 
-              const SizedBox(height: 20),
+                  const SizedBox(height: 20),
 
-              // Support & Info Section
-              _buildSectionCard(
-                title: 'الدعم والمعلومات',
-                icon: Icons.help_outline,
-                children: [
-                  _buildListTile(
-                    icon: Icons.support_agent,
-                    title: 'المساعدة والدعم',
-                    subtitle: 'تواصل مع فريق الدعم',
-                    onTap: () => _showSupportDialog(),
-                    trailing: const Icon(Icons.chevron_right),
+                  // Support & Info Section
+                  _buildSectionCard(
+                    title: 'الدعم والمعلومات',
+                    icon: Icons.help_outline,
+                    isDarkMode: isDarkMode,
+                    children: [
+                      _buildListTile(
+                        icon: Icons.support_agent,
+                        title: 'المساعدة والدعم',
+                        subtitle: 'تواصل مع فريق الدعم',
+                        onTap: () => _showSupportDialog(),
+                        trailing: const Icon(Icons.chevron_right),
+                        isDarkMode: isDarkMode,
+                      ),
+                      _buildDivider(isDarkMode),
+                      _buildListTile(
+                        icon: Icons.info_outline,
+                        title: 'من نحن',
+                        subtitle: 'معلومات عن التطبيق',
+                        onTap: () => _showAboutDialog(),
+                        trailing: const Icon(Icons.chevron_right),
+                        isDarkMode: isDarkMode,
+                      ),
+                      _buildDivider(isDarkMode),
+                      _buildListTile(
+                        icon: Icons.description,
+                        title: 'الشروط والأحكام',
+                        subtitle: 'اطلع على شروط الاستخدام',
+                        onTap: () => _showTermsDialog(),
+                        trailing: const Icon(Icons.chevron_right),
+                        isDarkMode: isDarkMode,
+                      ),
+                      _buildDivider(isDarkMode),
+                      _buildListTile(
+                        icon: Icons.privacy_tip,
+                        title: 'سياسة الخصوصية',
+                        subtitle: 'كيفية التعامل مع بياناتك',
+                        onTap: () => _showPrivacyDialog(),
+                        trailing: const Icon(Icons.chevron_right),
+                        isDarkMode: isDarkMode,
+                      ),
+                    ],
                   ),
-                  _buildDivider(),
-                  _buildListTile(
-                    icon: Icons.info_outline,
-                    title: 'من نحن',
-                    subtitle: 'معلومات عن التطبيق',
-                    onTap: () => _showAboutDialog(),
-                    trailing: const Icon(Icons.chevron_right),
-                  ),
-                  _buildDivider(),
-                  _buildListTile(
-                    icon: Icons.description,
-                    title: 'الشروط والأحكام',
-                    subtitle: 'اطلع على شروط الاستخدام',
-                    onTap: () => _showTermsDialog(),
-                    trailing: const Icon(Icons.chevron_right),
-                  ),
-                  _buildDivider(),
-                  _buildListTile(
-                    icon: Icons.privacy_tip,
-                    title: 'سياسة الخصوصية',
-                    subtitle: 'كيفية التعامل مع بياناتك',
-                    onTap: () => _showPrivacyDialog(),
-                    trailing: const Icon(Icons.chevron_right),
-                  ),
-                ],
-              ),
 
-              const SizedBox(height: 30),
+                  const SizedBox(height: 30),
 
-              // Logout Button
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: () => _showLogoutDialog(),
-                  icon: const Icon(Icons.logout),
-                  label: Text(
-                    'تسجيل الخروج',
-                    style: GoogleFonts.tajawal(
-                      fontSize: isTablet ? 18 : 16,
-                      fontWeight: FontWeight.bold,
+                  // Logout Button
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(builder: (context) => const LoginPage()),
+                        );
+                      },
+                      icon: const Icon(Icons.logout),
+                      label: Text(
+                        'تسجيل الخروج',
+                        style: GoogleFonts.tajawal(
+                          fontSize: isTablet ? 18 : 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                        foregroundColor: Colors.white,
+                        padding: EdgeInsets.symmetric(vertical: isTablet ? 18 : 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 2,
+                      ),
                     ),
                   ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red,
-                    foregroundColor: Colors.white,
-                    padding: EdgeInsets.symmetric(vertical: isTablet ? 18 : 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    elevation: 2,
-                  ),
-                ),
-              ),
 
-              const SizedBox(height: 20),
-            ],
+                  const SizedBox(height: 20),
+                ],
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
-  PreferredSizeWidget _buildAppBar(BuildContext context, bool isTablet) {
+  PreferredSizeWidget _buildAppBar(BuildContext context, bool isTablet, bool isDarkMode) {
     return AppBar(
-      backgroundColor: Colors.white,
+      backgroundColor: isDarkMode 
+          ? ThemeManager.darkTheme.appBarTheme.backgroundColor
+          : ThemeManager.lightTheme.appBarTheme.backgroundColor,
       elevation: 0,
       leading: IconButton(
-        icon: const Icon(Icons.arrow_back, color: Color(0xFF1E293B)),
+        icon: Icon(Icons.arrow_back, 
+            color: isDarkMode 
+                ? ThemeManager.darkTheme.appBarTheme.iconTheme?.color
+                : ThemeManager.lightTheme.appBarTheme.iconTheme?.color),
         onPressed: () => Navigator.pop(context),
       ),
       title: Text(
@@ -218,7 +259,7 @@ class _SettingsPageState extends State<SettingsPage> {
         style: GoogleFonts.tajawal(
           fontSize: isTablet ? 24 : 20,
           fontWeight: FontWeight.bold,
-          color: const Color(0xFF1E293B),
+          color: isDarkMode ? Colors.white : const Color(0xFF1E293B),
         ),
       ),
       centerTitle: true,
@@ -228,6 +269,7 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget _buildSectionCard({
     required String title,
     required IconData icon,
+    required bool isDarkMode,
     required List<Widget> children,
   }) {
     final screenWidth = MediaQuery.of(context).size.width;
@@ -235,7 +277,9 @@ class _SettingsPageState extends State<SettingsPage> {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDarkMode 
+            ? ThemeManager.darkTheme.cardColor
+            : ThemeManager.lightTheme.cardColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -277,7 +321,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   style: GoogleFonts.tajawal(
                     fontSize: isTablet ? 20 : 18,
                     fontWeight: FontWeight.bold,
-                    color: const Color(0xFF1E293B),
+                    color: isDarkMode ? Colors.white : const Color(0xFF1E293B),
                   ),
                 ),
               ],
@@ -297,6 +341,7 @@ class _SettingsPageState extends State<SettingsPage> {
     required VoidCallback onTap,
     Widget? trailing,
     Color? titleColor,
+    required bool isDarkMode,
   }) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isTablet = screenWidth > 600;
@@ -324,7 +369,7 @@ class _SettingsPageState extends State<SettingsPage> {
         style: GoogleFonts.tajawal(
           fontSize: isTablet ? 18 : 16,
           fontWeight: FontWeight.w600,
-          color: titleColor ?? const Color(0xFF1E293B),
+          color: titleColor ?? (isDarkMode ? Colors.white : const Color(0xFF1E293B)),
         ),
       ),
       subtitle: Text(
@@ -345,6 +390,7 @@ class _SettingsPageState extends State<SettingsPage> {
     required String subtitle,
     required bool value,
     required ValueChanged<bool> onChanged,
+    required bool isDarkMode,
   }) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isTablet = screenWidth > 600;
@@ -368,7 +414,7 @@ class _SettingsPageState extends State<SettingsPage> {
         style: GoogleFonts.tajawal(
           fontSize: isTablet ? 18 : 16,
           fontWeight: FontWeight.w600,
-          color: const Color(0xFF1E293B),
+          color: isDarkMode ? Colors.white : const Color(0xFF1E293B),
         ),
       ),
       subtitle: Text(
@@ -386,11 +432,15 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  Widget _buildDivider() {
-    return Divider(color: Colors.grey[200], height: 1, indent: 72);
+  Widget _buildDivider(bool isDarkMode) {
+    return Divider(
+      color: isDarkMode ? Colors.grey[700] : Colors.grey[200],
+      height: 1,
+      indent: 72,
+    );
   }
 
-  // Dialog methods
+  // Dialog methods (unchanged)...
   void _showChangePasswordDialog() {
     showDialog(
       context: context,
@@ -601,48 +651,5 @@ class _SettingsPageState extends State<SettingsPage> {
         ],
       ),
     );
-  }
-
-  void _showLogoutDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(
-          'تسجيل الخروج',
-          style: GoogleFonts.tajawal(fontWeight: FontWeight.bold),
-        ),
-        content: const Text(
-          'هل أنت متأكد من أنك تريد تسجيل الخروج من التطبيق؟',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('إلغاء'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _performLogout();
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text(
-              'تسجيل الخروج',
-              style: TextStyle(color: Colors.white),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _performLogout() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('تم تسجيل الخروج بنجاح', style: GoogleFonts.tajawal()),
-        backgroundColor: Colors.green,
-      ),
-    );
-    // Navigate to login page
-    // Navigator.pushReplacementNamed(context, '/login');
   }
 }

@@ -7,12 +7,13 @@ import 'package:courses_app/main_pages/search/presentation/pages/search_page.dar
 import 'package:courses_app/navbar/presentation/main_navbar_page.dart';
 import 'package:flutter/material.dart';
 
-List<Widget> pages = [
-  HomePage(),
-  SearchPage(),
-  CoursesPage(),
-  NotificationsPage(),
-  ProfilePage(),
+/// All main app pages
+final List<Widget> pages = [
+  const HomePage(),
+  const SearchPage(),
+  const CoursesPage(),
+  const NotificationsPage(),
+  const ProfilePage(),
 ];
 
 class WidgetTree extends StatelessWidget {
@@ -21,6 +22,7 @@ class WidgetTree extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // Let MaterialApp + ThemeCubit control background colors globally
       body: ValueListenableBuilder(
         valueListenable: selectedPageNotifier,
         builder: (BuildContext context, dynamic selectedPage, Widget? child) {
@@ -31,7 +33,7 @@ class WidgetTree extends StatelessWidget {
                 opacity: animation,
                 child: SlideTransition(
                   position: Tween<Offset>(
-                    begin: const Offset(0.05, 0), // slight horizontal slide
+                    begin: const Offset(0.05, 0), // subtle slide-in animation
                     end: Offset.zero,
                   ).animate(animation),
                   child: child,
@@ -42,7 +44,7 @@ class WidgetTree extends StatelessWidget {
           );
         },
       ),
-      bottomNavigationBar: NavBarWidget(),
+      bottomNavigationBar: const NavBarWidget(),
     );
   }
 }

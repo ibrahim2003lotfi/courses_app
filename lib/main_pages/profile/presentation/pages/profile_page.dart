@@ -1,5 +1,10 @@
+
+import 'package:courses_app/core/utils/theme_manager.dart';
 import 'package:courses_app/main_pages/profile/presentation/pages/settings_page.dart';
+import 'package:courses_app/theme_cubit/theme_cubit.dart';
+import 'package:courses_app/theme_cubit/theme_state.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -64,37 +69,66 @@ class _ProfilePageState extends State<ProfilePage> {
     },
   ];
 
+  // Helper method to get text color based on theme
+  Color _getTextColor(bool isDarkMode) {
+    return isDarkMode ? Colors.white : const Color(0xFF1E293B);
+  }
+
+  // Helper method to get card color based on theme
+  Color _getCardColor(bool isDarkMode) {
+    return isDarkMode ? const Color(0xFF1E1E1E) : Colors.white;
+  }
+
+  // Helper method to get background color based on theme
+  Color _getBackgroundColor(bool isDarkMode) {
+    return isDarkMode ? const Color(0xFF121212) : const Color(0xFFF8FAFC);
+  }
+
+  // Helper method to get secondary text color based on theme
+  Color _getSecondaryTextColor(bool isDarkMode) {
+    return isDarkMode ? Colors.grey[400]! : Colors.grey[600]!;
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
-      body: SafeArea(
-        child: CustomScrollView(
-          slivers: [
-            // Header with Cover and Profile Image
-            SliverToBoxAdapter(child: _buildProfileHeader()),
+    return BlocBuilder<ThemeCubit, ThemeState>(
+      builder: (context, themeState) {
+        final isDarkMode = themeState.isDarkMode;
+        
+        return Theme(
+          data: isDarkMode ? ThemeManager.darkTheme : ThemeManager.lightTheme,
+          child: Scaffold(
+            backgroundColor: _getBackgroundColor(isDarkMode),
+            body: SafeArea(
+              child: CustomScrollView(
+                slivers: [
+                  // Header with Cover and Profile Image
+                  SliverToBoxAdapter(child: _buildProfileHeader(isDarkMode)),
 
-            // User Info Section
-            SliverToBoxAdapter(child: _buildUserInfo()),
+                  // User Info Section
+                  SliverToBoxAdapter(child: _buildUserInfo(isDarkMode)),
 
-            // User Statistics
-            SliverToBoxAdapter(child: _buildUserStats()),
+                  // User Statistics
+                  SliverToBoxAdapter(child: _buildUserStats(isDarkMode)),
 
-            // Certificates Section
-            SliverToBoxAdapter(child: _buildCertificatesSection()),
+                  // Certificates Section
+                  SliverToBoxAdapter(child: _buildCertificatesSection(isDarkMode)),
 
-            // Action Buttons
-            SliverToBoxAdapter(child: _buildActionButtons()),
+                  // Action Buttons
+                  SliverToBoxAdapter(child: _buildActionButtons(isDarkMode)),
 
-            // Bottom Spacing
-            const SliverToBoxAdapter(child: SizedBox(height: 40)),
-          ],
-        ),
-      ),
+                  // Bottom Spacing
+                  const SliverToBoxAdapter(child: SizedBox(height: 40)),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 
-  Widget _buildProfileHeader() {
+  Widget _buildProfileHeader(bool isDarkMode) {
     return Container(
       height: 280,
       child: Stack(
@@ -125,7 +159,7 @@ class _ProfilePageState extends State<ProfilePage> {
             left: 16,
             child: Container(
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.9),
+                color: (isDarkMode ? Colors.black : Colors.white).withOpacity(0.9),
                 shape: BoxShape.circle,
               ),
             ),
@@ -164,7 +198,7 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _buildUserInfo() {
+  Widget _buildUserInfo(bool isDarkMode) {
     return Padding(
       padding: const EdgeInsets.all(20.0),
       child: Column(
@@ -177,7 +211,7 @@ class _ProfilePageState extends State<ProfilePage> {
             style: GoogleFonts.tajawal(
               fontSize: 24,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF1E293B),
+              color: _getTextColor(isDarkMode),
             ),
             textAlign: TextAlign.center,
           ),
@@ -187,7 +221,10 @@ class _ProfilePageState extends State<ProfilePage> {
           // Email and Username
           Text(
             userProfile['email'],
-            style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+            style: TextStyle(
+              fontSize: 16, 
+              color: _getSecondaryTextColor(isDarkMode)
+            ),
             textAlign: TextAlign.center,
           ),
 
@@ -195,7 +232,10 @@ class _ProfilePageState extends State<ProfilePage> {
 
           Text(
             userProfile['username'],
-            style: TextStyle(fontSize: 14, color: Colors.grey[500]),
+            style: TextStyle(
+              fontSize: 14, 
+              color: _getSecondaryTextColor(isDarkMode)
+            ),
             textAlign: TextAlign.center,
           ),
 
@@ -239,7 +279,7 @@ class _ProfilePageState extends State<ProfilePage> {
               userProfile['bio'],
               style: GoogleFonts.tajawal(
                 fontSize: 14,
-                color: Colors.grey[600],
+                color: _getSecondaryTextColor(isDarkMode),
                 height: 1.5,
               ),
               textAlign: TextAlign.center,
@@ -250,20 +290,23 @@ class _ProfilePageState extends State<ProfilePage> {
           // Join Date
           Text(
             userProfile['joinDate'],
-            style: GoogleFonts.tajawal(fontSize: 12, color: Colors.grey[500]),
+            style: GoogleFonts.tajawal(
+              fontSize: 12, 
+              color: _getSecondaryTextColor(isDarkMode)
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildUserStats() {
+  Widget _buildUserStats(bool isDarkMode) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20.0),
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: _getCardColor(isDarkMode),
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
@@ -280,17 +323,17 @@ class _ProfilePageState extends State<ProfilePage> {
             if (isTablet) {
               return Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: _buildStatItems(),
+                children: _buildStatItems(isDarkMode),
               );
             } else {
               return IntrinsicHeight(
                 child: Row(
                   children: [
-                    Expanded(child: _buildStatItems()[0]),
-                    _buildVerticalDivider(),
-                    Expanded(child: _buildStatItems()[1]),
-                    _buildVerticalDivider(),
-                    Expanded(child: _buildStatItems()[2]),
+                    Expanded(child: _buildStatItems(isDarkMode)[0]),
+                    _buildVerticalDivider(isDarkMode),
+                    Expanded(child: _buildStatItems(isDarkMode)[1]),
+                    _buildVerticalDivider(isDarkMode),
+                    Expanded(child: _buildStatItems(isDarkMode)[2]),
                   ],
                 ),
               );
@@ -301,25 +344,28 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  List<Widget> _buildStatItems() {
+  List<Widget> _buildStatItems(bool isDarkMode) {
     return [
       _buildStatItem(
         icon: Icons.school,
         count: userStats['enrolled'].toString(),
         label: 'الكورسات المشتركة',
         color: const Color(0xFF3B82F6),
+        isDarkMode: isDarkMode,
       ),
       _buildStatItem(
         icon: Icons.check_circle,
         count: userStats['completed'].toString(),
         label: 'الكورسات المكتملة',
         color: const Color(0xFF10B981),
+        isDarkMode: isDarkMode,
       ),
       _buildStatItem(
         icon: Icons.workspace_premium,
         count: userStats['certificates'].toString(),
         label: 'الشهادات',
         color: const Color(0xFFF59E0B),
+        isDarkMode: isDarkMode,
       ),
     ];
   }
@@ -329,6 +375,7 @@ class _ProfilePageState extends State<ProfilePage> {
     required String count,
     required String label,
     required Color color,
+    required bool isDarkMode,
   }) {
     return Column(
       children: [
@@ -349,7 +396,7 @@ class _ProfilePageState extends State<ProfilePage> {
           style: GoogleFonts.tajawal(
             fontSize: 24,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF1E293B),
+            color: _getTextColor(isDarkMode),
           ),
         ),
         const SizedBox(height: 4),
@@ -358,7 +405,7 @@ class _ProfilePageState extends State<ProfilePage> {
           style: GoogleFonts.tajawal(
             fontSize: 12,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF1E293B),
+            color: _getTextColor(isDarkMode),
           ),
           textAlign: TextAlign.center,
         ),
@@ -366,22 +413,22 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _buildVerticalDivider() {
+  Widget _buildVerticalDivider(bool isDarkMode) {
     return Container(
       width: 1,
-      color: Colors.grey[200],
+      color: isDarkMode ? Colors.grey[700] : Colors.grey[200],
       margin: const EdgeInsets.symmetric(horizontal: 16),
     );
   }
 
-  Widget _buildCertificatesSection() {
+  Widget _buildCertificatesSection(bool isDarkMode) {
     return Padding(
       padding: const EdgeInsets.all(20.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.end, // كل العناصر إلى اليمين
+            mainAxisAlignment: MainAxisAlignment.end,
             children: [
               const Icon(
                 Icons.workspace_premium,
@@ -394,7 +441,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 style: GoogleFonts.tajawal(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF1E293B),
+                  color: _getTextColor(isDarkMode),
                 ),
               ),
             ],
@@ -413,7 +460,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   width: 120,
                   margin: const EdgeInsets.only(right: 16),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: _getCardColor(isDarkMode),
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
                       BoxShadow(
@@ -452,7 +499,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           style: GoogleFonts.tajawal(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF1E293B),
+                            color: _getTextColor(isDarkMode),
                           ),
                           textAlign: TextAlign.center,
                           maxLines: 2,
@@ -464,7 +511,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         certificate['date'],
                         style: GoogleFonts.tajawal(
                           fontSize: 10,
-                          color: Colors.grey[500],
+                          color: _getSecondaryTextColor(isDarkMode),
                         ),
                       ),
                     ],
@@ -478,7 +525,7 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _buildActionButtons() {
+  Widget _buildActionButtons(bool isDarkMode) {
     return Padding(
       padding: const EdgeInsets.all(20.0),
       child: Column(
@@ -488,7 +535,7 @@ class _ProfilePageState extends State<ProfilePage> {
             width: double.infinity,
             child: ElevatedButton.icon(
               onPressed: () {
-                _showEditProfileDialog();
+                _showEditProfileDialog(isDarkMode);
               },
               icon: const Icon(Icons.edit),
               label: Text(
@@ -524,10 +571,14 @@ class _ProfilePageState extends State<ProfilePage> {
                     );
                   },
                   icon: const Icon(Icons.settings),
-                  label: const Text('الإعدادات'),
+                  label: Text(
+                    'الإعدادات',
+                    style: TextStyle(color: _getTextColor(isDarkMode)),
+                  ),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFF1E293B),
-                    side: const BorderSide(color: Color(0xFFE2E8F0)),
+                    side: BorderSide(
+                      color: isDarkMode ? Colors.grey[700]! : const Color(0xFFE2E8F0)
+                    ),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -539,13 +590,17 @@ class _ProfilePageState extends State<ProfilePage> {
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: () {
-                    _showHelpDialog();
+                    _showHelpDialog(isDarkMode);
                   },
                   icon: const Icon(Icons.help_outline),
-                  label: const Text('المساعدة'),
+                  label: Text(
+                    'المساعدة',
+                    style: TextStyle(color: _getTextColor(isDarkMode)),
+                  ),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFF1E293B),
-                    side: const BorderSide(color: Color(0xFFE2E8F0)),
+                    side: BorderSide(
+                      color: isDarkMode ? Colors.grey[700]! : const Color(0xFFE2E8F0)
+                    ),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -563,7 +618,7 @@ class _ProfilePageState extends State<ProfilePage> {
             width: double.infinity,
             child: TextButton.icon(
               onPressed: () {
-                _showLogoutDialog();
+                _showLogoutDialog(isDarkMode);
               },
               icon: const Icon(Icons.logout, color: Colors.red),
               label: Text(
@@ -588,72 +643,81 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  void _showEditProfileDialog() {
+  void _showEditProfileDialog(bool isDarkMode) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('تعديل الملف الشخصي'),
-        content: const Text('سيتم فتح صفحة تعديل البيانات الشخصية.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('إلغاء'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              // Navigate to edit profile page
-            },
-            child: const Text('موافق'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showHelpDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('المساعدة والدعم'),
-        content: const Text(
-          'يمكنك التواصل مع فريق الدعم من خلال البريد الإلكتروني: support@example.com',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('إغلاق'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showLogoutDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('تسجيل الخروج'),
-        content: const Text(
-          'هل أنت متأكد من أنك تريد تسجيل الخروج من التطبيق؟',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('إلغاء'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _performLogout();
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text(
-              'تسجيل الخروج',
-              style: TextStyle(color: Colors.white),
+      builder: (context) => Theme(
+        data: isDarkMode ? ThemeManager.darkTheme : ThemeManager.lightTheme,
+        child: AlertDialog(
+          title: Text('تعديل الملف الشخصي'),
+          content: Text('سيتم فتح صفحة تعديل البيانات الشخصية.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('إلغاء'),
             ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                // Navigate to edit profile page
+              },
+              child: Text('موافق'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showHelpDialog(bool isDarkMode) {
+    showDialog(
+      context: context,
+      builder: (context) => Theme(
+        data: isDarkMode ? ThemeManager.darkTheme : ThemeManager.lightTheme,
+        child: AlertDialog(
+          title: Text('المساعدة والدعم'),
+          content: Text(
+            'يمكنك التواصل مع فريق الدعم من خلال البريد الإلكتروني: support@example.com',
           ),
-        ],
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('إغلاق'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showLogoutDialog(bool isDarkMode) {
+    showDialog(
+      context: context,
+      builder: (context) => Theme(
+        data: isDarkMode ? ThemeManager.darkTheme : ThemeManager.lightTheme,
+        child: AlertDialog(
+          title: Text('تسجيل الخروج'),
+          content: Text(
+            'هل أنت متأكد من أنك تريد تسجيل الخروج من التطبيق؟',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('إلغاء'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _performLogout();
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              child: Text(
+                'تسجيل الخروج',
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

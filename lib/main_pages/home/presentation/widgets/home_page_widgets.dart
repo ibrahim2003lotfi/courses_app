@@ -1,8 +1,12 @@
+import 'package:courses_app/core/utils/theme_manager.dart';
 import 'package:courses_app/main_pages/courses/presentation/pages/course_details_page.dart';
 import 'package:courses_app/main_pages/home/presentation/side%20pages/category_page.dart';
 import 'package:courses_app/main_pages/home/presentation/side%20pages/recommended_page.dart';
 import 'package:courses_app/main_pages/home/presentation/side%20pages/university_pages/univiersities_page.dart';
+import 'package:courses_app/theme_cubit/theme_cubit.dart';
+import 'package:courses_app/theme_cubit/theme_state.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class TopSearchBar extends StatelessWidget implements PreferredSizeWidget {
@@ -10,66 +14,73 @@ class TopSearchBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      // 👈 prevents overlap with status bar / notch
-      child: Container(
-        height: 70, // taller bar
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            return Row(
-              children: [
-                // Logo
-                Container(
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF2563EB), Color(0xFF1D4ED8)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF2563EB).withOpacity(0.3),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  padding: const EdgeInsets.all(10),
-                  child: const Icon(
-                    Icons.school,
-                    color: Colors.white,
-                    size: 28,
-                  ),
-                ),
-
-                const Spacer(),
-
-                // Title text on the right
-                Text(
-                  'منصة الكورسات',
-                  style: GoogleFonts.tajawal(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w900,
-                    color: const Color(0xFF1F2937),
-                  ),
+    return BlocBuilder<ThemeCubit, ThemeState>(
+      builder: (context, themeState) {
+        return SafeArea(
+          child: Container(
+            height: 70,
+            decoration: BoxDecoration(
+              color: themeState.isDarkMode 
+                  ? const Color(0xFF1E1E1E) // Use dark theme card color
+                  : Colors.white, // Use light theme background
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(themeState.isDarkMode ? 0.1 : 0.05),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
                 ),
               ],
-            );
-          },
-        ),
-      ),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                return Row(
+                  children: [
+                    // Logo (unchanged as it uses gradient)
+                    Container(
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF2563EB), Color(0xFF1D4ED8)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF2563EB).withOpacity(0.3),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      padding: const EdgeInsets.all(10),
+                      child: const Icon(
+                        Icons.school,
+                        color: Colors.white,
+                        size: 28,
+                      ),
+                    ),
+
+                    const Spacer(),
+
+                    // Title text with theme-aware color
+                    Text(
+                      'منصة الكورسات',
+                      style: GoogleFonts.tajawal(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w900,
+                        color: themeState.isDarkMode 
+                            ? Colors.white // White text for dark mode
+                            : const Color(0xFF1F2937), // Original dark gray for light mode
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -106,51 +117,62 @@ class _SearchFieldState extends State<SearchField> {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      child: Material(
-        elevation: 2,
-        borderRadius: BorderRadius.circular(16),
-        child: TextField(
-          controller: _controller,
-          style: GoogleFonts.tajawal(
-            fontWeight: _hasText
-                ? FontWeight.w700
-                : FontWeight.w500, // Bolder when text exists
-            fontSize: 16,
-            color: const Color(0xFF1F2937),
+    return BlocBuilder<ThemeCubit, ThemeState>(
+      builder: (context, themeState) {
+        final bool isDarkMode = themeState.isDarkMode;
+        
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          child: Material(
+            elevation: isDarkMode ? 1 : 2,
+            borderRadius: BorderRadius.circular(16),
+            shadowColor: Colors.black.withOpacity(isDarkMode ? 0.2 : 0.1),
+            child: TextField(
+              controller: _controller,
+              style: GoogleFonts.tajawal(
+                fontWeight: _hasText ? FontWeight.w700 : FontWeight.w500,
+                fontSize: 16,
+                color: isDarkMode ? Colors.white : const Color(0xFF1F2937),
+              ),
+              decoration: InputDecoration(
+                hintText: 'ابحث عن الكورسات, المحاضرات, و الدروس',
+                hintStyle: GoogleFonts.tajawal(
+                  fontWeight: FontWeight.w500,
+                  color: isDarkMode ? const Color(0xFF9CA3AF) : const Color(0xFF6B7280),
+                ),
+                prefixIcon: Icon(Icons.search, 
+                  color: isDarkMode ? const Color(0xFF9CA3AF) : const Color(0xFF6B7280),
+                ),
+                filled: true,
+                fillColor: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
+                contentPadding: const EdgeInsets.symmetric(
+                  vertical: 16,
+                  horizontal: 16,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide.none,
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide.none,
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide(
+                    color: const Color(0xFF2563EB), 
+                    width: 2
+                  ),
+                ),
+              ),
+            ),
           ),
-          decoration: InputDecoration(
-            hintText: 'ابحث عن الكورسات, المحاضرات, و الدروس',
-            hintStyle: GoogleFonts.tajawal(
-              fontWeight: FontWeight.w500, // Normal weight for hint
-              color: const Color(0xFF6B7280),
-            ),
-            prefixIcon: const Icon(Icons.search, color: Color(0xFF6B7280)),
-            filled: true,
-            fillColor: Colors.white,
-            contentPadding: const EdgeInsets.symmetric(
-              vertical: 16,
-              horizontal: 16,
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide.none,
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide.none,
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: const BorderSide(color: Color(0xFF2563EB), width: 2),
-            ),
-          ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
+
 
 class HeroCarousel extends StatefulWidget {
   final List<String> heroImages;
@@ -160,7 +182,6 @@ class HeroCarousel extends StatefulWidget {
   @override
   State<HeroCarousel> createState() => _HeroCarouselState();
 }
-
 class _HeroCarouselState extends State<HeroCarousel> {
   final PageController _heroController = PageController();
   int _heroPage = 0;
@@ -186,138 +207,149 @@ class _HeroCarouselState extends State<HeroCarousel> {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: SizedBox(
-        height: 200,
-        child: Stack(
-          children: [
-            PageView.builder(
-              controller: _heroController,
-              itemCount: widget.heroImages.length,
-              itemBuilder: (context, index) {
-                return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(20),
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        Image.network(
-                          widget.heroImages[index],
-                          fit: BoxFit.cover,
-                          loadingBuilder: (context, child, loadingProgress) {
-                            if (loadingProgress == null) return child;
-                            return Container(
-                              color: const Color(0xFFF3F4F6),
-                              child: const Center(
-                                child: CircularProgressIndicator(),
-                              ),
-                            );
-                          },
-                        ),
-                        Container(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                Colors.black.withOpacity(0.6),
-                                Colors.black.withOpacity(0.2),
-                                Colors.transparent,
-                              ],
-                              begin: Alignment.bottomCenter,
-                              end: Alignment.topCenter,
-                            ),
-                          ),
-                        ),
-                        Positioned(
-                          right: 24,
-                          bottom: 24,
-                          left: 24,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'ابدأ رحلتك التعليمية اليوم 🚀',
-                                style: GoogleFonts.tajawal(
-                                  color: Colors.white,
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.w800, // Made bolder
-                                  height: 1.3,
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF10B981),
-                                  foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 24,
-                                    vertical: 12,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  elevation: 2,
-                                ),
-                                onPressed: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => CategoriesPage(),
+    return BlocBuilder<ThemeCubit, ThemeState>(
+      builder: (context, themeState) {
+        final bool isDarkMode = themeState.isDarkMode;
+        
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: SizedBox(
+            height: 200,
+            child: Stack(
+              children: [
+                PageView.builder(
+                  controller: _heroController,
+                  itemCount: widget.heroImages.length,
+                  itemBuilder: (context, index) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(20),
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            Image.network(
+                              widget.heroImages[index],
+                              fit: BoxFit.cover,
+                              loadingBuilder: (context, child, loadingProgress) {
+                                if (loadingProgress == null) return child;
+                                return Container(
+                                  color: isDarkMode 
+                                      ? const Color(0xFF2D2D2D) 
+                                      : const Color(0xFFF3F4F6),
+                                  child: Center(
+                                    child: CircularProgressIndicator(
+                                      color: isDarkMode ? Colors.white70 : const Color(0xFF3B82F6),
                                     ),
-                                  );
-                                },
-                                child: Text(
-                                  'تصفح الكورسات',
-                                  style: GoogleFonts.tajawal(
-                                    fontWeight: FontWeight.w700, // Made bolder
-                                    fontSize: 16,
                                   ),
+                                );
+                              },
+                            ),
+                            Container(
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    Colors.black.withOpacity(isDarkMode ? 0.8 : 0.6),
+                                    Colors.black.withOpacity(isDarkMode ? 0.4 : 0.2),
+                                    Colors.transparent,
+                                  ],
+                                  begin: Alignment.bottomCenter,
+                                  end: Alignment.topCenter,
                                 ),
                               ),
-                            ],
-                          ),
+                            ),
+                            Positioned(
+                              right: 24,
+                              bottom: 24,
+                              left: 24,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'ابدأ رحلتك التعليمية اليوم 🚀',
+                                    style: GoogleFonts.tajawal(
+                                      color: Colors.white,
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.w800,
+                                      height: 1.3,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: const Color(0xFF10B981),
+                                      foregroundColor: Colors.white,
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 24,
+                                        vertical: 12,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      elevation: isDarkMode ? 4 : 2,
+                                      shadowColor: Colors.black.withOpacity(isDarkMode ? 0.4 : 0.2),
+                                    ),
+                                    onPressed: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => CategoriesPage(),
+                                        ),
+                                      );
+                                    },
+                                    child: Text(
+                                      'تصفح الكورسات',
+                                      style: GoogleFonts.tajawal(
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
+                      ),
+                    );
+                  },
+                ),
+                // Dots
+                Positioned(
+                  bottom: 16,
+                  right: 0,
+                  left: 0,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(widget.heroImages.length, (i) {
+                      final active = i == _heroPage;
+                      return AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        margin: const EdgeInsets.symmetric(horizontal: 4),
+                        width: active ? 24 : 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          color: active
+                              ? Colors.white
+                              : Colors.white.withOpacity(isDarkMode ? 0.7 : 0.5),
+                          borderRadius: BorderRadius.circular(8),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(isDarkMode ? 0.3 : 0.1),
+                              blurRadius: 4,
+                              offset: const Offset(0, 1),
+                            ),
+                          ],
+                        ),
+                      );
+                    }),
                   ),
-                );
-              },
+                ),
+              ],
             ),
-            // Dots
-            Positioned(
-              bottom: 16,
-              right: 0,
-              left: 0,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(widget.heroImages.length, (i) {
-                  final active = i == _heroPage;
-                  return AnimatedContainer(
-                    duration: const Duration(milliseconds: 300),
-                    margin: const EdgeInsets.symmetric(horizontal: 4),
-                    width: active ? 24 : 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      color: active
-                          ? Colors.white
-                          : Colors.white.withOpacity(0.5),
-                      borderRadius: BorderRadius.circular(8),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 4,
-                          offset: const Offset(0, 1),
-                        ),
-                      ],
-                    ),
-                  );
-                }),
-              ),
-            ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }
@@ -329,77 +361,87 @@ class CategoriesGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header
-          Padding(
-            padding: const EdgeInsets.only(bottom: 16),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'الأقسام',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleLarge!.copyWith(fontWeight: FontWeight.w800),
-                ),
-                TextButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => CategoriesPage()),
-                    );
-                  },
-                  child: Text(
-                    'عرض الكل',
-                    style: GoogleFonts.tajawal(
-                      color: const Color(0xFF2563EB),
-                      fontWeight: FontWeight.w700,
+    return BlocBuilder<ThemeCubit, ThemeState>(
+      builder: (context, themeState) {
+        final bool isDarkMode = themeState.isDarkMode;
+        
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header
+              Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'الأقسام',
+                      style: Theme.of(context).textTheme.titleLarge!.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: isDarkMode ? Colors.white : null,
+                      ),
                     ),
-                  ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => CategoriesPage()),
+                        );
+                      },
+                      child: Text(
+                        'عرض الكل',
+                        style: GoogleFonts.tajawal(
+                          color: const Color(0xFF2563EB), // Keep blue color for both themes
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          ),
+              ),
 
-          // Grid
-          LayoutBuilder(
-            builder: (context, constraints) {
-              const crossAxisCount = 4;
-              final visibleCategories = categories.take(8).toList();
+              // Grid
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  const crossAxisCount = 4;
+                  final visibleCategories = categories.take(8).toList();
 
-              return GridView.builder(
-                physics: const NeverScrollableScrollPhysics(),
-                shrinkWrap: true,
-                itemCount: visibleCategories.length,
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: crossAxisCount,
-                  mainAxisSpacing: 12,
-                  crossAxisSpacing: 12,
-                  childAspectRatio: 0.85,
-                ),
-                itemBuilder: (context, idx) {
-                  final c = visibleCategories[idx];
-                  return _buildCategoryCube(
-                    c,
-                    constraints.maxWidth / crossAxisCount - 16,
+                  return GridView.builder(
+                    physics: const NeverScrollableScrollPhysics(),
+                    shrinkWrap: true,
+                    itemCount: visibleCategories.length,
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: crossAxisCount,
+                      mainAxisSpacing: 12,
+                      crossAxisSpacing: 12,
+                      childAspectRatio: 0.85,
+                    ),
+                    itemBuilder: (context, idx) {
+                      final c = visibleCategories[idx];
+                      return _buildCategoryCube(
+                        c,
+                        constraints.maxWidth / crossAxisCount - 16,
+                        isDarkMode: isDarkMode,
+                      );
+                    },
                   );
                 },
-              );
-            },
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
-  Widget _buildCategoryCube(Map<String, dynamic> category, double itemSize) {
+  Widget _buildCategoryCube(Map<String, dynamic> category, double itemSize, {required bool isDarkMode}) {
     return Material(
-      elevation: 3,
+      elevation: isDarkMode ? 4 : 3,
       borderRadius: BorderRadius.circular(16),
+      color: isDarkMode ? const Color(0xFF1E1E1E) : Colors.transparent,
+      shadowColor: Colors.black.withOpacity(isDarkMode ? 0.3 : 0.1),
       child: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -411,9 +453,9 @@ class CategoriesGrid extends StatelessWidget {
           boxShadow: [
             BoxShadow(
               color: (category['gradient'] as List<Color>).last.withOpacity(
-                0.3,
+                isDarkMode ? 0.5 : 0.3, // Enhanced shadow for dark mode
               ),
-              blurRadius: 8,
+              blurRadius: isDarkMode ? 12 : 8,
               offset: const Offset(0, 3),
             ),
           ],
@@ -431,7 +473,7 @@ class CategoriesGrid extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
+                    color: Colors.white.withOpacity(isDarkMode ? 0.3 : 0.2), // Enhanced opacity for dark mode
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
@@ -461,6 +503,8 @@ class CategoriesGrid extends StatelessWidget {
   }
 }
 
+
+
 class RecommendedCourses extends StatelessWidget {
   final List<Map<String, dynamic>> recommended;
 
@@ -468,79 +512,219 @@ class RecommendedCourses extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(bottom: 16),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'مقترح لك',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleLarge!.copyWith(fontWeight: FontWeight.w800),
-                ),
-                TextButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => RecommendedPage(),
+    return BlocBuilder<ThemeCubit, ThemeState>(
+      builder: (context, themeState) {
+        final bool isDarkMode = themeState.isDarkMode;
+        
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'مقترح لك',
+                      style: Theme.of(context).textTheme.titleLarge!.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: isDarkMode ? Colors.white : null,
                       ),
-                    );
-                  },
-                  child: Text(
-                    'عرض الكل',
-                    style: GoogleFonts.tajawal(
-                      color: const Color(0xFF2563EB),
-                      fontWeight: FontWeight.w700,
                     ),
-                  ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => RecommendedPage(),
+                          ),
+                        );
+                      },
+                      child: Text(
+                        'عرض الكل',
+                        style: GoogleFonts.tajawal(
+                          color: const Color(0xFF2563EB),
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          ),
-          ...recommended.map((item) {
-            return Container(
-              margin: const EdgeInsets.only(bottom: 16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
               ),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    // Use different layouts based on available width
-                    if (constraints.maxWidth < 600) {
-                      // Mobile layout - vertical
-                      return Column(
-                        children: [
-                          // Image and title row
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+              ...recommended.map((item) {
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(isDarkMode ? 0.1 : 0.05),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        // Use different layouts based on available width
+                        if (constraints.maxWidth < 600) {
+                          // Mobile layout - vertical
+                          return Column(
+                            children: [
+                              // Image and title row
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(12),
+                                    child: Image.network(
+                                      item['image'],
+                                      width: 80,
+                                      height: 60,
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          item['title'],
+                                          style: GoogleFonts.tajawal(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w700,
+                                            color: isDarkMode ? Colors.white : const Color(0xFF1F2937),
+                                          ),
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          item['teacher'],
+                                          style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                                            fontWeight: FontWeight.w500,
+                                            color: isDarkMode ? Colors.white70 : null,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              // Rating and students row
+                              Row(
+                                children: [
+                                  const Icon(
+                                    Icons.star,
+                                    size: 16,
+                                    color: Colors.amber,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    item['rating'].toStringAsFixed(1),
+                                    style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                                      fontWeight: FontWeight.w500,
+                                      color: isDarkMode ? Colors.white70 : null,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  Icon(
+                                    Icons.people_outline,
+                                    size: 16,
+                                    color: isDarkMode ? Colors.white60 : const Color(0xFF6B7280),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Expanded(
+                                    child: Text(
+                                      '${item['students']} طالب',
+                                      style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                                        fontWeight: FontWeight.w500,
+                                        color: isDarkMode ? Colors.white70 : null,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              // Button - full width on mobile
+                              SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton(
+                                  onPressed: () {
+                                    Map<String, dynamic> enhancedCourse = {
+                                      ...item, // Spread the original item
+                                      'category': item['category'] ?? 'برمجة',
+                                      'reviews': item['reviews'] ?? 100,
+                                      'duration': item['duration'] ?? 20,
+                                      'lessons': item['lessons'] ?? 30,
+                                      'level': item['level'] ?? 'متوسط',
+                                      'lastUpdated': item['lastUpdated'] ?? '2024',
+                                      'price': item['price'] ?? '₪199',
+                                      'description':
+                                          item['description'] ??
+                                          'دورة تعليمية شاملة تغطي أهم المفاهيم والمهارات في هذا المجال.',
+                                      'tags':
+                                          item['tags'] ??
+                                          ['تعليم', 'تدريب', 'مهارات'],
+                                      'instructorImage':
+                                          item['instructorImage'] ??
+                                          'https://picsum.photos/seed/instructor/200/200',
+                                    };
+
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => CourseDetailsPage(
+                                          course: enhancedCourse,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF2563EB),
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 10,
+                                    ),
+                                    elevation: isDarkMode ? 3 : 0,
+                                  ),
+                                  child: Text(
+                                    'التفاصيل',
+                                    style: GoogleFonts.tajawal(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          );
+                        } else {
+                          // Tablet/Desktop layout - horizontal
+                          return Row(
                             children: [
                               ClipRRect(
                                 borderRadius: BorderRadius.circular(12),
                                 child: Image.network(
                                   item['image'],
-                                  width: 80,
-                                  height: 60,
+                                  width: constraints.maxWidth < 800 ? 80 : 100,
+                                  height: constraints.maxWidth < 800 ? 60 : 80,
                                   fit: BoxFit.cover,
                                 ),
                               ),
-                              const SizedBox(width: 12),
+                              const SizedBox(width: 16),
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -548,227 +732,126 @@ class RecommendedCourses extends StatelessWidget {
                                     Text(
                                       item['title'],
                                       style: GoogleFonts.tajawal(
-                                        fontSize: 14,
+                                        fontSize: constraints.maxWidth < 800
+                                            ? 14
+                                            : 16,
                                         fontWeight: FontWeight.w700,
-                                        color: const Color(0xFF1F2937),
+                                        color: isDarkMode ? Colors.white : const Color(0xFF1F2937),
                                       ),
                                       maxLines: 2,
                                       overflow: TextOverflow.ellipsis,
                                     ),
-                                    const SizedBox(height: 4),
+                                    const SizedBox(height: 6),
                                     Text(
                                       item['teacher'],
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .bodyMedium!
-                                          .copyWith(
+                                      style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                                        fontWeight: FontWeight.w500,
+                                        color: isDarkMode ? Colors.white70 : null,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Row(
+                                      children: [
+                                        const Icon(
+                                          Icons.star,
+                                          size: 16,
+                                          color: Colors.amber,
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          item['rating'].toStringAsFixed(1),
+                                          style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                                             fontWeight: FontWeight.w500,
+                                            color: isDarkMode ? Colors.white70 : null,
                                           ),
+                                        ),
+                                        const SizedBox(width: 16),
+                                        Icon(
+                                          Icons.people_outline,
+                                          size: 16,
+                                          color: isDarkMode ? Colors.white60 : const Color(0xFF6B7280),
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          '${item['students']} طالب',
+                                          style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                                            fontWeight: FontWeight.w500,
+                                            color: isDarkMode ? Colors.white70 : null,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ],
                                 ),
                               ),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          // Rating and students row
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.star,
-                                size: 16,
-                                color: Colors.amber,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                item['rating'].toStringAsFixed(1),
-                                style: Theme.of(context).textTheme.bodyMedium!
-                                    .copyWith(fontWeight: FontWeight.w500),
-                              ),
-                              const SizedBox(width: 16),
-                              const Icon(
-                                Icons.people_outline,
-                                size: 16,
-                                color: Color(0xFF6B7280),
-                              ),
-                              const SizedBox(width: 4),
-                              Expanded(
-                                child: Text(
-                                  '${item['students']} طالب',
-                                  style: Theme.of(context).textTheme.bodyMedium!
-                                      .copyWith(fontWeight: FontWeight.w500),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          // Button - full width on mobile
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton(
-                              onPressed: () {
-                                Map<String, dynamic> enhancedCourse = {
-                                  ...item, // Spread the original item
-                                  'category': item['category'] ?? 'برمجة',
-                                  'reviews': item['reviews'] ?? 100,
-                                  'duration': item['duration'] ?? 20,
-                                  'lessons': item['lessons'] ?? 30,
-                                  'level': item['level'] ?? 'متوسط',
-                                  'lastUpdated': item['lastUpdated'] ?? '2024',
-                                  'price': item['price'] ?? '₪199',
-                                  'description':
-                                      item['description'] ??
-                                      'دورة تعليمية شاملة تغطي أهم المفاهيم والمهارات في هذا المجال.',
-                                  'tags':
-                                      item['tags'] ??
-                                      ['تعليم', 'تدريب', 'مهارات'],
-                                  'instructorImage':
-                                      item['instructorImage'] ??
-                                      'https://picsum.photos/seed/instructor/200/200',
-                                };
+                              const SizedBox(width: 12),
+                              ElevatedButton(
+                                onPressed: () {
+                                  Map<String, dynamic> enhancedCourse = {
+                                    ...item,
+                                    'category': item['category'] ?? 'برمجة',
+                                    'reviews': item['reviews'] ?? 100,
+                                    'duration': item['duration'] ?? 20,
+                                    'lessons': item['lessons'] ?? 30,
+                                    'level': item['level'] ?? 'متوسط',
+                                    'lastUpdated': item['lastUpdated'] ?? '2024',
+                                    'price': item['price'] ?? '₪199',
+                                    'description':
+                                        item['description'] ??
+                                        'دورة تعليمية شاملة تغطي أهم المفاهيم والمهارات في هذا المجال.',
+                                    'tags':
+                                        item['tags'] ??
+                                        ['تعليم', 'تدريب', 'مهارات'],
+                                    'instructorImage':
+                                        item['instructorImage'] ??
+                                        'https://picsum.photos/seed/instructor/200/200',
+                                  };
 
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => CourseDetailsPage(
-                                      course: enhancedCourse,
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => CourseDetailsPage(
+                                        course: enhancedCourse,
+                                      ),
                                     ),
+                                  );
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF2563EB),
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
                                   ),
-                                );
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF2563EB),
-                                foregroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 10,
+                                  ),
+                                  elevation: isDarkMode ? 3 : 0,
                                 ),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 10,
-                                ),
-                              ),
-                              child: Text(
-                                'التفاصيل',
-                                style: GoogleFonts.tajawal(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      );
-                    } else {
-                      // Tablet/Desktop layout - horizontal
-                      return Row(
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: Image.network(
-                              item['image'],
-                              width: constraints.maxWidth < 800 ? 80 : 100,
-                              height: constraints.maxWidth < 800 ? 60 : 80,
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  item['title'],
+                                child: Text(
+                                  'التفاصيل',
                                   style: GoogleFonts.tajawal(
-                                    fontSize: constraints.maxWidth < 800
-                                        ? 14
-                                        : 16,
+                                    fontSize: 14,
                                     fontWeight: FontWeight.w700,
-                                    color: const Color(0xFF1F2937),
                                   ),
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
                                 ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  item['teacher'],
-                                  style: Theme.of(context).textTheme.bodyMedium!
-                                      .copyWith(fontWeight: FontWeight.w500),
-                                ),
-                                const SizedBox(height: 6),
-                                Row(
-                                  children: [
-                                    const Icon(
-                                      Icons.star,
-                                      size: 16,
-                                      color: Colors.amber,
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      item['rating'].toStringAsFixed(1),
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .bodyMedium!
-                                          .copyWith(
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                    ),
-                                    const SizedBox(width: 16),
-                                    const Icon(
-                                      Icons.people_outline,
-                                      size: 16,
-                                      color: Color(0xFF6B7280),
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      '${item['students']} طالب',
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .bodyMedium!
-                                          .copyWith(
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          ElevatedButton(
-                            onPressed: () {},
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF2563EB),
-                              foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
                               ),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 10,
-                              ),
-                            ),
-                            child: Text(
-                              'التفاصيل',
-                              style: GoogleFonts.tajawal(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ),
-                        ],
-                      );
-                    }
-                  },
-                ),
-              ),
-            );
-          }),
-        ],
-      ),
+                            ],
+                          );
+                        }
+                      },
+                    ),
+                  ),
+                );
+              }),
+            ],
+          ),
+        );
+      },
     );
   }
 }
+
 
 class TrendingCourses extends StatelessWidget {
   final List<Map<String, dynamic>> trending;
@@ -777,309 +860,331 @@ class TrendingCourses extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Title row with padding
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'الأكثر شيوعًا',
-                style: Theme.of(
-                  context,
-                ).textTheme.titleLarge!.copyWith(fontWeight: FontWeight.w800),
-              ),
-              TextButton(
-                onPressed: () {},
-                child: Text(
-                  'عرض الكل',
-                  style: GoogleFonts.tajawal(
-                    color: const Color(0xFF2563EB),
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-
-        // Horizontal courses list edge-to-edge
-        SizedBox(
-          height: 180,
-          child: ListView.separated(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 20,
-            ), // 👈 keep spacing, optional
-            scrollDirection: Axis.horizontal,
-            itemCount: trending.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 16),
-            itemBuilder: (context, idx) {
-              final t = trending[idx];
-              return SizedBox(
-                width: 200,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 8,
-                        offset: const Offset(0, 3),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Image section
-                      ClipRRect(
-                        borderRadius: const BorderRadius.vertical(
-                          top: Radius.circular(16),
+    return BlocBuilder<ThemeCubit, ThemeState>(
+      builder: (context, themeState) {
+        final isDarkMode = themeState.isDarkMode;
+        final theme = isDarkMode ? ThemeManager.darkTheme : ThemeManager.lightTheme;
+        
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Title row with padding
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'الأكثر شيوعًا',
+                    style: Theme.of(context).textTheme.titleLarge!.copyWith(
+                          fontWeight: FontWeight.w800,
+                          color: theme.colorScheme.onBackground,
                         ),
-                        child: Stack(
-                          children: [
-                            Image.network(
-                              t['image'],
-                              width: 200,
-                              height: 100,
-                              fit: BoxFit.cover,
+                  ),
+                  TextButton(
+                    onPressed: () {},
+                    child: Text(
+                      'عرض الكل',
+                      style: GoogleFonts.tajawal(
+                        color: const Color(0xFF2563EB), // Keep brand color
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Horizontal courses list edge-to-edge
+            SizedBox(
+              height: 180,
+              child: ListView.separated(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                scrollDirection: Axis.horizontal,
+                itemCount: trending.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 16),
+                itemBuilder: (context, idx) {
+                  final t = trending[idx];
+                  return SizedBox(
+                    width: 200,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: theme.cardColor, // Use theme card color
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(isDarkMode ? 0.1 : 0.05),
+                            blurRadius: 8,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Image section
+                          ClipRRect(
+                            borderRadius: const BorderRadius.vertical(
+                              top: Radius.circular(16),
                             ),
-                            Positioned(
-                              top: 8,
-                              right: 8,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 4,
+                            child: Stack(
+                              children: [
+                                Image.network(
+                                  t['image'],
+                                  width: 200,
+                                  height: 100,
+                                  fit: BoxFit.cover,
                                 ),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFEF4444),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Text(
-                                  t['price'],
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w700,
+                                Positioned(
+                                  top: 8,
+                                  right: 8,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 4,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFEF4444), // Keep discount color
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Text(
+                                      t['price'],
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
                                   ),
                                 ),
+                              ],
+                            ),
+                          ),
+                          // Content section
+                          Expanded(
+                            child: Padding(
+                              padding: const EdgeInsets.all(12),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    t['title'],
+                                    style: GoogleFonts.tajawal(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w700,
+                                      color: theme.colorScheme.onSurface, // Use theme text color
+                                    ),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
                               ),
                             ),
-                          ],
-                        ),
-                      ),
-                      // Content section
-                      Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.all(12),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                t['title'],
-                                style: GoogleFonts.tajawal(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w700,
-                                  color: const Color(0xFF374151),
-                                ),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ],
                           ),
-                        ),
+                        ],
                       ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
-      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }
+
 
 class ExtrasSection extends StatelessWidget {
   const ExtrasSection({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // University Lectures Section
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-          child: Container(
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              children: [
-                // الكتابة مع الأيقونة في السطر الأول
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.school_outlined,
-                      size: 40,
-                      color: Colors.white,
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'طور مهاراتك الجامعية',
-                            style: GoogleFonts.tajawal(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'محاضرات ومواد دراسية متقدمة',
-                            style: GoogleFonts.tajawal(
-                              color: Colors.white.withOpacity(0.9),
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
+    return BlocBuilder<ThemeCubit, ThemeState>(
+      builder: (context, themeState) {
+        final isDarkMode = themeState.isDarkMode;
+        final theme = isDarkMode ? ThemeManager.darkTheme : ThemeManager.lightTheme;
+        
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // University Lectures Section
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(isDarkMode ? 0.3 : 0.1),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
-                // الزر في السطر الثاني
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => UniversitiesPage(),
-                      ),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: const Color(0xFF667EEA),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    minimumSize: const Size(
-                      double.infinity,
-                      48,
-                    ), // يجعل الزر عريض بالكامل
-                  ),
-                  child: Text(
-                    'عرض المحاضرات',
-                    style: GoogleFonts.tajawal(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 16,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-
-        // أفضل الأساتذة (بدلاً من أفضل المدربين)
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Text(
-            'أفضل الأساتذة',
-            style: Theme.of(
-              context,
-            ).textTheme.titleLarge!.copyWith(fontWeight: FontWeight.w800),
-          ),
-        ),
-        const SizedBox(height: 16),
-        SizedBox(
-          height: 120,
-          child: ListView.separated(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            scrollDirection: Axis.horizontal,
-            itemCount: 6,
-            separatorBuilder: (_, __) => const SizedBox(width: 12),
-            itemBuilder: (context, i) {
-              return SizedBox(
-                width: 80,
+                padding: const EdgeInsets.all(20),
                 child: Column(
                   children: [
-                    Container(
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
+                    // الكتابة مع الأيقونة في السطر الأول
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.school_outlined,
+                          size: 40,
+                          color: Colors.white,
                         ),
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFFF59E0B).withOpacity(0.3),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'طور مهاراتك الجامعية',
+                                style: GoogleFonts.tajawal(
+                                  color: Colors.white,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'محاضرات ومواد دراسية متقدمة',
+                                style: GoogleFonts.tajawal(
+                                  color: Colors.white.withOpacity(0.9),
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                      padding: const EdgeInsets.all(2),
-                      child: CircleAvatar(
-                        radius: 28,
-                        backgroundImage: NetworkImage(
-                          'https://picsum.photos/seed/professor${i}/100/100',
                         ),
-                      ),
+                      ],
                     ),
-                    const SizedBox(height: 8),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 2),
-                      child: Text(
-                        'د. أحمد ${i + 1}',
-                        style: GoogleFonts.tajawal(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: const Color(0xFF374151),
+                    const SizedBox(height: 16),
+                    // الزر في السطر الثاني
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => UniversitiesPage(),
+                          ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: const Color(0xFF667EEA),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
                         ),
-                        textAlign: TextAlign.center,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                        minimumSize: const Size(double.infinity, 48),
+                        elevation: isDarkMode ? 4 : 2,
+                        shadowColor: Colors.black.withOpacity(isDarkMode ? 0.3 : 0.1),
+                      ),
+                      child: Text(
+                        'عرض المحاضرات',
+                        style: GoogleFonts.tajawal(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 16,
+                        ),
                       ),
                     ),
                   ],
                 ),
-              );
-            },
-          ),
-        ),
-        const SizedBox(height: 24),
+              ),
+            ),
 
-        // باقي الأقسام زي ما هي (إنجازات - تحميل - نشرة بريدية)
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Column(
-            children: [
-              // Achievements, Download buttons, Newsletter...
-            ],
-          ),
-        ),
-      ],
+            // أفضل الأساتذة (بدلاً من أفضل المدربين)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Text(
+                'أفضل الأساتذة',
+                style: Theme.of(context).textTheme.titleLarge!.copyWith(
+                      fontWeight: FontWeight.w800,
+                      color: theme.colorScheme.onBackground,
+                    ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              height: 120,
+              child: ListView.separated(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                scrollDirection: Axis.horizontal,
+                itemCount: 6,
+                separatorBuilder: (_, __) => const SizedBox(width: 12),
+                itemBuilder: (context, i) {
+                  return SizedBox(
+                    width: 80,
+                    child: Column(
+                      children: [
+                        Container(
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFFF59E0B).withOpacity(isDarkMode ? 0.4 : 0.3),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          padding: const EdgeInsets.all(2),
+                          child: CircleAvatar(
+                            radius: 28,
+                            backgroundImage: NetworkImage(
+                              'https://picsum.photos/seed/professor${i}/100/100',
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 2),
+                          child: Text(
+                            'د. أحمد ${i + 1}',
+                            style: GoogleFonts.tajawal(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: theme.colorScheme.onSurface, // Use theme text color
+                            ),
+                            textAlign: TextAlign.center,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // باقي الأقسام زي ما هي (إنجازات - تحميل - نشرة بريدية)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Column(
+                children: [
+                  // Add your other sections here with theme adaptation
+                  // Achievements, Download buttons, Newsletter...
+                ],
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }
@@ -1089,330 +1194,350 @@ class Footer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFF1F2937), Color(0xFF111827)],
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-        ),
-      ),
-      padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
-      child: Column(
-        children: [
-          // Responsive layout for main content
-          LayoutBuilder(
-            builder: (context, constraints) {
-              if (constraints.maxWidth < 600) {
-                // Mobile layout - vertical
-                return Column(
-                  children: [
-                    // Logo and description
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+    return BlocBuilder<ThemeCubit, ThemeState>(
+      builder: (context, themeState) {
+        final isDarkMode = themeState.isDarkMode;
+        final theme = isDarkMode ? ThemeManager.darkTheme : ThemeManager.lightTheme;
+        
+        return Container(
+          decoration: BoxDecoration(
+            gradient: isDarkMode 
+              ? const LinearGradient(
+                  colors: [Color(0xFF1F2937), Color(0xFF111827)],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                )
+              : LinearGradient(
+                  colors: [theme.primaryColor.withOpacity(0.1), theme.scaffoldBackgroundColor],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
+            color: isDarkMode ? null : theme.scaffoldBackgroundColor,
+          ),
+          padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
+          child: Column(
+            children: [
+              // Responsive layout for main content
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final textColor = isDarkMode ? Colors.white : theme.colorScheme.onBackground;
+                  final textSecondaryColor = isDarkMode ? Colors.white70 : theme.colorScheme.onSurface.withOpacity(0.8);
+                  
+                  if (constraints.maxWidth < 600) {
+                    // Mobile layout - vertical
+                    return Column(
                       children: [
-                        Row(
+                        // Logo and description
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Container(
-                              decoration: BoxDecoration(
-                                gradient: const LinearGradient(
-                                  colors: [
-                                    Color(0xFF2563EB),
-                                    Color(0xFF1D4ED8),
-                                  ],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                ),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              padding: const EdgeInsets.all(8),
-                              child: const Icon(
-                                Icons.school,
-                                color: Colors.white,
-                                size: 24,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Text(
-                              'منصة الكورسات',
-                              style: GoogleFonts.tajawal(
-                                color: Colors.white,
-                                fontSize: 20,
-                                fontWeight: FontWeight.w900,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'منصة تعليمية رائدة تقدم أفضل الكورسات بأعلى جودة وبأسعار مناسبة',
-                          style: GoogleFonts.tajawal(
-                            color: Colors.white70,
-                            fontSize: 14,
-                            height: 1.5,
-                            fontWeight: FontWeight.w500,
-                          ),
-                          textAlign: TextAlign.start,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 24),
-                    // Quick links
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'روابط سريعة',
-                          style: GoogleFonts.tajawal(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Wrap(
-                          spacing: 16,
-                          runSpacing: 8,
-                          children: [
-                            TextButton(
-                              onPressed: () {},
-                              child: Text(
-                                'عن المنصة',
-                                style: GoogleFonts.tajawal(
-                                  color: Colors.white70,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ),
-                            TextButton(
-                              onPressed: () {},
-                              child: Text(
-                                'اتصل بنا',
-                                style: GoogleFonts.tajawal(
-                                  color: Colors.white70,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ),
-                            TextButton(
-                              onPressed: () {},
-                              child: Text(
-                                'سياسة الخصوصية',
-                                style: GoogleFonts.tajawal(
-                                  color: Colors.white70,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ],
-                );
-              } else {
-                // Desktop layout - horizontal
-                return Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Container(
-                                decoration: BoxDecoration(
-                                  gradient: const LinearGradient(
-                                    colors: [
-                                      Color(0xFF2563EB),
-                                      Color(0xFF1D4ED8),
-                                    ],
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
+                            Row(
+                              children: [
+                                Container(
+                                  decoration: BoxDecoration(
+                                    gradient: const LinearGradient(
+                                      colors: [
+                                        Color(0xFF2563EB),
+                                        Color(0xFF1D4ED8),
+                                      ],
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                    ),
+                                    borderRadius: BorderRadius.circular(12),
                                   ),
-                                  borderRadius: BorderRadius.circular(12),
+                                  padding: const EdgeInsets.all(8),
+                                  child: Icon(
+                                    Icons.school,
+                                    color: Colors.white,
+                                    size: 24,
+                                  ),
                                 ),
-                                padding: const EdgeInsets.all(8),
-                                child: const Icon(
-                                  Icons.school,
-                                  color: Colors.white,
-                                  size: 24,
+                                const SizedBox(width: 12),
+                                Text(
+                                  'منصة الكورسات',
+                                  style: GoogleFonts.tajawal(
+                                    color: textColor,
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w900,
+                                  ),
                                 ),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'منصة تعليمية رائدة تقدم أفضل الكورسات بأعلى جودة وبأسعار مناسبة',
+                              style: GoogleFonts.tajawal(
+                                color: textSecondaryColor,
+                                fontSize: 14,
+                                height: 1.5,
+                                fontWeight: FontWeight.w500,
                               ),
-                              const SizedBox(width: 12),
+                              textAlign: TextAlign.start,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 24),
+                        // Quick links
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'روابط سريعة',
+                              style: GoogleFonts.tajawal(
+                                color: textColor,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Wrap(
+                              spacing: 16,
+                              runSpacing: 8,
+                              children: [
+                                TextButton(
+                                  onPressed: () {},
+                                  child: Text(
+                                    'عن المنصة',
+                                    style: GoogleFonts.tajawal(
+                                      color: textSecondaryColor,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                                TextButton(
+                                  onPressed: () {},
+                                  child: Text(
+                                    'اتصل بنا',
+                                    style: GoogleFonts.tajawal(
+                                      color: textSecondaryColor,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                                TextButton(
+                                  onPressed: () {},
+                                  child: Text(
+                                    'سياسة الخصوصية',
+                                    style: GoogleFonts.tajawal(
+                                      color: textSecondaryColor,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ],
+                    );
+                  } else {
+                    // Desktop layout - horizontal
+                    return Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Container(
+                                    decoration: BoxDecoration(
+                                      gradient: const LinearGradient(
+                                        colors: [
+                                          Color(0xFF2563EB),
+                                          Color(0xFF1D4ED8),
+                                        ],
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                      ),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    padding: const EdgeInsets.all(8),
+                                    child: const Icon(
+                                      Icons.school,
+                                      color: Colors.white,
+                                      size: 24,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Text(
+                                    'منصة الكورسات',
+                                    style: GoogleFonts.tajawal(
+                                      color: textColor,
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w900,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 16),
                               Text(
-                                'منصة الكورسات',
+                                'منصة تعليمية رائدة تقدم أفضل الكورسات\nبأعلى جودة وبأسعار مناسبة',
                                 style: GoogleFonts.tajawal(
-                                  color: Colors.white,
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w900,
+                                  color: textSecondaryColor,
+                                  fontSize: 14,
+                                  height: 1.5,
+                                  fontWeight: FontWeight.w500,
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'منصة تعليمية رائدة تقدم أفضل الكورسات\nبأعلى جودة وبأسعار مناسبة',
-                            style: GoogleFonts.tajawal(
-                              color: Colors.white70,
-                              fontSize: 14,
-                              height: 1.5,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 40),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'روابط سريعة',
-                          style: GoogleFonts.tajawal(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                          ),
                         ),
-                        const SizedBox(height: 12),
+                        const SizedBox(width: 40),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            TextButton(
-                              onPressed: () {},
-                              child: Text(
-                                'عن المنصة',
-                                style: GoogleFonts.tajawal(
-                                  color: Colors.white70,
-                                  fontWeight: FontWeight.w500,
-                                ),
+                            Text(
+                              'روابط سريعة',
+                              style: GoogleFonts.tajawal(
+                                color: textColor,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
                               ),
                             ),
-                            TextButton(
-                              onPressed: () {},
-                              child: Text(
-                                'اتصل بنا',
-                                style: GoogleFonts.tajawal(
-                                  color: Colors.white70,
-                                  fontWeight: FontWeight.w500,
+                            const SizedBox(height: 12),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                TextButton(
+                                  onPressed: () {},
+                                  child: Text(
+                                    'عن المنصة',
+                                    style: GoogleFonts.tajawal(
+                                      color: textSecondaryColor,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
                                 ),
+                                TextButton(
+                                  onPressed: () {},
+                                  child: Text(
+                                    'اتصل بنا',
+                                    style: GoogleFonts.tajawal(
+                                      color: textSecondaryColor,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                                TextButton(
+                                  onPressed: () {},
+                                  child: Text(
+                                    'سياسة الخصوصية',
+                                    style: GoogleFonts.tajawal(
+                                      color: textSecondaryColor,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ],
+                    );
+                  }
+                },
+              ),
+              const SizedBox(height: 32),
+              Divider(color: isDarkMode ? Colors.white12 : Colors.black12),
+              const SizedBox(height: 20),
+              // Bottom section with copyright and social icons
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final textColor = isDarkMode ? Colors.white70 : theme.colorScheme.onSurface.withOpacity(0.8);
+                  final iconColor = isDarkMode ? Colors.white70 : theme.colorScheme.onSurface.withOpacity(0.7);
+                  
+                  if (constraints.maxWidth < 600) {
+                    // Mobile layout - vertical
+                    return Column(
+                      children: [
+                        Text(
+                          '© 2025 منصة الكورسات. جميع الحقوق محفوظة',
+                          style: GoogleFonts.tajawal(
+                            color: textColor,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 16),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            IconButton(
+                              onPressed: () {},
+                              icon: Icon(
+                                Icons.facebook,
+                                color: iconColor,
                               ),
                             ),
-                            TextButton(
+                            IconButton(
                               onPressed: () {},
-                              child: Text(
-                                'سياسة الخصوصية',
-                                style: GoogleFonts.tajawal(
-                                  color: Colors.white70,
-                                  fontWeight: FontWeight.w500,
-                                ),
+                              icon: Icon(
+                                Icons.link_rounded,
+                                color: iconColor,
+                              ),
+                            ),
+                            IconButton(
+                              onPressed: () {},
+                              icon: Icon(
+                                Icons.alternate_email,
+                                color: iconColor,
                               ),
                             ),
                           ],
                         ),
                       ],
-                    ),
-                  ],
-                );
-              }
-            },
-          ),
-          const SizedBox(height: 32),
-          const Divider(color: Colors.white12),
-          const SizedBox(height: 20),
-          // Bottom section with copyright and social icons
-          LayoutBuilder(
-            builder: (context, constraints) {
-              if (constraints.maxWidth < 600) {
-                // Mobile layout - vertical
-                return Column(
-                  children: [
-                    Text(
-                      '© 2025 منصة الكورسات. جميع الحقوق محفوظة',
-                      style: GoogleFonts.tajawal(
-                        color: Colors.white70,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                    );
+                  } else {
+                    // Desktop layout - horizontal
+                    return Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        IconButton(
-                          onPressed: () {},
-                          icon: const Icon(
-                            Icons.facebook,
-                            color: Colors.white70,
+                        Text(
+                          '© 2025 منصة الكورسات. جميع الحقوق محفوظة',
+                          style: GoogleFonts.tajawal(
+                            color: textColor,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
-                        IconButton(
-                          onPressed: () {},
-                          icon: const Icon(
-                            Icons.link_rounded,
-                            color: Colors.white70,
-                          ),
-                        ),
-                        IconButton(
-                          onPressed: () {},
-                          icon: const Icon(
-                            Icons.alternate_email,
-                            color: Colors.white70,
-                          ),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              onPressed: () {},
+                              icon: Icon(
+                                Icons.facebook,
+                                color: iconColor,
+                              ),
+                            ),
+                            IconButton(
+                              onPressed: () {},
+                              icon: Icon(
+                                Icons.link_rounded,
+                                color: iconColor,
+                              ),
+                            ),
+                            IconButton(
+                              onPressed: () {},
+                              icon: Icon(
+                                Icons.alternate_email,
+                                color: iconColor,
+                              ),
+                            ),
+                          ],
                         ),
                       ],
-                    ),
-                  ],
-                );
-              } else {
-                // Desktop layout - horizontal
-                return Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      '© 2025 منصة الكورسات. جميع الحقوق محفوظة',
-                      style: GoogleFonts.tajawal(
-                        color: Colors.white70,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          onPressed: () {},
-                          icon: const Icon(
-                            Icons.facebook,
-                            color: Colors.white70,
-                          ),
-                        ),
-                        IconButton(
-                          onPressed: () {},
-                          icon: const Icon(
-                            Icons.link_rounded,
-                            color: Colors.white70,
-                          ),
-                        ),
-                        IconButton(
-                          onPressed: () {},
-                          icon: const Icon(
-                            Icons.alternate_email,
-                            color: Colors.white70,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                );
-              }
-            },
+                    );
+                  }
+                },
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

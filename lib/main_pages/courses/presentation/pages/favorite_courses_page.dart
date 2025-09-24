@@ -1,8 +1,12 @@
-// courses_page.dart
+import 'package:courses_app/core/utils/theme_manager.dart';
 import 'package:courses_app/main_pages/courses/presentation/pages/course_details_page.dart';
 import 'package:courses_app/main_pages/home/presentation/widgets/home_page_widgets.dart';
+import 'package:courses_app/theme_cubit/theme_cubit.dart';
+import 'package:courses_app/theme_cubit/theme_state.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
+
 
 class CoursesPage extends StatefulWidget {
   const CoursesPage({super.key});
@@ -201,115 +205,115 @@ class _CoursesPageState extends State<CoursesPage>
     final baseFontSize = _getResponsiveFontSize(context);
     final smallFontSize = _getResponsiveSmallFontSize(context);
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
-      body: SafeArea(
-        child: Column(
-          children: [
-            // TopSearchBar widget
-            const TopSearchBar(),
+    return BlocBuilder<ThemeCubit, ThemeState>(
+      builder: (context, themeState) {
+        final bool isDarkMode = themeState.isDarkMode;
+        final themeData = isDarkMode ? ThemeManager.darkTheme : ThemeManager.lightTheme;
 
-            // Custom AppBar with Tabs - without nested Scaffold
-            Container(
-              color: Colors.white,
-              child: Column(
-                children: [
-                  // Title
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16.0,
-                    ),
-                    
-                  ),
+        return Scaffold(
+          backgroundColor: themeData.scaffoldBackgroundColor,
+          body: SafeArea(
+            child: Column(
+              children: [
+                // TopSearchBar widget
+                const TopSearchBar(),
 
-                  // TabBar
-                  TabBar(
-                    controller: _tabController,
-                    tabs: [
-                      Tab(
-                        icon: const Icon(Icons.school),
-                        child: Text(
-                          'المشتركة',
-                          style: GoogleFonts.tajawal(
-                            fontSize: smallFontSize,
-                            fontWeight: FontWeight.w700,
+                // Custom AppBar with Tabs - without nested Scaffold
+                Container(
+                  color: themeData.appBarTheme.backgroundColor,
+                  child: Column(
+                    children: [
+                      // TabBar
+                      TabBar(
+                        controller: _tabController,
+                        tabs: [
+                          Tab(
+                            icon: const Icon(Icons.school),
+                            child: Text(
+                              'المشتركة',
+                              style: GoogleFonts.tajawal(
+                                fontSize: smallFontSize,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
-                      Tab(
-                        icon: const Icon(Icons.favorite),
-                        child: Text(
-                          'المفضلة',
-                          style: GoogleFonts.tajawal(
-                            fontSize: smallFontSize,
-                            fontWeight: FontWeight.w700,
+                          Tab(
+                            icon: const Icon(Icons.favorite),
+                            child: Text(
+                              'المفضلة',
+                              style: GoogleFonts.tajawal(
+                                fontSize: smallFontSize,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
-                      Tab(
-                        icon: const Icon(Icons.watch_later),
-                        child: Text(
-                          'لاحقاً',
-                          style: GoogleFonts.tajawal(
-                            fontSize: smallFontSize,
-                            fontWeight: FontWeight.w700,
+                          Tab(
+                            icon: const Icon(Icons.watch_later),
+                            child: Text(
+                              'لاحقاً',
+                              style: GoogleFonts.tajawal(
+                                fontSize: smallFontSize,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
                           ),
-                        ),
+                        ],
+                        labelColor: themeData.colorScheme.primary,
+                        unselectedLabelColor: isDarkMode ? Colors.grey[400] : Colors.grey[600],
+                        indicatorColor: themeData.colorScheme.primary,
+                        indicatorWeight: 3,
                       ),
                     ],
-                    labelColor: Colors.blue,
-                    unselectedLabelColor: Colors.grey,
-                    indicatorColor: Colors.blue,
-                    indicatorWeight: 3,
                   ),
-                ],
-              ),
-            ),
+                ),
 
-            // TabBarView
-            Expanded(
-              child: TabBarView(
-                controller: _tabController,
-                children: [
-                  CoursesListView(
-                    courses: subscribedCourses,
-                    showProgress: true,
-                    emptyMessage: 'لم تشترك في أي دورة بعد',
-                    emptyDescription:
-                        'ابدأ رحلتك التعليمية واشترك في دورة جديدة!',
-                    emptyIcon: Icons.school_outlined,
-                    baseFontSize: baseFontSize,
-                    smallFontSize: smallFontSize,
+                // TabBarView
+                Expanded(
+                  child: TabBarView(
+                    controller: _tabController,
+                    children: [
+                      CoursesListView(
+                        courses: subscribedCourses,
+                        showProgress: true,
+                        emptyMessage: 'لم تشترك في أي دورة بعد',
+                        emptyDescription:
+                            'ابدأ رحلتك التعليمية واشترك في دورة جديدة!',
+                        emptyIcon: Icons.school_outlined,
+                        baseFontSize: baseFontSize,
+                        smallFontSize: smallFontSize,
+                        isDarkMode: isDarkMode,
+                      ),
+                      CoursesListView(
+                        courses: favoriteCourses,
+                        showProgress: false,
+                        emptyMessage: 'لا توجد دورات مفضلة',
+                        emptyDescription: 'أضف دوراتك المفضلة لتجدها هنا بسهولة!',
+                        emptyIcon: Icons.favorite_outline,
+                        baseFontSize: baseFontSize,
+                        smallFontSize: smallFontSize,
+                        isDarkMode: isDarkMode,
+                      ),
+                      CoursesListView(
+                        courses: watchLaterCourses,
+                        showProgress: false,
+                        emptyMessage: 'لا توجد دورات محفوظة',
+                        emptyDescription: 'احفظ الدورات التي تود مشاهدتها لاحقاً!',
+                        emptyIcon: Icons.watch_later_outlined,
+                        baseFontSize: baseFontSize,
+                        smallFontSize: smallFontSize,
+                        isDarkMode: isDarkMode,
+                      ),
+                    ],
                   ),
-                  CoursesListView(
-                    courses: favoriteCourses,
-                    showProgress: false,
-                    emptyMessage: 'لا توجد دورات مفضلة',
-                    emptyDescription: 'أضف دوراتك المفضلة لتجدها هنا بسهولة!',
-                    emptyIcon: Icons.favorite_outline,
-                    baseFontSize: baseFontSize,
-                    smallFontSize: smallFontSize,
-                  ),
-                  CoursesListView(
-                    courses: watchLaterCourses,
-                    showProgress: false,
-                    emptyMessage: 'لا توجد دورات محفوظة',
-                    emptyDescription: 'احفظ الدورات التي تود مشاهدتها لاحقاً!',
-                    emptyIcon: Icons.watch_later_outlined,
-                    baseFontSize: baseFontSize,
-                    smallFontSize: smallFontSize,
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }
-
-// ... Rest of the code remains the same (CoursesListView, CourseCard, EmptyState classes)
 
 class CoursesListView extends StatelessWidget {
   final List<Map<String, dynamic>> courses;
@@ -319,6 +323,7 @@ class CoursesListView extends StatelessWidget {
   final IconData emptyIcon;
   final double baseFontSize;
   final double smallFontSize;
+  final bool isDarkMode;
 
   const CoursesListView({
     super.key,
@@ -329,6 +334,7 @@ class CoursesListView extends StatelessWidget {
     required this.emptyIcon,
     required this.baseFontSize,
     required this.smallFontSize,
+    required this.isDarkMode,
   });
 
   @override
@@ -340,6 +346,7 @@ class CoursesListView extends StatelessWidget {
         description: emptyDescription,
         baseFontSize: baseFontSize,
         smallFontSize: smallFontSize,
+        isDarkMode: isDarkMode,
       );
     }
 
@@ -365,6 +372,7 @@ class CoursesListView extends StatelessWidget {
                   isGridView: true,
                   baseFontSize: baseFontSize,
                   smallFontSize: smallFontSize,
+                  isDarkMode: isDarkMode,
                 );
               },
             ),
@@ -382,6 +390,7 @@ class CoursesListView extends StatelessWidget {
                   isGridView: false,
                   baseFontSize: baseFontSize,
                   smallFontSize: smallFontSize,
+                  isDarkMode: isDarkMode,
                 ),
               );
             },
@@ -398,6 +407,7 @@ class CourseCard extends StatefulWidget {
   final bool isGridView;
   final double baseFontSize;
   final double smallFontSize;
+  final bool isDarkMode;
 
   const CourseCard({
     super.key,
@@ -406,6 +416,7 @@ class CourseCard extends StatefulWidget {
     required this.isGridView,
     required this.baseFontSize,
     required this.smallFontSize,
+    required this.isDarkMode,
   });
 
   @override
@@ -417,6 +428,8 @@ class _CourseCardState extends State<CourseCard> {
 
   @override
   Widget build(BuildContext context) {
+    final themeData = widget.isDarkMode ? ThemeManager.darkTheme : ThemeManager.lightTheme;
+    
     return Dismissible(
       key: Key(widget.course['id']),
       direction: DismissDirection.endToStart,
@@ -459,23 +472,23 @@ class _CourseCardState extends State<CourseCard> {
         },
         child: Container(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: themeData.cardColor,
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.05),
+                color: Colors.black.withOpacity(widget.isDarkMode ? 0.2 : 0.05),
                 blurRadius: 10,
                 offset: const Offset(0, 2),
               ),
             ],
           ),
-          child: widget.isGridView ? _buildGridLayout() : _buildListLayout(),
+          child: widget.isGridView ? _buildGridLayout(themeData) : _buildListLayout(themeData),
         ),
       ),
     );
   }
 
-  Widget _buildGridLayout() {
+  Widget _buildGridLayout(ThemeData themeData) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -489,8 +502,8 @@ class _CourseCardState extends State<CourseCard> {
               fit: BoxFit.cover,
               errorBuilder: (context, error, stackTrace) {
                 return Container(
-                  color: Colors.grey[200],
-                  child: const Icon(Icons.image, size: 50, color: Colors.grey),
+                  color: widget.isDarkMode ? Colors.grey[800] : Colors.grey[200],
+                  child: Icon(Icons.image, size: 50, color: widget.isDarkMode ? Colors.grey[400] : Colors.grey),
                 );
               },
             ),
@@ -508,7 +521,7 @@ class _CourseCardState extends State<CourseCard> {
                   style: GoogleFonts.tajawal(
                     fontSize: widget.baseFontSize * 0.7,
                     fontWeight: FontWeight.w900,
-                    color: const Color(0xFF1F2937),
+                    color: themeData.colorScheme.onBackground,
                   ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -519,13 +532,13 @@ class _CourseCardState extends State<CourseCard> {
                   style: GoogleFonts.tajawal(
                     fontSize: widget.smallFontSize * 0.8,
                     fontWeight: FontWeight.w500,
-                    color: Colors.grey[600],
+                    color: widget.isDarkMode ? Colors.grey[400] : Colors.grey[600],
                   ),
                 ),
                 const Spacer(),
                 if (widget.showProgress && widget.course['progress'] != null)
-                  _buildProgressIndicator(),
-                _buildActionButtons(),
+                  _buildProgressIndicator(themeData),
+                _buildActionButtons(themeData),
               ],
             ),
           ),
@@ -534,7 +547,7 @@ class _CourseCardState extends State<CourseCard> {
     );
   }
 
-  Widget _buildListLayout() {
+  Widget _buildListLayout(ThemeData themeData) {
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Row(
@@ -550,8 +563,8 @@ class _CourseCardState extends State<CourseCard> {
                 return Container(
                   width: 120,
                   height: 80,
-                  color: Colors.grey[200],
-                  child: const Icon(Icons.image, size: 30, color: Colors.grey),
+                  color: widget.isDarkMode ? Colors.grey[800] : Colors.grey[200],
+                  child: Icon(Icons.image, size: 30, color: widget.isDarkMode ? Colors.grey[400] : Colors.grey),
                 );
               },
             ),
@@ -566,7 +579,7 @@ class _CourseCardState extends State<CourseCard> {
                   style: GoogleFonts.tajawal(
                     fontSize: widget.baseFontSize * 0.8,
                     fontWeight: FontWeight.w900,
-                    color: const Color(0xFF1F2937),
+                    color: themeData.colorScheme.onBackground,
                   ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -577,7 +590,7 @@ class _CourseCardState extends State<CourseCard> {
                   style: GoogleFonts.tajawal(
                     fontSize: widget.smallFontSize,
                     fontWeight: FontWeight.w500,
-                    color: Colors.grey[600],
+                    color: widget.isDarkMode ? Colors.grey[400] : Colors.grey[600],
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -593,25 +606,24 @@ class _CourseCardState extends State<CourseCard> {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    Icon(Icons.people, size: 16, color: Colors.grey[600]),
+                    Icon(Icons.people, size: 16, color: widget.isDarkMode ? Colors.grey[400] : Colors.grey[600]),
                     const SizedBox(width: 4),
                     Text(
                       widget.course['students'],
                       style: GoogleFonts.tajawal(
                         fontSize: widget.smallFontSize * 0.8,
                         fontWeight: FontWeight.w500,
-                        color: Colors.grey[600],
+                        color: widget.isDarkMode ? Colors.grey[400] : Colors.grey[600],
                       ),
                     ),
                   ],
                 ),
-                if (widget.showProgress &&
-                    widget.course['progress'] != null) ...[
+                if (widget.showProgress && widget.course['progress'] != null) ...[
                   const SizedBox(height: 8),
-                  _buildProgressIndicator(),
+                  _buildProgressIndicator(themeData),
                 ],
                 const SizedBox(height: 8),
-                _buildActionButtons(),
+                _buildActionButtons(themeData),
               ],
             ),
           ),
@@ -620,7 +632,7 @@ class _CourseCardState extends State<CourseCard> {
     );
   }
 
-  Widget _buildProgressIndicator() {
+  Widget _buildProgressIndicator(ThemeData themeData) {
     final progress = widget.course['progress'] ?? 0.0;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -633,7 +645,7 @@ class _CourseCardState extends State<CourseCard> {
               style: GoogleFonts.tajawal(
                 fontSize: widget.smallFontSize * 0.8,
                 fontWeight: FontWeight.w500,
-                color: Colors.grey[600],
+                color: widget.isDarkMode ? Colors.grey[400] : Colors.grey[600],
               ),
             ),
             Text(
@@ -641,7 +653,7 @@ class _CourseCardState extends State<CourseCard> {
               style: GoogleFonts.tajawal(
                 fontSize: widget.smallFontSize * 0.8,
                 fontWeight: FontWeight.w900,
-                color: Colors.blue[600],
+                color: themeData.colorScheme.primary,
               ),
             ),
           ],
@@ -649,15 +661,15 @@ class _CourseCardState extends State<CourseCard> {
         const SizedBox(height: 4),
         LinearProgressIndicator(
           value: progress,
-          backgroundColor: Colors.grey[200],
-          valueColor: AlwaysStoppedAnimation<Color>(Colors.blue[600]!),
+          backgroundColor: widget.isDarkMode ? Colors.grey[700] : Colors.grey[200],
+          valueColor: AlwaysStoppedAnimation<Color>(themeData.colorScheme.primary),
           minHeight: 6,
         ),
       ],
     );
   }
 
-  Widget _buildActionButtons() {
+  Widget _buildActionButtons(ThemeData themeData) {
     return Row(
       children: [
         Expanded(
@@ -674,7 +686,7 @@ class _CourseCardState extends State<CourseCard> {
               ),
             ),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blue[600],
+              backgroundColor: themeData.colorScheme.primary,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 8),
               shape: RoundedRectangleBorder(
@@ -695,6 +707,7 @@ class EmptyState extends StatelessWidget {
   final String description;
   final double baseFontSize;
   final double smallFontSize;
+  final bool isDarkMode;
 
   const EmptyState({
     super.key,
@@ -703,10 +716,13 @@ class EmptyState extends StatelessWidget {
     required this.description,
     required this.baseFontSize,
     required this.smallFontSize,
+    required this.isDarkMode,
   });
 
   @override
   Widget build(BuildContext context) {
+    final themeData = isDarkMode ? ThemeManager.darkTheme : ThemeManager.lightTheme;
+    
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32.0),
@@ -717,10 +733,10 @@ class EmptyState extends StatelessWidget {
               width: 120,
               height: 120,
               decoration: BoxDecoration(
-                color: Colors.grey[100],
+                color: isDarkMode ? Colors.grey[800] : Colors.grey[100],
                 shape: BoxShape.circle,
               ),
-              child: Icon(icon, size: 60, color: Colors.grey[400]),
+              child: Icon(icon, size: 60, color: isDarkMode ? Colors.grey[400] : Colors.grey[400]),
             ),
             const SizedBox(height: 24),
             Text(
@@ -728,7 +744,7 @@ class EmptyState extends StatelessWidget {
               style: GoogleFonts.tajawal(
                 fontSize: baseFontSize,
                 fontWeight: FontWeight.w900,
-                color: const Color(0xFF1E293B),
+                color: themeData.colorScheme.onBackground,
               ),
               textAlign: TextAlign.center,
             ),
@@ -738,7 +754,7 @@ class EmptyState extends StatelessWidget {
               style: GoogleFonts.tajawal(
                 fontSize: smallFontSize,
                 fontWeight: FontWeight.w500,
-                color: Colors.grey[600],
+                color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
               ),
               textAlign: TextAlign.center,
             ),
@@ -756,7 +772,7 @@ class EmptyState extends StatelessWidget {
                 ),
               ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue[600],
+                backgroundColor: themeData.colorScheme.primary,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 24,
@@ -773,5 +789,3 @@ class EmptyState extends StatelessWidget {
     );
   }
 }
-
-// Placeholder for TopSearchBar widget - replace with your actual implementation

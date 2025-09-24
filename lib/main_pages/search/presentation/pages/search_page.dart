@@ -1,8 +1,10 @@
+import 'package:courses_app/core/utils/theme_manager.dart';
 import 'package:courses_app/main_pages/search/presentation/widgets/search_widgets.dart';
+import 'package:courses_app/theme_cubit/theme_cubit.dart';
+import 'package:courses_app/theme_cubit/theme_state.dart';
 import 'package:flutter/material.dart';
-
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../home/presentation/widgets/home_page_widgets.dart';
-
 
 class SearchPage extends StatefulWidget {
   const SearchPage({super.key});
@@ -95,43 +97,53 @@ class _SearchPageState extends State<SearchPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF9FAFB),
-      body: CustomScrollView(
-        slivers: [
-          // Top Search Bar (from home page)
-          SliverAppBar(
-            automaticallyImplyLeading: false,
-            backgroundColor: Colors.white,
-            elevation: 2,
-            pinned: true,
-            flexibleSpace: const TopSearchBar(),
+    return BlocBuilder<ThemeCubit, ThemeState>(
+      builder: (context, themeState) {
+        final bool isDarkMode = themeState.isDarkMode;
+        
+        return Scaffold(
+          backgroundColor: isDarkMode 
+              ? ThemeManager.darkTheme.scaffoldBackgroundColor
+              : ThemeManager.lightTheme.scaffoldBackgroundColor,
+          body: CustomScrollView(
+            slivers: [
+              // Top Search Bar (from home page)
+              SliverAppBar(
+                automaticallyImplyLeading: false,
+                backgroundColor: isDarkMode 
+                    ? ThemeManager.darkTheme.appBarTheme.backgroundColor
+                    : ThemeManager.lightTheme.appBarTheme.backgroundColor,
+                elevation: 2,
+                pinned: true,
+                flexibleSpace: const TopSearchBar(),
+              ),
+
+              // Search Content
+              SliverToBoxAdapter(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Search Field (from home page)
+                    const SearchField(),
+
+                    // Recent Searches
+                    SuggestedSearch(recentSearches: _recentSearches),
+
+                    // Popular Categories
+                    PopularCategories(categories: _popularCategories),
+
+                    // Search Suggestions Grid
+                    SearchSuggestionsGrid(suggestions: _searchSuggestions),
+
+                    // Empty space at bottom
+                    const SizedBox(height: 40),
+                  ],
+                ),
+              ),
+            ],
           ),
-
-          // Search Content
-          SliverToBoxAdapter(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Search Field (from home page)
-                const SearchField(),
-
-                // Recent Searches
-                SuggestedSearch(recentSearches: _recentSearches),
-
-                // Popular Categories
-                PopularCategories(categories: _popularCategories),
-
-                // Search Suggestions Grid
-                SearchSuggestionsGrid(suggestions: _searchSuggestions),
-
-                // Empty space at bottom
-                const SizedBox(height: 40),
-              ],
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
