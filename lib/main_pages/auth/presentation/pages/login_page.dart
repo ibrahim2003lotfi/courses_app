@@ -1,3 +1,4 @@
+import 'package:courses_app/main_pages/auth/presentation/pages/forgot_password_page.dart';
 import 'package:courses_app/main_pages/auth/presentation/pages/register_page.dart';
 import 'package:courses_app/widget_tree.dart';
 import 'package:flutter/material.dart';
@@ -413,7 +414,12 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
             children: [
               TextButton(
                 onPressed: () {
-                  _showForgotPasswordDialog();
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ForgotPasswordPage(),
+                    ),
+                  );
                 },
                 child: Text(
                   'هل نسيت كلمة المرور؟',
@@ -534,97 +540,6 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
         ),
       );
     }
-  }
-
-  void _showForgotPasswordDialog() {
-    final TextEditingController resetEmailController = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF334155),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(
-          'استعادة كلمة المرور',
-          style: GoogleFonts.tajawal(
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'أدخل بريدك الإلكتروني لإرسال رابط استعادة كلمة المرور',
-              style: GoogleFonts.tajawal(color: Colors.white70),
-            ),
-            const SizedBox(height: 20),
-            TextField(
-              controller: resetEmailController,
-              keyboardType: TextInputType.emailAddress,
-              style: GoogleFonts.tajawal(color: Colors.white),
-              decoration: InputDecoration(
-                labelText: 'البريد الإلكتروني',
-                labelStyle: GoogleFonts.tajawal(color: Colors.white70),
-                prefixIcon: const Icon(Icons.email, color: Colors.white70),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Colors.white.withOpacity(0.3)),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(
-                    color: Color(0xFF3B82F6),
-                    width: 2,
-                  ),
-                ),
-                filled: true,
-                fillColor: Colors.white.withOpacity(0.05),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              'إلغاء',
-              style: GoogleFonts.tajawal(
-                fontWeight: FontWeight.w600,
-                color: Colors.white70,
-              ),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    'تم إرسال رابط الاستعادة إلى بريدك الإلكتروني',
-                    style: GoogleFonts.tajawal(fontWeight: FontWeight.w500),
-                  ),
-                  backgroundColor: const Color(0xFF10B981),
-                ),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF3B82F6),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            child: Text(
-              'إرسال',
-              style: GoogleFonts.tajawal(
-                fontWeight: FontWeight.w600,
-                color: Colors.white,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
   }
 
   void _showDialog(String title, String content) {
