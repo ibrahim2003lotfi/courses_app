@@ -1,6 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+// نموذج بيانات الدفع
+class PaymentData {
+  String paymentMethod = 'syriatel';
+  String subscriptionType = 'course';
+  String phoneNumber = '';
+  String confirmPhoneNumber = '';
+}
+
 class CourseHeader extends StatelessWidget {
   final Map<String, dynamic> course;
 
@@ -23,9 +31,7 @@ class CourseHeader extends StatelessWidget {
                 if (loadingProgress == null) return child;
                 return Container(
                   color: const Color(0xFFF3F4F6),
-                  child: const Center(
-                    child: CircularProgressIndicator(),
-                  ),
+                  child: const Center(child: CircularProgressIndicator()),
                 );
               },
             ),
@@ -50,7 +56,10 @@ class CourseHeader extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFF10B981),
                       borderRadius: BorderRadius.circular(8),
@@ -100,6 +109,15 @@ class CourseInfoCard extends StatelessWidget {
 
   const CourseInfoCard({super.key, required this.course});
 
+  void _showPaymentBottomSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => PaymentBottomSheet(course: course),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return SliverToBoxAdapter(
@@ -121,11 +139,11 @@ class CourseInfoCard extends StatelessWidget {
           child: LayoutBuilder(
             builder: (context, constraints) {
               final isMobile = constraints.maxWidth < 600;
-              
+
               if (isMobile) {
-                return _buildMobileLayout();
+                return _buildMobileLayout(context);
               } else {
-                return _buildDesktopLayout();
+                return _buildDesktopLayout(context);
               }
             },
           ),
@@ -134,26 +152,26 @@ class CourseInfoCard extends StatelessWidget {
     );
   }
 
-  Widget _buildMobileLayout() {
+  Widget _buildMobileLayout(BuildContext context) {
     return Column(
       children: [
         _buildRatingRow(),
         const SizedBox(height: 16),
         _buildInfoGrid(),
         const SizedBox(height: 16),
-        _buildPriceSection(),
+        _buildPriceSection(context),
       ],
     );
   }
 
-  Widget _buildDesktopLayout() {
+  Widget _buildDesktopLayout(BuildContext context) {
     return Row(
       children: [
         Expanded(child: _buildInfoGrid()),
         const SizedBox(width: 24),
         _buildRatingRow(),
         const SizedBox(width: 24),
-        _buildPriceSection(),
+        _buildPriceSection(context),
       ],
     );
   }
@@ -205,7 +223,10 @@ class CourseInfoCard extends StatelessWidget {
       childAspectRatio: 3.5,
       children: [
         _buildInfoItem(Icons.schedule, '${course['duration'] ?? 20} ساعة'),
-        _buildInfoItem(Icons.video_library, '${course['lessons'] ?? 30} محاضرة'),
+        _buildInfoItem(
+          Icons.video_library,
+          '${course['lessons'] ?? 30} محاضرة',
+        ),
         _buildInfoItem(Icons.bar_chart, course['level'] ?? 'متوسط'),
         _buildInfoItem(Icons.update, 'محدث ${course['lastUpdated'] ?? '2024'}'),
       ],
@@ -236,7 +257,7 @@ class CourseInfoCard extends StatelessWidget {
     );
   }
 
-  Widget _buildPriceSection() {
+  Widget _buildPriceSection(BuildContext context) {
     return Column(
       children: [
         Text(
@@ -249,7 +270,7 @@ class CourseInfoCard extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         ElevatedButton(
-          onPressed: () {},
+          onPressed: () => _showPaymentBottomSheet(context),
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xFF10B981),
             foregroundColor: Colors.white,
@@ -272,6 +293,605 @@ class CourseInfoCard extends StatelessWidget {
   }
 }
 
+// Bottom Sheet للدفع
+class PaymentBottomSheet extends StatefulWidget {
+  final Map<String, dynamic> course;
+
+  const PaymentBottomSheet({super.key, required this.course});
+
+  @override
+  State<PaymentBottomSheet> createState() => _PaymentBottomSheetState();
+}
+
+class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
+  final PaymentData _paymentData = PaymentData();
+  final _formKey = GlobalKey<FormState>();
+  bool _isLoading = false;
+  final String _orderNumber = 'ORD${DateTime.now().millisecondsSinceEpoch}';
+
+  // قائمة طرق الدفع القابلة للتوسع
+  final List<PaymentMethod> _paymentMethods = [
+    PaymentMethod(
+      id: 'syriatel',
+      name: 'Syriatel Cash',
+      icon: Icons.phone_iphone,
+      color: Colors.blue,
+    ),
+    PaymentMethod(
+      id: 'mtn',
+      name: 'MTN Cash',
+      icon: Icons.phone_android,
+      color: Colors.orange,
+    ),
+  ];
+
+  // قائمة أنواع الاشتراكات
+  final List<SubscriptionType> _subscriptionTypes = [
+    SubscriptionType(
+      id: 'course',
+      name: 'شراء الكورس الحالي',
+      priceMultiplier: 1.0,
+    ),
+    SubscriptionType(
+      id: 'monthly',
+      name: 'الباقة الشهرية',
+      priceMultiplier: 1.5,
+    ),
+    SubscriptionType(
+      id: 'yearly',
+      name: 'الباقة السنوية',
+      priceMultiplier: 10.0,
+    ),
+  ];
+
+  double get _basePrice {
+    final priceString = widget.course['price'] ?? '199';
+    return double.parse(priceString.replaceAll('₪', '').trim());
+  }
+
+  double get _taxAmount => _basePrice * 0.1; // 10% ضريبة
+  double get _totalPrice {
+    final selectedType = _subscriptionTypes.firstWhere(
+      (type) => type.id == _paymentData.subscriptionType,
+      orElse: () => _subscriptionTypes.first,
+    );
+    return (_basePrice * selectedType.priceMultiplier) + _taxAmount;
+  }
+
+  void _processPayment() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isLoading = true);
+
+    // محاكاة عملية الدفع
+    await Future.delayed(const Duration(seconds: 2));
+
+    setState(() => _isLoading = false);
+
+    if (mounted) {
+      Navigator.of(context).pop();
+
+      // عرض رسالة نجاح
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'تمت عملية الدفع بنجاح! رقم الطلب: $_orderNumber',
+            style: GoogleFonts.tajawal(fontWeight: FontWeight.w600),
+            textAlign: TextAlign.center,
+          ),
+          backgroundColor: Colors.green,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 600;
+    final bottomSheetHeight = screenHeight * 0.75; // ثلاثة أرباع الشاشة
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      height: bottomSheetHeight,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(24),
+          topRight: Radius.circular(24),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.25),
+            blurRadius: 20,
+            offset: const Offset(0, -5),
+          ),
+        ],
+      ),
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        body: SafeArea(
+          top: false,
+          child: Column(
+            children: [
+              // Handle للسحب
+              Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.symmetric(vertical: 12),
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+
+              // العنوان
+              Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: isMobile ? 20 : 32,
+                  vertical: 8,
+                ),
+                child: Center(
+                  child: Text(
+                    'إتمام عملية الدفع',
+                    style: GoogleFonts.tajawal(
+                      fontSize: isMobile ? 20 : 24,
+                      fontWeight: FontWeight.w900,
+                      color: const Color(0xFF1F2937),
+                    ),
+                  ),
+                ),
+              ),
+              const Divider(thickness: 1),
+
+              // المحتوى الرئيسي
+              Expanded(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isMobile ? 20 : 32,
+                    vertical: 8,
+                  ),
+                  child: Form(
+                    key: _formKey,
+                    child: SingleChildScrollView(
+                      physics: const BouncingScrollPhysics(),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // بيانات الكورس
+                          _buildCourseInfo(isMobile),
+                          const SizedBox(height: 24),
+
+                          // طرق الدفع
+                          _buildPaymentMethods(isMobile),
+                          const SizedBox(height: 24),
+
+                          // نوع الاشتراك
+                          _buildSubscriptionType(isMobile),
+                          const SizedBox(height: 24),
+
+                          // ملخص الدفع
+                          _buildPaymentSummary(isMobile),
+                          const SizedBox(height: 24),
+
+                          // معلومات الدفع
+                          _buildPaymentInfo(isMobile),
+                          const SizedBox(height: 32),
+
+                          // أزرار الإجراءات
+                          _buildActionButtons(isMobile),
+                          SizedBox(
+                            height: MediaQuery.of(context).padding.bottom,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCourseInfo(bool isMobile) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(isMobile ? 16 : 20),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.end, // تغيير إلى end
+        children: [
+          Text(
+            'بيانات الكورس',
+            style: GoogleFonts.tajawal(
+              fontSize: isMobile ? 16 : 18,
+              fontWeight: FontWeight.w800,
+              color: const Color(0xFF1F2937),
+            ),
+          ),
+          const SizedBox(height: 12),
+          _buildInfoRow(Icons.school, widget.course['title'], isMobile),
+          const SizedBox(height: 8),
+          _buildInfoRow(Icons.person, widget.course['teacher'], isMobile),
+          const SizedBox(height: 8),
+          _buildInfoRow(
+            Icons.confirmation_number,
+            'رقم الطلب: $_orderNumber',
+            isMobile,
+            isSmall: true,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(
+    IconData icon,
+    String text,
+    bool isMobile, {
+    bool isSmall = false,
+  }) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.end, // إضافة هذه السطر
+      children: [
+        Expanded(
+          // نقل Expanded إلى النص
+          child: Text(
+            text,
+            textAlign: TextAlign.right, // محاذاة النص إلى اليمين
+            style: GoogleFonts.tajawal(
+              fontSize: isSmall ? 12 : (isMobile ? 14 : 16),
+              fontWeight: isSmall ? FontWeight.w500 : FontWeight.w600,
+              color: isSmall
+                  ? const Color(0xFF6B7280)
+                  : const Color(0xFF374151),
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Icon(
+          icon,
+          size: isSmall ? 14 : (isMobile ? 16 : 18),
+          color: const Color(0xFF6B7280),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPaymentMethods(bool isMobile) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.end, // تغيير إلى end
+      children: [
+        Text(
+          'طرق الدفع المتاحة',
+          style: GoogleFonts.tajawal(
+            fontSize: isMobile ? 16 : 18,
+            fontWeight: FontWeight.w800,
+            color: const Color(0xFF1F2937),
+          ),
+        ),
+        const SizedBox(height: 12),
+        ..._paymentMethods.map(
+          (method) => Container(
+            margin: const EdgeInsets.only(bottom: 8),
+            child: RadioListTile<String>(
+              value: method.id,
+              groupValue: _paymentData.paymentMethod,
+              onChanged: (value) {
+                setState(() {
+                  _paymentData.paymentMethod = value!;
+                });
+              },
+              title: Row(
+                mainAxisAlignment: MainAxisAlignment.end, // إضافة هذا السطر
+                children: [
+                  Text(
+                    method.name,
+                    style: GoogleFonts.tajawal(
+                      fontSize: isMobile ? 14 : 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Icon(
+                    method.icon,
+                    color: method.color,
+                    size: isMobile ? 20 : 24,
+                  ),
+                ],
+              ),
+              activeColor: const Color(0xFF10B981),
+              contentPadding: EdgeInsets.zero,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSubscriptionType(bool isMobile) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.end, // تغيير إلى end
+      children: [
+        Text(
+          'نوع الاشتراك',
+          style: GoogleFonts.tajawal(
+            fontSize: isMobile ? 16 : 18,
+            fontWeight: FontWeight.w800,
+            color: const Color(0xFF1F2937),
+          ),
+        ),
+        const SizedBox(height: 8),
+        DropdownButtonFormField<String>(
+          value: _paymentData.subscriptionType,
+          onChanged: (value) {
+            setState(() {
+              _paymentData.subscriptionType = value!;
+            });
+          },
+          items: _subscriptionTypes.map((type) {
+            return DropdownMenuItem(
+              value: type.id,
+              child: Text(
+                type.name,
+                style: GoogleFonts.tajawal(fontSize: isMobile ? 14 : 16),
+                textAlign: TextAlign.right, // إضافة محاذاة النص
+              ),
+            );
+          }).toList(),
+          decoration: InputDecoration(
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
+            ),
+            contentPadding: EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: isMobile ? 12 : 16,
+            ),
+            isDense: true,
+            alignLabelWithHint: true,
+          ),
+          isExpanded: true,
+          dropdownColor: Colors.white,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPaymentSummary(bool isMobile) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(isMobile ? 16 : 20),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF0FDF4),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFF10B981).withOpacity(0.3)),
+      ),
+      child: Column(
+        children: [
+          Text(
+            'ملخص الدفع',
+            style: GoogleFonts.tajawal(
+              fontSize: isMobile ? 16 : 18,
+              fontWeight: FontWeight.w800,
+              color: const Color(0xFF065F46),
+            ),
+          ),
+          const SizedBox(height: 16),
+          _buildSummaryRow(
+            'السعر الأساسي',
+            '₪${_basePrice.toStringAsFixed(2)}',
+            isMobile,
+          ),
+          _buildSummaryRow(
+            'الضرائب',
+            '₪${_taxAmount.toStringAsFixed(2)}',
+            isMobile,
+          ),
+          const Divider(),
+          _buildSummaryRow(
+            'الإجمالي',
+            '₪${_totalPrice.toStringAsFixed(2)}',
+            isMobile,
+            isTotal: true,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSummaryRow(
+    String label,
+    String value,
+    bool isMobile, {
+    bool isTotal = false,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: GoogleFonts.tajawal(
+              fontSize: isMobile ? 14 : 16,
+              fontWeight: isTotal ? FontWeight.w800 : FontWeight.w500,
+              color: isTotal
+                  ? const Color(0xFF065F46)
+                  : const Color(0xFF374151),
+            ),
+          ),
+          Text(
+            value,
+            style: GoogleFonts.tajawal(
+              fontSize: isMobile ? 14 : 16,
+              fontWeight: isTotal ? FontWeight.w900 : FontWeight.w600,
+              color: isTotal
+                  ? const Color(0xFF065F46)
+                  : const Color(0xFF374151),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPaymentInfo(bool isMobile) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'معلومات الدفع',
+          style: GoogleFonts.tajawal(
+            fontSize: isMobile ? 16 : 18,
+            fontWeight: FontWeight.w800,
+            color: const Color(0xFF1F2937),
+          ),
+        ),
+        const SizedBox(height: 12),
+        TextFormField(
+          decoration: InputDecoration(
+            labelText: 'رقم الهاتف',
+            prefixIcon: const Icon(Icons.phone),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            contentPadding: EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: isMobile ? 12 : 16,
+            ),
+          ),
+          keyboardType: TextInputType.phone,
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'يرجى إدخال رقم الهاتف';
+            }
+            if (value.length < 10) {
+              return 'رقم الهاتف يجب أن يكون 10 أرقام على الأقل';
+            }
+            return null;
+          },
+          onChanged: (value) => _paymentData.phoneNumber = value,
+        ),
+        const SizedBox(height: 12),
+        TextFormField(
+          decoration: InputDecoration(
+            labelText: 'تأكيد رقم الهاتف',
+            prefixIcon: const Icon(Icons.phone_android),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            contentPadding: EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: isMobile ? 12 : 16,
+            ),
+          ),
+          keyboardType: TextInputType.phone,
+          validator: (value) {
+            if (value != _paymentData.phoneNumber) {
+              return 'رقم الهاتف غير متطابق';
+            }
+            return null;
+          },
+          onChanged: (value) => _paymentData.confirmPhoneNumber = value,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildActionButtons(bool isMobile) {
+    return Row(
+      children: [
+        Expanded(
+          child: OutlinedButton(
+            onPressed: () => Navigator.of(context).pop(),
+            style: OutlinedButton.styleFrom(
+              padding: EdgeInsets.symmetric(vertical: isMobile ? 16 : 18),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              side: const BorderSide(color: Color(0xFFD1D5DB)),
+            ),
+            child: Text(
+              'إلغاء',
+              style: GoogleFonts.tajawal(
+                fontSize: isMobile ? 16 : 18,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF6B7280),
+              ),
+            ),
+          ),
+        ),
+        SizedBox(width: isMobile ? 12 : 16),
+        Expanded(
+          child: ElevatedButton(
+            onPressed: _isLoading ? null : _processPayment,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF10B981),
+              padding: EdgeInsets.symmetric(vertical: isMobile ? 16 : 18),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: _isLoading
+                ? SizedBox(
+                    height: isMobile ? 20 : 24,
+                    width: isMobile ? 20 : 24,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation(Colors.white),
+                    ),
+                  )
+                : Text(
+                    'تأكيد الدفع',
+                    style: GoogleFonts.tajawal(
+                      fontSize: isMobile ? 16 : 18,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// نموذج لطريقة الدفع (قابل للتوسع)
+class PaymentMethod {
+  final String id;
+  final String name;
+  final IconData icon;
+  final Color color;
+
+  PaymentMethod({
+    required this.id,
+    required this.name,
+    required this.icon,
+    required this.color,
+  });
+}
+
+// نموذج لنوع الاشتراك
+class SubscriptionType {
+  final String id;
+  final String name;
+  final double priceMultiplier;
+
+  SubscriptionType({
+    required this.id,
+    required this.name,
+    required this.priceMultiplier,
+  });
+}
+
+// باقي الكود (CourseTabs و RelatedCourses) يبقى كما هو بدون تغيير
 class CourseTabs extends StatefulWidget {
   final Map<String, dynamic> course;
 
@@ -339,7 +959,9 @@ class _CourseTabsState extends State<CourseTabs> {
           decoration: BoxDecoration(
             border: Border(
               bottom: BorderSide(
-                color: isSelected ? const Color(0xFF2563EB) : Colors.transparent,
+                color: isSelected
+                    ? const Color(0xFF2563EB)
+                    : Colors.transparent,
                 width: 2,
               ),
             ),
@@ -349,7 +971,9 @@ class _CourseTabsState extends State<CourseTabs> {
             textAlign: TextAlign.center,
             style: GoogleFonts.tajawal(
               fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
-              color: isSelected ? const Color(0xFF2563EB) : const Color(0xFF6B7280),
+              color: isSelected
+                  ? const Color(0xFF2563EB)
+                  : const Color(0xFF6B7280),
               fontSize: 14,
             ),
           ),
@@ -387,7 +1011,8 @@ class _CourseTabsState extends State<CourseTabs> {
         ),
         const SizedBox(height: 12),
         Text(
-          widget.course['description'] ?? 'دورة تعليمية شاملة تغطي أهم المفاهيم والمهارات في هذا المجال. تم تصميم المحتوى بعناية لضمان أفضل تجربة تعلم.',
+          widget.course['description'] ??
+              'دورة تعليمية شاملة تغطي أهم المفاهيم والمهارات في هذا المجال. تم تصميم المحتوى بعناية لضمان أفضل تجربة تعلم.',
           style: GoogleFonts.tajawal(
             fontSize: 14,
             fontWeight: FontWeight.w500,
@@ -453,8 +1078,11 @@ class _CourseTabsState extends State<CourseTabs> {
                     color: const Color(0xFF10B981),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Icon(Icons.lock_outline, 
-                      color: Colors.white, size: 16),
+                  child: const Icon(
+                    Icons.lock_outline,
+                    color: Colors.white,
+                    size: 16,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -479,8 +1107,6 @@ class _CourseTabsState extends State<CourseTabs> {
             ),
           );
         }),
-        
-        // Beautiful message for course content
         const SizedBox(height: 20),
         Container(
           padding: const EdgeInsets.all(16),
@@ -590,7 +1216,11 @@ class _CourseTabsState extends State<CourseTabs> {
                           ),
                           Row(
                             children: [
-                              const Icon(Icons.star, color: Colors.amber, size: 16),
+                              const Icon(
+                                Icons.star,
+                                color: Colors.amber,
+                                size: 16,
+                              ),
                               const SizedBox(width: 4),
                               Text(
                                 '5.0',
@@ -627,8 +1257,6 @@ class _CourseTabsState extends State<CourseTabs> {
             ),
           );
         }),
-        
-        // Beautiful message for reviews
         const SizedBox(height: 16),
         Container(
           padding: const EdgeInsets.all(16),
@@ -726,7 +1354,8 @@ class _CourseTabsState extends State<CourseTabs> {
               child: CircleAvatar(
                 radius: 40,
                 backgroundImage: NetworkImage(
-                  widget.course['instructorImage'] ?? 'https://picsum.photos/seed/instructor/200/200',
+                  widget.course['instructorImage'] ??
+                      'https://picsum.photos/seed/instructor/200/200',
                 ),
               ),
             ),
@@ -882,8 +1511,11 @@ class RelatedCourses extends StatelessWidget {
                                 const SizedBox(height: 8),
                                 Row(
                                   children: [
-                                    const Icon(Icons.star, 
-                                        size: 14, color: Colors.amber),
+                                    const Icon(
+                                      Icons.star,
+                                      size: 14,
+                                      color: Colors.amber,
+                                    ),
                                     const SizedBox(width: 4),
                                     Text(
                                       course['rating'].toStringAsFixed(1),
