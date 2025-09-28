@@ -1,7 +1,6 @@
 import 'package:courses_app/data/notifiers.dart';
 import 'package:courses_app/main_pages/courses/presentation/pages/favorite_courses_page.dart';
 import 'package:courses_app/main_pages/home/presentation/pages/home_page.dart';
-import 'package:courses_app/main_pages/notifications/presentation/pages/notifications_page.dart';
 import 'package:courses_app/main_pages/profile/presentation/pages/profile_page.dart';
 import 'package:courses_app/main_pages/search/presentation/pages/search_page.dart';
 import 'package:courses_app/navbar/presentation/main_navbar_page.dart';
@@ -12,7 +11,6 @@ final List<Widget> pages = [
   const HomePage(),
   const SearchPage(),
   const CoursesPage(),
-  const NotificationsPage(),
   const ProfilePage(),
 ];
 

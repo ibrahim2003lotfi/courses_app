@@ -4,6 +4,7 @@ import 'package:courses_app/main_pages/home/presentation/side%20pages/category_d
 import 'package:courses_app/main_pages/home/presentation/side%20pages/category_page.dart';
 import 'package:courses_app/main_pages/home/presentation/side%20pages/recommended_page.dart';
 import 'package:courses_app/main_pages/home/presentation/side%20pages/university_pages/univiersities_page.dart';
+import 'package:courses_app/main_pages/home/presentation/widgets/notifications_page.dart';
 import 'package:courses_app/theme_cubit/theme_cubit.dart';
 import 'package:courses_app/theme_cubit/theme_state.dart';
 import 'package:flutter/material.dart';
@@ -22,8 +23,8 @@ class TopSearchBar extends StatelessWidget implements PreferredSizeWidget {
             height: 70,
             decoration: BoxDecoration(
               color: themeState.isDarkMode
-                  ? const Color(0xFF1E1E1E) // Use dark theme card color
-                  : Colors.white, // Use light theme background
+                  ? const Color(0xFF1E1E1E)
+                  : Colors.white,
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(
@@ -39,7 +40,7 @@ class TopSearchBar extends StatelessWidget implements PreferredSizeWidget {
               builder: (context, constraints) {
                 return Row(
                   children: [
-                    // Logo (unchanged as it uses gradient)
+                    // Logo
                     Container(
                       decoration: BoxDecoration(
                         gradient: const LinearGradient(
@@ -64,21 +65,39 @@ class TopSearchBar extends StatelessWidget implements PreferredSizeWidget {
                       ),
                     ),
 
-                    const Spacer(),
+                    const SizedBox(width: 12),
 
-                    // Title text with theme-aware color
-                    Text(
-                      'منصة الكورسات',
-                      style: GoogleFonts.tajawal(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w900,
-                        color: themeState.isDarkMode
-                            ? Colors
-                                  .white // White text for dark mode
-                            : const Color(
-                                0xFF1F2937,
-                              ), // Original dark gray for light mode
+                    // Title
+                    Expanded(
+                      child: Text(
+                        'منصة الكورسات',
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.tajawal(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w900,
+                          color: themeState.isDarkMode
+                              ? Colors.white
+                              : const Color(0xFF1F2937),
+                        ),
                       ),
+                    ),
+
+                    // Bell Icon
+                    IconButton(
+                      icon: Icon(
+                        Icons.notifications_none,
+                        color: themeState.isDarkMode
+                            ? Colors.white
+                            : const Color(0xFF1F2937),
+                      ),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => NotificationsPage(),
+                          ),
+                        );
+                      },
                     ),
                   ],
                 );

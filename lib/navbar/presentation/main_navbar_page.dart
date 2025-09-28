@@ -14,31 +14,29 @@ class _NavBarWidgetState extends State<NavBarWidget> {
     return ValueListenableBuilder(
       valueListenable: selectedPageNotifier,
       builder: (BuildContext context, dynamic selectedpage, Widget? child) {
-        return NavigationBar(
-          destinations: [
-            NavigationDestination(
-              icon: Icon(Icons.home_rounded),
-              label: 'Home',
-            ),
-            NavigationDestination(icon: Icon(Icons.search), label: 'Search'),
-            NavigationDestination(
-              icon: Icon(Icons.local_offer_outlined),
-              label: 'Courses',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.notifications_active_outlined,),
-              label: 'Notifications',
-            ),
-          
-            NavigationDestination(
-              icon: Icon(Icons.account_circle_outlined,),
-              label: 'Profile',
-            ),
-          ],
-          onDestinationSelected: (int value) {
-            selectedPageNotifier.value = value;
-          },
-          selectedIndex: selectedpage,
+        return Directionality(
+          textDirection: TextDirection.rtl, // هذا يجعل الشريط يبدأ من اليمين
+          child: NavigationBar(
+            destinations: [
+              NavigationDestination(
+                icon: Icon(Icons.home_rounded),
+                label: 'الرئيسية',
+              ),
+              NavigationDestination(icon: Icon(Icons.search), label: 'البحث'),
+              NavigationDestination(
+                icon: Icon(Icons.local_offer_outlined),
+                label: 'كورساتي',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.account_circle_outlined),
+                label: 'حسابي',
+              ),
+            ],
+            onDestinationSelected: (int value) {
+              selectedPageNotifier.value = value;
+            },
+            selectedIndex: selectedpage,
+          ),
         );
       },
     );
