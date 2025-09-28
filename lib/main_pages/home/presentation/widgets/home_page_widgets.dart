@@ -1,5 +1,6 @@
 import 'package:courses_app/core/utils/theme_manager.dart';
 import 'package:courses_app/main_pages/courses/presentation/pages/course_details_page.dart';
+import 'package:courses_app/main_pages/home/presentation/side%20pages/category_datail_page.dart';
 import 'package:courses_app/main_pages/home/presentation/side%20pages/category_page.dart';
 import 'package:courses_app/main_pages/home/presentation/side%20pages/recommended_page.dart';
 import 'package:courses_app/main_pages/home/presentation/side%20pages/university_pages/univiersities_page.dart';
@@ -20,12 +21,14 @@ class TopSearchBar extends StatelessWidget implements PreferredSizeWidget {
           child: Container(
             height: 70,
             decoration: BoxDecoration(
-              color: themeState.isDarkMode 
+              color: themeState.isDarkMode
                   ? const Color(0xFF1E1E1E) // Use dark theme card color
                   : Colors.white, // Use light theme background
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(themeState.isDarkMode ? 0.1 : 0.05),
+                  color: Colors.black.withOpacity(
+                    themeState.isDarkMode ? 0.1 : 0.05,
+                  ),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -69,9 +72,12 @@ class TopSearchBar extends StatelessWidget implements PreferredSizeWidget {
                       style: GoogleFonts.tajawal(
                         fontSize: 22,
                         fontWeight: FontWeight.w900,
-                        color: themeState.isDarkMode 
-                            ? Colors.white // White text for dark mode
-                            : const Color(0xFF1F2937), // Original dark gray for light mode
+                        color: themeState.isDarkMode
+                            ? Colors
+                                  .white // White text for dark mode
+                            : const Color(
+                                0xFF1F2937,
+                              ), // Original dark gray for light mode
                       ),
                     ),
                   ],
@@ -120,7 +126,7 @@ class _SearchFieldState extends State<SearchField> {
     return BlocBuilder<ThemeCubit, ThemeState>(
       builder: (context, themeState) {
         final bool isDarkMode = themeState.isDarkMode;
-        
+
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           child: Material(
@@ -138,10 +144,15 @@ class _SearchFieldState extends State<SearchField> {
                 hintText: 'ابحث عن الكورسات, المحاضرات, و الدروس',
                 hintStyle: GoogleFonts.tajawal(
                   fontWeight: FontWeight.w500,
-                  color: isDarkMode ? const Color(0xFF9CA3AF) : const Color(0xFF6B7280),
+                  color: isDarkMode
+                      ? const Color(0xFF9CA3AF)
+                      : const Color(0xFF6B7280),
                 ),
-                prefixIcon: Icon(Icons.search, 
-                  color: isDarkMode ? const Color(0xFF9CA3AF) : const Color(0xFF6B7280),
+                prefixIcon: Icon(
+                  Icons.search,
+                  color: isDarkMode
+                      ? const Color(0xFF9CA3AF)
+                      : const Color(0xFF6B7280),
                 ),
                 filled: true,
                 fillColor: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
@@ -160,8 +171,8 @@ class _SearchFieldState extends State<SearchField> {
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
                   borderSide: BorderSide(
-                    color: const Color(0xFF2563EB), 
-                    width: 2
+                    color: const Color(0xFF2563EB),
+                    width: 2,
                   ),
                 ),
               ),
@@ -173,7 +184,6 @@ class _SearchFieldState extends State<SearchField> {
   }
 }
 
-
 class HeroCarousel extends StatefulWidget {
   final List<String> heroImages;
 
@@ -182,6 +192,7 @@ class HeroCarousel extends StatefulWidget {
   @override
   State<HeroCarousel> createState() => _HeroCarouselState();
 }
+
 class _HeroCarouselState extends State<HeroCarousel> {
   final PageController _heroController = PageController();
   int _heroPage = 0;
@@ -210,7 +221,7 @@ class _HeroCarouselState extends State<HeroCarousel> {
     return BlocBuilder<ThemeCubit, ThemeState>(
       builder: (context, themeState) {
         final bool isDarkMode = themeState.isDarkMode;
-        
+
         return Padding(
           padding: const EdgeInsets.symmetric(vertical: 8),
           child: SizedBox(
@@ -231,26 +242,33 @@ class _HeroCarouselState extends State<HeroCarousel> {
                             Image.network(
                               widget.heroImages[index],
                               fit: BoxFit.cover,
-                              loadingBuilder: (context, child, loadingProgress) {
-                                if (loadingProgress == null) return child;
-                                return Container(
-                                  color: isDarkMode 
-                                      ? const Color(0xFF2D2D2D) 
-                                      : const Color(0xFFF3F4F6),
-                                  child: Center(
-                                    child: CircularProgressIndicator(
-                                      color: isDarkMode ? Colors.white70 : const Color(0xFF3B82F6),
-                                    ),
-                                  ),
-                                );
-                              },
+                              loadingBuilder:
+                                  (context, child, loadingProgress) {
+                                    if (loadingProgress == null) return child;
+                                    return Container(
+                                      color: isDarkMode
+                                          ? const Color(0xFF2D2D2D)
+                                          : const Color(0xFFF3F4F6),
+                                      child: Center(
+                                        child: CircularProgressIndicator(
+                                          color: isDarkMode
+                                              ? Colors.white70
+                                              : const Color(0xFF3B82F6),
+                                        ),
+                                      ),
+                                    );
+                                  },
                             ),
                             Container(
                               decoration: BoxDecoration(
                                 gradient: LinearGradient(
                                   colors: [
-                                    Colors.black.withOpacity(isDarkMode ? 0.8 : 0.6),
-                                    Colors.black.withOpacity(isDarkMode ? 0.4 : 0.2),
+                                    Colors.black.withOpacity(
+                                      isDarkMode ? 0.8 : 0.6,
+                                    ),
+                                    Colors.black.withOpacity(
+                                      isDarkMode ? 0.4 : 0.2,
+                                    ),
                                     Colors.transparent,
                                   ],
                                   begin: Alignment.bottomCenter,
@@ -287,13 +305,16 @@ class _HeroCarouselState extends State<HeroCarousel> {
                                         borderRadius: BorderRadius.circular(12),
                                       ),
                                       elevation: isDarkMode ? 4 : 2,
-                                      shadowColor: Colors.black.withOpacity(isDarkMode ? 0.4 : 0.2),
+                                      shadowColor: Colors.black.withOpacity(
+                                        isDarkMode ? 0.4 : 0.2,
+                                      ),
                                     ),
                                     onPressed: () {
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
-                                          builder: (context) => CategoriesPage(),
+                                          builder: (context) =>
+                                              CategoriesPage(),
                                         ),
                                       );
                                     },
@@ -331,11 +352,15 @@ class _HeroCarouselState extends State<HeroCarousel> {
                         decoration: BoxDecoration(
                           color: active
                               ? Colors.white
-                              : Colors.white.withOpacity(isDarkMode ? 0.7 : 0.5),
+                              : Colors.white.withOpacity(
+                                  isDarkMode ? 0.7 : 0.5,
+                                ),
                           borderRadius: BorderRadius.circular(8),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(isDarkMode ? 0.3 : 0.1),
+                              color: Colors.black.withOpacity(
+                                isDarkMode ? 0.3 : 0.1,
+                              ),
                               blurRadius: 4,
                               offset: const Offset(0, 1),
                             ),
@@ -364,7 +389,7 @@ class CategoriesGrid extends StatelessWidget {
     return BlocBuilder<ThemeCubit, ThemeState>(
       builder: (context, themeState) {
         final bool isDarkMode = themeState.isDarkMode;
-        
+
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
           child: Column(
@@ -387,13 +412,15 @@ class CategoriesGrid extends StatelessWidget {
                       onPressed: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => CategoriesPage()),
+                          MaterialPageRoute(
+                            builder: (context) => CategoriesPage(),
+                          ),
                         );
                       },
                       child: Text(
                         'عرض الكل',
                         style: GoogleFonts.tajawal(
-                          color: const Color(0xFF2563EB), // Keep blue color for both themes
+                          color: const Color(0xFF2563EB),
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -412,15 +439,17 @@ class CategoriesGrid extends StatelessWidget {
                     physics: const NeverScrollableScrollPhysics(),
                     shrinkWrap: true,
                     itemCount: visibleCategories.length,
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: crossAxisCount,
-                      mainAxisSpacing: 12,
-                      crossAxisSpacing: 12,
-                      childAspectRatio: 0.85,
-                    ),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: crossAxisCount,
+                          mainAxisSpacing: 12,
+                          crossAxisSpacing: 12,
+                          childAspectRatio: 0.85,
+                        ),
                     itemBuilder: (context, idx) {
                       final c = visibleCategories[idx];
                       return _buildCategoryCube(
+                        context, // pass context here ✅
                         c,
                         constraints.maxWidth / crossAxisCount - 16,
                         isDarkMode: isDarkMode,
@@ -436,7 +465,12 @@ class CategoriesGrid extends StatelessWidget {
     );
   }
 
-  Widget _buildCategoryCube(Map<String, dynamic> category, double itemSize, {required bool isDarkMode}) {
+  Widget _buildCategoryCube(
+    BuildContext context, // add context ✅
+    Map<String, dynamic> category,
+    double itemSize, {
+    required bool isDarkMode,
+  }) {
     return Material(
       elevation: isDarkMode ? 4 : 3,
       borderRadius: BorderRadius.circular(16),
@@ -453,7 +487,7 @@ class CategoriesGrid extends StatelessWidget {
           boxShadow: [
             BoxShadow(
               color: (category['gradient'] as List<Color>).last.withOpacity(
-                isDarkMode ? 0.5 : 0.3, // Enhanced shadow for dark mode
+                isDarkMode ? 0.5 : 0.3,
               ),
               blurRadius: isDarkMode ? 12 : 8,
               offset: const Offset(0, 3),
@@ -463,7 +497,12 @@ class CategoriesGrid extends StatelessWidget {
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
           onTap: () {
-            // Handle category tap
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => CategoryDetailPage(category: category),
+              ),
+            );
           },
           child: Padding(
             padding: const EdgeInsets.all(8),
@@ -473,7 +512,7 @@ class CategoriesGrid extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(isDarkMode ? 0.3 : 0.2), // Enhanced opacity for dark mode
+                    color: Colors.white.withOpacity(isDarkMode ? 0.3 : 0.2),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
@@ -503,8 +542,6 @@ class CategoriesGrid extends StatelessWidget {
   }
 }
 
-
-
 class RecommendedCourses extends StatelessWidget {
   final List<Map<String, dynamic>> recommended;
 
@@ -515,7 +552,7 @@ class RecommendedCourses extends StatelessWidget {
     return BlocBuilder<ThemeCubit, ThemeState>(
       builder: (context, themeState) {
         final bool isDarkMode = themeState.isDarkMode;
-        
+
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
           child: Column(
@@ -561,7 +598,9 @@ class RecommendedCourses extends StatelessWidget {
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(isDarkMode ? 0.1 : 0.05),
+                        color: Colors.black.withOpacity(
+                          isDarkMode ? 0.1 : 0.05,
+                        ),
                         blurRadius: 12,
                         offset: const Offset(0, 4),
                       ),
@@ -592,14 +631,17 @@ class RecommendedCourses extends StatelessWidget {
                                   const SizedBox(width: 12),
                                   Expanded(
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Text(
                                           item['title'],
                                           style: GoogleFonts.tajawal(
                                             fontSize: 14,
                                             fontWeight: FontWeight.w700,
-                                            color: isDarkMode ? Colors.white : const Color(0xFF1F2937),
+                                            color: isDarkMode
+                                                ? Colors.white
+                                                : const Color(0xFF1F2937),
                                           ),
                                           maxLines: 2,
                                           overflow: TextOverflow.ellipsis,
@@ -607,10 +649,15 @@ class RecommendedCourses extends StatelessWidget {
                                         const SizedBox(height: 4),
                                         Text(
                                           item['teacher'],
-                                          style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                                            fontWeight: FontWeight.w500,
-                                            color: isDarkMode ? Colors.white70 : null,
-                                          ),
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodyMedium!
+                                              .copyWith(
+                                                fontWeight: FontWeight.w500,
+                                                color: isDarkMode
+                                                    ? Colors.white70
+                                                    : null,
+                                              ),
                                         ),
                                       ],
                                     ),
@@ -629,25 +676,37 @@ class RecommendedCourses extends StatelessWidget {
                                   const SizedBox(width: 4),
                                   Text(
                                     item['rating'].toStringAsFixed(1),
-                                    style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                                      fontWeight: FontWeight.w500,
-                                      color: isDarkMode ? Colors.white70 : null,
-                                    ),
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium!
+                                        .copyWith(
+                                          fontWeight: FontWeight.w500,
+                                          color: isDarkMode
+                                              ? Colors.white70
+                                              : null,
+                                        ),
                                   ),
                                   const SizedBox(width: 16),
                                   Icon(
                                     Icons.people_outline,
                                     size: 16,
-                                    color: isDarkMode ? Colors.white60 : const Color(0xFF6B7280),
+                                    color: isDarkMode
+                                        ? Colors.white60
+                                        : const Color(0xFF6B7280),
                                   ),
                                   const SizedBox(width: 4),
                                   Expanded(
                                     child: Text(
                                       '${item['students']} طالب',
-                                      style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                                        fontWeight: FontWeight.w500,
-                                        color: isDarkMode ? Colors.white70 : null,
-                                      ),
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyMedium!
+                                          .copyWith(
+                                            fontWeight: FontWeight.w500,
+                                            color: isDarkMode
+                                                ? Colors.white70
+                                                : null,
+                                          ),
                                       overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
@@ -666,7 +725,8 @@ class RecommendedCourses extends StatelessWidget {
                                       'duration': item['duration'] ?? 20,
                                       'lessons': item['lessons'] ?? 30,
                                       'level': item['level'] ?? 'متوسط',
-                                      'lastUpdated': item['lastUpdated'] ?? '2024',
+                                      'lastUpdated':
+                                          item['lastUpdated'] ?? '2024',
                                       'price': item['price'] ?? '₪199',
                                       'description':
                                           item['description'] ??
@@ -736,7 +796,9 @@ class RecommendedCourses extends StatelessWidget {
                                             ? 14
                                             : 16,
                                         fontWeight: FontWeight.w700,
-                                        color: isDarkMode ? Colors.white : const Color(0xFF1F2937),
+                                        color: isDarkMode
+                                            ? Colors.white
+                                            : const Color(0xFF1F2937),
                                       ),
                                       maxLines: 2,
                                       overflow: TextOverflow.ellipsis,
@@ -744,10 +806,15 @@ class RecommendedCourses extends StatelessWidget {
                                     const SizedBox(height: 6),
                                     Text(
                                       item['teacher'],
-                                      style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                                        fontWeight: FontWeight.w500,
-                                        color: isDarkMode ? Colors.white70 : null,
-                                      ),
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyMedium!
+                                          .copyWith(
+                                            fontWeight: FontWeight.w500,
+                                            color: isDarkMode
+                                                ? Colors.white70
+                                                : null,
+                                          ),
                                     ),
                                     const SizedBox(height: 6),
                                     Row(
@@ -760,24 +827,36 @@ class RecommendedCourses extends StatelessWidget {
                                         const SizedBox(width: 4),
                                         Text(
                                           item['rating'].toStringAsFixed(1),
-                                          style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                                            fontWeight: FontWeight.w500,
-                                            color: isDarkMode ? Colors.white70 : null,
-                                          ),
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodyMedium!
+                                              .copyWith(
+                                                fontWeight: FontWeight.w500,
+                                                color: isDarkMode
+                                                    ? Colors.white70
+                                                    : null,
+                                              ),
                                         ),
                                         const SizedBox(width: 16),
                                         Icon(
                                           Icons.people_outline,
                                           size: 16,
-                                          color: isDarkMode ? Colors.white60 : const Color(0xFF6B7280),
+                                          color: isDarkMode
+                                              ? Colors.white60
+                                              : const Color(0xFF6B7280),
                                         ),
                                         const SizedBox(width: 4),
                                         Text(
                                           '${item['students']} طالب',
-                                          style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                                            fontWeight: FontWeight.w500,
-                                            color: isDarkMode ? Colors.white70 : null,
-                                          ),
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodyMedium!
+                                              .copyWith(
+                                                fontWeight: FontWeight.w500,
+                                                color: isDarkMode
+                                                    ? Colors.white70
+                                                    : null,
+                                              ),
                                         ),
                                       ],
                                     ),
@@ -794,7 +873,8 @@ class RecommendedCourses extends StatelessWidget {
                                     'duration': item['duration'] ?? 20,
                                     'lessons': item['lessons'] ?? 30,
                                     'level': item['level'] ?? 'متوسط',
-                                    'lastUpdated': item['lastUpdated'] ?? '2024',
+                                    'lastUpdated':
+                                        item['lastUpdated'] ?? '2024',
                                     'price': item['price'] ?? '₪199',
                                     'description':
                                         item['description'] ??
@@ -852,7 +932,6 @@ class RecommendedCourses extends StatelessWidget {
   }
 }
 
-
 class TrendingCourses extends StatelessWidget {
   final List<Map<String, dynamic>> trending;
 
@@ -863,8 +942,10 @@ class TrendingCourses extends StatelessWidget {
     return BlocBuilder<ThemeCubit, ThemeState>(
       builder: (context, themeState) {
         final isDarkMode = themeState.isDarkMode;
-        final theme = isDarkMode ? ThemeManager.darkTheme : ThemeManager.lightTheme;
-        
+        final theme = isDarkMode
+            ? ThemeManager.darkTheme
+            : ThemeManager.lightTheme;
+
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -877,9 +958,9 @@ class TrendingCourses extends StatelessWidget {
                   Text(
                     'الأكثر شيوعًا',
                     style: Theme.of(context).textTheme.titleLarge!.copyWith(
-                          fontWeight: FontWeight.w800,
-                          color: theme.colorScheme.onBackground,
-                        ),
+                      fontWeight: FontWeight.w800,
+                      color: theme.colorScheme.onBackground,
+                    ),
                   ),
                   TextButton(
                     onPressed: () {},
@@ -913,7 +994,9 @@ class TrendingCourses extends StatelessWidget {
                         borderRadius: BorderRadius.circular(16),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(isDarkMode ? 0.1 : 0.05),
+                            color: Colors.black.withOpacity(
+                              isDarkMode ? 0.1 : 0.05,
+                            ),
                             blurRadius: 8,
                             offset: const Offset(0, 3),
                           ),
@@ -944,7 +1027,9 @@ class TrendingCourses extends StatelessWidget {
                                       vertical: 4,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFFEF4444), // Keep discount color
+                                      color: const Color(
+                                        0xFFEF4444,
+                                      ), // Keep discount color
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: Text(
@@ -966,14 +1051,17 @@ class TrendingCourses extends StatelessWidget {
                               padding: const EdgeInsets.all(12),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
                                     t['title'],
                                     style: GoogleFonts.tajawal(
                                       fontSize: 14,
                                       fontWeight: FontWeight.w700,
-                                      color: theme.colorScheme.onSurface, // Use theme text color
+                                      color: theme
+                                          .colorScheme
+                                          .onSurface, // Use theme text color
                                     ),
                                     maxLines: 2,
                                     overflow: TextOverflow.ellipsis,
@@ -996,7 +1084,6 @@ class TrendingCourses extends StatelessWidget {
   }
 }
 
-
 class ExtrasSection extends StatelessWidget {
   const ExtrasSection({super.key});
 
@@ -1005,8 +1092,10 @@ class ExtrasSection extends StatelessWidget {
     return BlocBuilder<ThemeCubit, ThemeState>(
       builder: (context, themeState) {
         final isDarkMode = themeState.isDarkMode;
-        final theme = isDarkMode ? ThemeManager.darkTheme : ThemeManager.lightTheme;
-        
+        final theme = isDarkMode
+            ? ThemeManager.darkTheme
+            : ThemeManager.lightTheme;
+
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -1086,7 +1175,9 @@ class ExtrasSection extends StatelessWidget {
                         ),
                         minimumSize: const Size(double.infinity, 48),
                         elevation: isDarkMode ? 4 : 2,
-                        shadowColor: Colors.black.withOpacity(isDarkMode ? 0.3 : 0.1),
+                        shadowColor: Colors.black.withOpacity(
+                          isDarkMode ? 0.3 : 0.1,
+                        ),
                       ),
                       child: Text(
                         'عرض المحاضرات',
@@ -1107,9 +1198,9 @@ class ExtrasSection extends StatelessWidget {
               child: Text(
                 'أفضل الأساتذة',
                 style: Theme.of(context).textTheme.titleLarge!.copyWith(
-                      fontWeight: FontWeight.w800,
-                      color: theme.colorScheme.onBackground,
-                    ),
+                  fontWeight: FontWeight.w800,
+                  color: theme.colorScheme.onBackground,
+                ),
               ),
             ),
             const SizedBox(height: 16),
@@ -1135,7 +1226,9 @@ class ExtrasSection extends StatelessWidget {
                             shape: BoxShape.circle,
                             boxShadow: [
                               BoxShadow(
-                                color: const Color(0xFFF59E0B).withOpacity(isDarkMode ? 0.4 : 0.3),
+                                color: const Color(
+                                  0xFFF59E0B,
+                                ).withOpacity(isDarkMode ? 0.4 : 0.3),
                                 blurRadius: 8,
                                 offset: const Offset(0, 2),
                               ),
@@ -1157,7 +1250,9 @@ class ExtrasSection extends StatelessWidget {
                             style: GoogleFonts.tajawal(
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
-                              color: theme.colorScheme.onSurface, // Use theme text color
+                              color: theme
+                                  .colorScheme
+                                  .onSurface, // Use theme text color
                             ),
                             textAlign: TextAlign.center,
                             maxLines: 1,
@@ -1197,21 +1292,26 @@ class Footer extends StatelessWidget {
     return BlocBuilder<ThemeCubit, ThemeState>(
       builder: (context, themeState) {
         final isDarkMode = themeState.isDarkMode;
-        final theme = isDarkMode ? ThemeManager.darkTheme : ThemeManager.lightTheme;
-        
+        final theme = isDarkMode
+            ? ThemeManager.darkTheme
+            : ThemeManager.lightTheme;
+
         return Container(
           decoration: BoxDecoration(
-            gradient: isDarkMode 
-              ? const LinearGradient(
-                  colors: [Color(0xFF1F2937), Color(0xFF111827)],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                )
-              : LinearGradient(
-                  colors: [theme.primaryColor.withOpacity(0.1), theme.scaffoldBackgroundColor],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                ),
+            gradient: isDarkMode
+                ? const LinearGradient(
+                    colors: [Color(0xFF1F2937), Color(0xFF111827)],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                  )
+                : LinearGradient(
+                    colors: [
+                      theme.primaryColor.withOpacity(0.1),
+                      theme.scaffoldBackgroundColor,
+                    ],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                  ),
             color: isDarkMode ? null : theme.scaffoldBackgroundColor,
           ),
           padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
@@ -1220,9 +1320,13 @@ class Footer extends StatelessWidget {
               // Responsive layout for main content
               LayoutBuilder(
                 builder: (context, constraints) {
-                  final textColor = isDarkMode ? Colors.white : theme.colorScheme.onBackground;
-                  final textSecondaryColor = isDarkMode ? Colors.white70 : theme.colorScheme.onSurface.withOpacity(0.8);
-                  
+                  final textColor = isDarkMode
+                      ? Colors.white
+                      : theme.colorScheme.onBackground;
+                  final textSecondaryColor = isDarkMode
+                      ? Colors.white70
+                      : theme.colorScheme.onSurface.withOpacity(0.8);
+
                   if (constraints.maxWidth < 600) {
                     // Mobile layout - vertical
                     return Column(
@@ -1445,9 +1549,13 @@ class Footer extends StatelessWidget {
               // Bottom section with copyright and social icons
               LayoutBuilder(
                 builder: (context, constraints) {
-                  final textColor = isDarkMode ? Colors.white70 : theme.colorScheme.onSurface.withOpacity(0.8);
-                  final iconColor = isDarkMode ? Colors.white70 : theme.colorScheme.onSurface.withOpacity(0.7);
-                  
+                  final textColor = isDarkMode
+                      ? Colors.white70
+                      : theme.colorScheme.onSurface.withOpacity(0.8);
+                  final iconColor = isDarkMode
+                      ? Colors.white70
+                      : theme.colorScheme.onSurface.withOpacity(0.7);
+
                   if (constraints.maxWidth < 600) {
                     // Mobile layout - vertical
                     return Column(
@@ -1467,17 +1575,11 @@ class Footer extends StatelessWidget {
                           children: [
                             IconButton(
                               onPressed: () {},
-                              icon: Icon(
-                                Icons.facebook,
-                                color: iconColor,
-                              ),
+                              icon: Icon(Icons.facebook, color: iconColor),
                             ),
                             IconButton(
                               onPressed: () {},
-                              icon: Icon(
-                                Icons.link_rounded,
-                                color: iconColor,
-                              ),
+                              icon: Icon(Icons.link_rounded, color: iconColor),
                             ),
                             IconButton(
                               onPressed: () {},
@@ -1508,17 +1610,11 @@ class Footer extends StatelessWidget {
                           children: [
                             IconButton(
                               onPressed: () {},
-                              icon: Icon(
-                                Icons.facebook,
-                                color: iconColor,
-                              ),
+                              icon: Icon(Icons.facebook, color: iconColor),
                             ),
                             IconButton(
                               onPressed: () {},
-                              icon: Icon(
-                                Icons.link_rounded,
-                                color: iconColor,
-                              ),
+                              icon: Icon(Icons.link_rounded, color: iconColor),
                             ),
                             IconButton(
                               onPressed: () {},

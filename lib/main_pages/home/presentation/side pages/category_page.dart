@@ -1,3 +1,4 @@
+import 'package:courses_app/main_pages/home/presentation/side%20pages/category_datail_page.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -160,9 +161,7 @@ class CategoriesPage extends StatelessWidget {
       appBar: AppBar(
         title: Text(
           'جميع الأقسام',
-          style: GoogleFonts.tajawal(
-            fontWeight: FontWeight.w800,
-          ),
+          style: GoogleFonts.tajawal(fontWeight: FontWeight.w800),
         ),
         backgroundColor: Colors.white,
         elevation: 0,
@@ -184,7 +183,7 @@ class CategoriesPage extends StatelessWidget {
 
   Widget _buildSection(Map<String, dynamic> section, BuildContext context) {
     final categories = section['categories'] as List<Map<String, dynamic>>;
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -219,13 +218,15 @@ class CategoriesPage extends StatelessWidget {
         ),
 
         // Section separator
-        if (section != _categorySections.last)
-          const SizedBox(height: 20),
+        if (section != _categorySections.last) const SizedBox(height: 20),
       ],
     );
   }
 
-  Widget _buildCategoryCube(Map<String, dynamic> category, BuildContext context) {
+  Widget _buildCategoryCube(
+    Map<String, dynamic> category,
+    BuildContext context,
+  ) {
     return Material(
       elevation: 4,
       borderRadius: BorderRadius.circular(16),
@@ -239,7 +240,9 @@ class CategoriesPage extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: (category['gradient'] as List<Color>).last.withOpacity(0.4),
+              color: (category['gradient'] as List<Color>).last.withOpacity(
+                0.4,
+              ),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -248,7 +251,12 @@ class CategoriesPage extends StatelessWidget {
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
           onTap: () {
-            // Navigate to category courses
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => CategoryDetailPage(category: category),
+              ),
+            );
           },
           child: Padding(
             padding: const EdgeInsets.all(12),
