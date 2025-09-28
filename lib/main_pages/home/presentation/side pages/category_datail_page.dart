@@ -867,38 +867,44 @@ class _CategoryDetailPageState extends State<CategoryDetailPage> {
         },
         child: Padding(
           padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
-                  shape: BoxShape.circle,
+          child: FittedBox(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    subcategory['icon'],
+                    color: Colors.white,
+                    size: 32,
+                  ),
                 ),
-                child: Icon(subcategory['icon'], color: Colors.white, size: 32),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                subcategory['name'],
-                style: GoogleFonts.tajawal(
-                  color: Colors.white,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
+                const SizedBox(height: 12),
+                Text(
+                  subcategory['name'],
+                  style: GoogleFonts.tajawal(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                  ),
+                  textAlign: TextAlign.center,
                 ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                '${subcategory['courseCount']} كورس',
-                style: GoogleFonts.tajawal(
-                  color: Colors.white.withOpacity(0.9),
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
+                const SizedBox(height: 4),
+                Text(
+                  '${subcategory['courseCount']} كورس',
+                  style: GoogleFonts.tajawal(
+                    color: Colors.white.withOpacity(0.9),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  textAlign: TextAlign.center,
                 ),
-                textAlign: TextAlign.center,
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
