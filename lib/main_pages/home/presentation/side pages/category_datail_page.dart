@@ -1,7 +1,7 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:courses_app/core/utils/theme_manager.dart';
 import 'package:courses_app/main_pages/courses/presentation/pages/course_details_page.dart';
 import 'package:courses_app/theme_cubit/theme_cubit.dart';
-import 'package:courses_app/theme_cubit/theme_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -221,142 +221,152 @@ class _CategoryDetailPageState extends State<CategoryDetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<ThemeCubit, ThemeState>(
-      builder: (context, themeState) {
-        final isDarkMode = themeState.isDarkMode;
-        final themeData = isDarkMode
-            ? ThemeManager.darkTheme
-            : ThemeManager.lightTheme;
+    // ✅ Only read theme state here (no full rebuild from BlocBuilder!)
+    final isDarkMode = context.select<ThemeCubit, bool>(
+      (cubit) => cubit.state.isDarkMode,
+    );
+    final themeData = isDarkMode
+        ? ThemeManager.darkTheme
+        : ThemeManager.lightTheme;
 
-        return Scaffold(
-          backgroundColor: themeData.scaffoldBackgroundColor,
-          body: CustomScrollView(
-            controller: _scrollController,
-            slivers: [
-              // App Bar with Hero Header
-              SliverAppBar(
-                expandedHeight: 250,
-                floating: false,
-                pinned: true,
-                backgroundColor: themeData.appBarTheme.backgroundColor,
-                foregroundColor: themeData.appBarTheme.foregroundColor,
-                elevation: 0,
-                title: AnimatedOpacity(
-                  opacity: _showAppBarTitle ? 1.0 : 0.0,
-                  duration: const Duration(milliseconds: 200),
-                  child: Text(
-                    widget.category['name'] ?? 'الفئة',
-                    style: GoogleFonts.tajawal(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ),
-                flexibleSpace: FlexibleSpaceBar(
-                  background: Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors:
-                            widget.category['gradient'] ??
-                            [const Color(0xFF667EEA), const Color(0xFF764BA2)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                    ),
-                    child: Stack(
-                      children: [
-                        // Background pattern
-                        Positioned.fill(
-                          child: Opacity(
-                            opacity: 0.1,
-                            child: Image.network(
-                              'https://picsum.photos/seed/pattern/800/400',
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                        ),
-                        // Content
-                        SafeArea(
-                          child: Padding(
-                            padding: const EdgeInsets.all(24.0),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.end,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(16),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.2),
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: Icon(
-                                    widget.category['icon'] ?? Icons.code,
-                                    size: 48,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                                const SizedBox(height: 16),
-                                Text(
-                                  widget.category['name'] ?? 'البرمجة',
-                                  style: GoogleFonts.tajawal(
-                                    color: Colors.white,
-                                    fontSize: 32,
-                                    fontWeight: FontWeight.w900,
-                                    height: 1.2,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  'اكتشف عالم البرمجة والتطوير مع أفضل الكورسات التعليمية',
-                                  style: GoogleFonts.tajawal(
-                                    color: Colors.white.withOpacity(0.9),
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w500,
-                                    height: 1.4,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+    return Scaffold(
+      backgroundColor: themeData.scaffoldBackgroundColor,
+      body: CustomScrollView(
+        controller: _scrollController,
+        slivers: [
+          // ✅ Optimized SliverAppBar
+          SliverAppBar(
+            expandedHeight: 250,
+            floating: false,
+            pinned: true,
+            backgroundColor: themeData.appBarTheme.backgroundColor,
+            foregroundColor: themeData.appBarTheme.foregroundColor,
+            elevation: 0,
+            title: AnimatedOpacity(
+              opacity: _showAppBarTitle ? 1.0 : 0.0,
+              duration: const Duration(milliseconds: 200),
+              child: Text(
+                widget.category['name'] ?? 'الفئة',
+                style: GoogleFonts.tajawal(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
                 ),
               ),
-
-              // Content sections
-              SliverToBoxAdapter(
-                child: Column(
+            ),
+            flexibleSpace: FlexibleSpaceBar(
+              background: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors:
+                        widget.category['gradient'] ??
+                        [const Color(0xFF667EEA), const Color(0xFF764BA2)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                ),
+                child: Stack(
                   children: [
-                    const SizedBox(height: 32),
-
-                    // Beginner Courses Section
-                    _buildBeginnerCoursesSection(themeData, isDarkMode),
-
-                    const SizedBox(height: 40),
-
-                    // Featured Courses Section
-                    _buildFeaturedCoursesSection(themeData, isDarkMode),
-
-                    const SizedBox(height: 40),
-
-                    // Subcategories Section
-                    _buildSubcategoriesSection(themeData, isDarkMode),
-
-                    const SizedBox(height: 40),
-
-                    // All Courses Section
-                    _buildAllCoursesSection(themeData, isDarkMode),
-
-                    const SizedBox(height: 40),
+                    // ✅ Cached + lightweight background
+                    Positioned.fill(
+                      child: Opacity(
+                        opacity: 0.1,
+                        child: CachedNetworkImage(
+                          imageUrl:
+                              'https://picsum.photos/seed/pattern/800/400',
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) =>
+                              const SizedBox.shrink(),
+                          errorWidget: (context, url, error) =>
+                              const SizedBox.shrink(),
+                        ),
+                      ),
+                    ),
+                    // Content
+                    SafeArea(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24.0),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.2),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                widget.category['icon'] ?? Icons.code,
+                                size: 48,
+                                color: Colors.white,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              widget.category['name'] ?? 'البرمجة',
+                              style: GoogleFonts.tajawal(
+                                color: Colors.white,
+                                fontSize: 32,
+                                fontWeight: FontWeight.w900,
+                                height: 1.2,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'اكتشف عالم البرمجة والتطوير مع أفضل الكورسات التعليمية',
+                              style: GoogleFonts.tajawal(
+                                color: Colors.white.withOpacity(0.9),
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                                height: 1.4,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
-            ],
+            ),
           ),
-        );
-      },
+
+          // ✅ Replace SliverToBoxAdapter+Column with SliverList
+          SliverList(
+            delegate: SliverChildListDelegate.fixed([
+              const SizedBox(height: 32),
+
+              // Beginner Courses Section
+              RepaintBoundary(
+                child: _buildBeginnerCoursesSection(themeData, isDarkMode),
+              ),
+
+              const SizedBox(height: 40),
+
+              // Featured Courses Section
+              RepaintBoundary(
+                child: _buildFeaturedCoursesSection(themeData, isDarkMode),
+              ),
+
+              const SizedBox(height: 40),
+
+              // Subcategories Section
+              RepaintBoundary(
+                child: _buildSubcategoriesSection(themeData, isDarkMode),
+              ),
+
+              const SizedBox(height: 40),
+
+              // All Courses Section
+              RepaintBoundary(
+                child: _buildAllCoursesSection(themeData, isDarkMode),
+              ),
+
+              const SizedBox(height: 40),
+            ]),
+          ),
+        ],
+      ),
     );
   }
 
