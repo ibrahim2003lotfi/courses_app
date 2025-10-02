@@ -38,7 +38,11 @@ dependencies:
   path_provider: ^2.1.5
   flutter_bloc: ^9.1.1
   equatable: ^2.0.7
+<<<<<<< HEAD
   shared_preferences: ^2.5.3
+=======
+  cached_network_image: ^3.4.1
+>>>>>>> 9733b3b7817e2ac38d39d4067b5efb503841f1f1
 
 dev_dependencies:
   flutter_test:

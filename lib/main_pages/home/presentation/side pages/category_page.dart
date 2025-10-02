@@ -1,5 +1,9 @@
+<<<<<<< HEAD
 import 'package:courses_app/theme_cubit/theme_cubit.dart';
 import 'package:courses_app/theme_cubit/theme_state.dart';
+=======
+import 'package:courses_app/main_pages/home/presentation/side%20pages/category_datail_page.dart';
+>>>>>>> 9733b3b7817e2ac38d39d4067b5efb503841f1f1
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -158,6 +162,7 @@ class CategoriesPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+<<<<<<< HEAD
     return BlocBuilder<ThemeCubit, ThemeState>(
       builder: (context, themeState) {
         final isDarkMode = themeState.isDarkMode;
@@ -196,12 +201,36 @@ class CategoriesPage extends StatelessWidget {
           ),
         );
       },
+=======
+    return Scaffold(
+      backgroundColor: const Color(0xFFF9FAFB),
+      appBar: AppBar(
+        title: Text(
+          'جميع الأقسام',
+          style: GoogleFonts.tajawal(fontWeight: FontWeight.w800),
+        ),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
+      body: ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: _categorySections.length,
+        itemBuilder: (context, sectionIndex) {
+          final section = _categorySections[sectionIndex];
+          return _buildSection(section, context);
+        },
+      ),
+>>>>>>> 9733b3b7817e2ac38d39d4067b5efb503841f1f1
     );
   }
 
   Widget _buildSection(Map<String, dynamic> section, BuildContext context, bool isDarkMode) {
     final categories = section['categories'] as List<Map<String, dynamic>>;
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -236,13 +265,15 @@ class CategoriesPage extends StatelessWidget {
         ),
 
         // Section separator
-        if (section != _categorySections.last)
-          const SizedBox(height: 20),
+        if (section != _categorySections.last) const SizedBox(height: 20),
       ],
     );
   }
 
-  Widget _buildCategoryCube(Map<String, dynamic> category, BuildContext context) {
+  Widget _buildCategoryCube(
+    Map<String, dynamic> category,
+    BuildContext context,
+  ) {
     return Material(
       elevation: 4,
       borderRadius: BorderRadius.circular(16),
@@ -256,7 +287,9 @@ class CategoriesPage extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: (category['gradient'] as List<Color>).last.withOpacity(0.4),
+              color: (category['gradient'] as List<Color>).last.withOpacity(
+                0.4,
+              ),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -265,7 +298,12 @@ class CategoriesPage extends StatelessWidget {
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
           onTap: () {
-            // Navigate to category courses
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => CategoryDetailPage(category: category),
+              ),
+            );
           },
           child: Padding(
             padding: const EdgeInsets.all(12),

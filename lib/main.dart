@@ -1,8 +1,8 @@
 import 'package:courses_app/bloc/user_role_bloc.dart';
 import 'package:courses_app/core/utils/theme_manager.dart';
+import 'package:courses_app/main_pages/splash/splash_page.dart';
 import 'package:courses_app/theme_cubit/theme_cubit.dart';
 import 'package:courses_app/theme_cubit/theme_state.dart';
-import 'package:courses_app/welcome.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -34,7 +34,7 @@ class MyApp extends StatelessWidget {
           darkTheme: ThemeManager.darkTheme,
           themeMode: state.isDarkMode ? ThemeMode.dark : ThemeMode.light,
           debugShowCheckedModeBanner: false,
-          home: const WelcomePage(),
+          home: const SplashScreen(),
         );
       },
     );
