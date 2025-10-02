@@ -1,5 +1,8 @@
 import 'package:courses_app/main_pages/home/presentation/side%20pages/university_pages/lectures_page.dart';
+import 'package:courses_app/theme_cubit/theme_cubit.dart';
+import 'package:courses_app/theme_cubit/theme_state.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class FacultiesPage extends StatelessWidget {
@@ -9,77 +12,81 @@ class FacultiesPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF9FAFB),
-      body: CustomScrollView(
-        slivers: [
-          // Page Header with Back Button
-          SliverToBoxAdapter(
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
+    return BlocBuilder<ThemeCubit, ThemeState>(
+      builder: (context, themeState) {
+        final isDarkMode = themeState.isDarkMode;
+        
+        return Scaffold(
+          backgroundColor: isDarkMode ? const Color(0xFF121212) : const Color(0xFFF9FAFB),
+          body: CustomScrollView(
+            slivers: [
+              // Page Header with Back Button
+              SliverToBoxAdapter(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(isDarkMode ? 0.2 : 0.05),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-              child: SafeArea(
-                bottom: false,
-                child: Row(
-                  children: [
-                    // Back Button
-                    IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      icon: const Icon(
-                        Icons.arrow_back,
-                        color: Color(0xFF10B981),
-                      ),
-                      style: IconButton.styleFrom(
-                        backgroundColor: const Color(
-                          0xFF10B981,
-                        ).withOpacity(0.1),
-                        padding: const EdgeInsets.all(8),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    // Title
-                    Expanded(
-                      child: Text(
-                        'كليات $universityName',
-                        style: GoogleFonts.tajawal(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w900,
-                          color: const Color(0xFF1F2937),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  child: SafeArea(
+                    bottom: false,
+                    child: Row(
+                      children: [
+                        // Back Button
+                        IconButton(
+                          onPressed: () => Navigator.pop(context),
+                          icon: Icon(
+                            Icons.arrow_back,
+                            color: isDarkMode ? Colors.white : const Color(0xFF10B981),
+                          ),
+                          style: IconButton.styleFrom(
+                            backgroundColor: const Color(0xFF10B981).withOpacity(isDarkMode ? 0.2 : 0.1),
+                            padding: const EdgeInsets.all(8),
+                          ),
                         ),
-                      ),
+                        const SizedBox(width: 16),
+                        // Title
+                        Expanded(
+                          child: Text(
+                            'كليات $universityName',
+                            style: GoogleFonts.tajawal(
+                              fontSize: 24,
+                              fontWeight: FontWeight.w900,
+                              color: isDarkMode ? Colors.white : const Color(0xFF1F2937),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
-            ),
-          ),
 
-          // Faculties List
-          SliverList(
-            delegate: SliverChildBuilderDelegate((context, index) {
-              return Padding(
-                padding: EdgeInsets.fromLTRB(20, index == 0 ? 20 : 0, 20, 16),
-                child: FacultyListItem(
-                  faculty: facultiesList[index],
-                  universityName: universityName,
-                ),
-              );
-            }, childCount: facultiesList.length),
-          ),
+              // Faculties List
+              SliverList(
+                delegate: SliverChildBuilderDelegate((context, index) {
+                  return Padding(
+                    padding: EdgeInsets.fromLTRB(20, index == 0 ? 20 : 0, 20, 16),
+                    child: FacultyListItem(
+                      faculty: facultiesList[index],
+                      universityName: universityName,
+                    ),
+                  );
+                }, childCount: facultiesList.length),
+              ),
 
-          // Bottom spacing
-          const SliverToBoxAdapter(child: SizedBox(height: 40)),
-        ],
-      ),
+              // Bottom spacing
+              const SliverToBoxAdapter(child: SizedBox(height: 40)),
+            ],
+          ),
+        );
+      },
     );
   }
 }
@@ -96,183 +103,189 @@ class FacultyListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      elevation: 2,
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
+    return BlocBuilder<ThemeCubit, ThemeState>(
+      builder: (context, themeState) {
+        final isDarkMode = themeState.isDarkMode;
+        
+        return Material(
+          elevation: 2,
           borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 8,
-              offset: const Offset(0, 3),
-            ),
-          ],
-        ),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(16),
-          onTap: () {
-            _showFacultyDetails(context, faculty);
-          },
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Faculty Icon (Bigger size)
-                Container(
-                  width: 80,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF10B981).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(
-                    _getFacultyIcon(faculty),
-                    size: 40,
-                    color: const Color(0xFF10B981),
-                  ),
+          child: Container(
+            decoration: BoxDecoration(
+              color: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(isDarkMode ? 0.2 : 0.05),
+                  blurRadius: 8,
+                  offset: const Offset(0, 3),
                 ),
-
-                const SizedBox(width: 12),
-
-                // Faculty Info and button
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Faculty Name
-                      Text(
-                        faculty,
-                        style: GoogleFonts.tajawal(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w800,
-                          color: const Color(0xFF1F2937),
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
+              ],
+              border: isDarkMode ? Border.all(color: Colors.white30) : null,
+            ),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(16),
+              onTap: () {
+                _showFacultyDetails(context, faculty, isDarkMode);
+              },
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Faculty Icon (Bigger size)
+                    Container(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        color: _getFacultyColor(faculty).withOpacity(isDarkMode ? 0.2 : 0.1),
+                        borderRadius: BorderRadius.circular(12),
+                        border: isDarkMode ? Border.all(color: _getFacultyColor(faculty).withOpacity(0.4)) : null,
                       ),
+                      child: Icon(
+                        _getFacultyIcon(faculty),
+                        size: 40,
+                        color: _getFacultyColor(faculty),
+                      ),
+                    ),
 
-                      const SizedBox(height: 8),
+                    const SizedBox(width: 12),
 
-                      // Faculty Info
-                      Wrap(
-                        spacing: 12,
-                        runSpacing: 6,
+                    // Faculty Info and button
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // University Name
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
+                          // Faculty Name
+                          Text(
+                            faculty,
+                            style: GoogleFonts.tajawal(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                              color: isDarkMode ? Colors.white : const Color(0xFF1F2937),
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+
+                          const SizedBox(height: 8),
+
+                          // Faculty Info
+                          Wrap(
+                            spacing: 12,
+                            runSpacing: 6,
                             children: [
-                              const Icon(
-                                Icons.school_outlined,
-                                size: 14,
-                                color: Color(0xFFEF4444),
+                              // University Name
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.school_outlined,
+                                    size: 14,
+                                    color: isDarkMode ? Colors.white70 : const Color(0xFFEF4444),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    universityName,
+                                    style: GoogleFonts.tajawal(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: isDarkMode ? Colors.white70 : const Color(0xFF6B7280),
+                                    ),
+                                  ),
+                                ],
                               ),
-                              const SizedBox(width: 4),
-                              Text(
-                                universityName,
-                                style: GoogleFonts.tajawal(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: const Color(0xFF6B7280),
+
+                              // Faculty Type
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 2,
                                 ),
+                                decoration: BoxDecoration(
+                                  color: _getFacultyColor(faculty).withOpacity(isDarkMode ? 0.2 : 0.1),
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(
+                                    color: _getFacultyColor(faculty).withOpacity(isDarkMode ? 0.4 : 0.3),
+                                  ),
+                                ),
+                                child: Text(
+                                  _getFacultyType(faculty),
+                                  style: GoogleFonts.tajawal(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w700,
+                                    color: _getFacultyColor(faculty),
+                                  ),
+                                ),
+                              ),
+
+                              // Students Count (Example)
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.people_outline,
+                                    size: 14,
+                                    color: isDarkMode ? Colors.white70 : const Color(0xFF6B7280),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    '${_getRandomStudentCount()} طالب',
+                                    style: GoogleFonts.tajawal(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: isDarkMode ? Colors.white70 : const Color(0xFF6B7280),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
 
-                          // Faculty Type
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: _getFacultyColor(faculty).withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(6),
-                              border: Border.all(
-                                color: _getFacultyColor(
-                                  faculty,
-                                ).withOpacity(0.3),
-                              ),
-                            ),
-                            child: Text(
-                              _getFacultyType(faculty),
-                              style: GoogleFonts.tajawal(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w700,
-                                color: _getFacultyColor(faculty),
-                              ),
-                            ),
-                          ),
+                          const SizedBox(height: 12),
 
-                          // Students Count (Example)
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(
-                                Icons.people_outline,
-                                size: 14,
-                                color: Color(0xFF6B7280),
+                          // Button
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => LecturesPage(
+                                      facultyName: faculty,
+                                      universityName: universityName,
+                                    ),
+                                  ),
+                                );
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF10B981),
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                padding: const EdgeInsets.symmetric(vertical: 12),
                               ),
-                              const SizedBox(width: 4),
-                              Text(
-                                '${_getRandomStudentCount()} طالب',
+                              child: Text(
+                                'عرض المحاضرات',
                                 style: GoogleFonts.tajawal(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: const Color(0xFF6B7280),
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
                                 ),
                               ),
-                            ],
+                            ),
                           ),
                         ],
                       ),
-
-                      const SizedBox(height: 12),
-
-                      // Button
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => LecturesPage(
-                                  facultyName: faculty,
-                                  universityName: universityName,
-                                ),
-                              ),
-                            );
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF10B981),
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                          ),
-                          child: Text(
-                            'عرض المحاضرات',
-                            style: GoogleFonts.tajawal(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -306,35 +319,38 @@ class FacultyListItem extends StatelessWidget {
     return 500 + (faculty.hashCode % 2000);
   }
 
-  void _showFacultyDetails(BuildContext context, String faculty) {
+  void _showFacultyDetails(BuildContext context, String faculty, bool isDarkMode) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) =>
-          FacultyDetailsSheet(faculty: faculty, universityName: universityName),
+      builder: (context) => FacultyDetailsSheet(
+        faculty: faculty, 
+        universityName: universityName,
+        isDarkMode: isDarkMode,
+      ),
     );
   }
-
-  
 }
 
 class FacultyDetailsSheet extends StatelessWidget {
   final String faculty;
   final String universityName;
+  final bool isDarkMode;
 
   const FacultyDetailsSheet({
     super.key,
     required this.faculty,
     required this.universityName,
+    required this.isDarkMode,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -347,7 +363,7 @@ class FacultyDetailsSheet extends StatelessWidget {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: Colors.grey[300],
+                color: isDarkMode ? Colors.grey[600] : Colors.grey[300],
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -361,8 +377,9 @@ class FacultyDetailsSheet extends StatelessWidget {
                 width: 80,
                 height: 80,
                 decoration: BoxDecoration(
-                  color: _getFacultyColor(faculty).withOpacity(0.1),
+                  color: _getFacultyColor(faculty).withOpacity(isDarkMode ? 0.2 : 0.1),
                   borderRadius: BorderRadius.circular(12),
+                  border: isDarkMode ? Border.all(color: _getFacultyColor(faculty).withOpacity(0.4)) : null,
                 ),
                 child: Icon(
                   _getFacultyIcon(faculty),
@@ -380,7 +397,7 @@ class FacultyDetailsSheet extends StatelessWidget {
                       style: GoogleFonts.tajawal(
                         fontSize: 20,
                         fontWeight: FontWeight.w800,
-                        color: const Color(0xFF1F2937),
+                        color: isDarkMode ? Colors.white : const Color(0xFF1F2937),
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -389,7 +406,7 @@ class FacultyDetailsSheet extends StatelessWidget {
                       style: GoogleFonts.tajawal(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
-                        color: const Color(0xFF6B7280),
+                        color: isDarkMode ? Colors.white70 : const Color(0xFF6B7280),
                       ),
                     ),
                   ],
@@ -401,9 +418,9 @@ class FacultyDetailsSheet extends StatelessWidget {
           const SizedBox(height: 24),
 
           // Faculty info
-          _buildInfoRow('نوع الكلية', _getFacultyType(faculty)),
-          _buildInfoRow('عدد الطلاب', '${_getRandomStudentCount()} طالب'),
-          _buildInfoRow('التخصص', _getFacultySpecialization(faculty)),
+          _buildInfoRow('نوع الكلية', _getFacultyType(faculty), isDarkMode),
+          _buildInfoRow('عدد الطلاب', '${_getRandomStudentCount()} طالب', isDarkMode),
+          _buildInfoRow('التخصص', _getFacultySpecialization(faculty), isDarkMode),
 
           const SizedBox(height: 24),
 
@@ -442,7 +459,10 @@ class FacultyDetailsSheet extends StatelessWidget {
                 child: OutlinedButton(
                   onPressed: () => Navigator.pop(context),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFF6B7280),
+                    foregroundColor: isDarkMode ? Colors.white70 : const Color(0xFF6B7280),
+                    side: BorderSide(
+                      color: isDarkMode ? Colors.white30 : const Color(0xFFD1D5DB),
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -461,7 +481,7 @@ class FacultyDetailsSheet extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoRow(String label, String value) {
+  Widget _buildInfoRow(String label, String value, bool isDarkMode) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
@@ -472,7 +492,7 @@ class FacultyDetailsSheet extends StatelessWidget {
             style: GoogleFonts.tajawal(
               fontSize: 14,
               fontWeight: FontWeight.w600,
-              color: const Color(0xFF1F2937),
+              color: isDarkMode ? Colors.white : const Color(0xFF1F2937),
             ),
           ),
           Text(
@@ -480,7 +500,7 @@ class FacultyDetailsSheet extends StatelessWidget {
             style: GoogleFonts.tajawal(
               fontSize: 14,
               fontWeight: FontWeight.w500,
-              color: const Color(0xFF6B7280),
+              color: isDarkMode ? Colors.white70 : const Color(0xFF6B7280),
             ),
           ),
         ],
@@ -529,8 +549,6 @@ class FacultyDetailsSheet extends StatelessWidget {
   int _getRandomStudentCount() {
     return 500 + (faculty.hashCode % 2000);
   }
-
-  
 }
 
 // Faculties data list

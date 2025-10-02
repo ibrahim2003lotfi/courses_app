@@ -1,5 +1,8 @@
 import 'package:courses_app/main_pages/courses/presentation/widgets/courses_details_widgets.dart';
+import 'package:courses_app/theme_cubit/theme_cubit.dart';
+import 'package:courses_app/theme_cubit/theme_state.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class CourseDetailsPage extends StatefulWidget {
   final Map<String, dynamic> course;
@@ -13,19 +16,25 @@ class CourseDetailsPage extends StatefulWidget {
 class _CourseDetailsPageState extends State<CourseDetailsPage> {
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
-      body: CustomScrollView(
-        slivers: [
-          CourseHeader(course: widget.course),
-          CourseInfoCard(course: widget.course),
-          CourseTabs(course: widget.course),
-          RelatedCourses(relatedCourses: _getRelatedCourses()),
-          const SliverToBoxAdapter(
-            child: SizedBox(height: 40),
+    return BlocBuilder<ThemeCubit, ThemeState>(
+      builder: (context, themeState) {
+        final isDarkMode = themeState.isDarkMode;
+        
+        return Scaffold(
+          backgroundColor: isDarkMode ? const Color(0xFF121212) : const Color(0xFFF8FAFC),
+          body: CustomScrollView(
+            slivers: [
+              CourseHeader(course: widget.course),
+              CourseInfoCard(course: widget.course),
+              CourseTabs(course: widget.course),
+              RelatedCourses(relatedCourses: _getRelatedCourses()),
+              const SliverToBoxAdapter(
+                child: SizedBox(height: 40),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 

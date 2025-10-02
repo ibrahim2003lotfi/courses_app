@@ -1,5 +1,7 @@
-
+import 'package:courses_app/theme_cubit/theme_cubit.dart';
+import 'package:courses_app/theme_cubit/theme_state.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class LecturesPage extends StatelessWidget {
@@ -14,100 +16,102 @@ class LecturesPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF9FAFB),
-      body: CustomScrollView(
-        slivers: [
-          // Page Header with Back Button
-          SliverToBoxAdapter(
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
+    return BlocBuilder<ThemeCubit, ThemeState>(
+      builder: (context, themeState) {
+        final isDarkMode = themeState.isDarkMode;
+        
+        return Scaffold(
+          backgroundColor: isDarkMode ? const Color(0xFF121212) : const Color(0xFFF9FAFB),
+          body: CustomScrollView(
+            slivers: [
+              // Page Header with Back Button
+              SliverToBoxAdapter(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(isDarkMode ? 0.2 : 0.05),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-              child: SafeArea(
-                bottom: false,
-                child: Row(
-                  children: [
-                    // Back Button
-                    IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      icon: const Icon(
-                        Icons.arrow_back,
-                        color: Color(0xFF10B981),
-                      ),
-                      style: IconButton.styleFrom(
-                        backgroundColor: const Color(
-                          0xFF10B981,
-                        ).withOpacity(0.1),
-                        padding: const EdgeInsets.all(8),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    // Title
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'مواد $facultyName',
-                            style: GoogleFonts.tajawal(
-                              fontSize: 24,
-                              fontWeight: FontWeight.w900,
-                              color: const Color(0xFF1F2937),
-                            ),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  child: SafeArea(
+                    bottom: false,
+                    child: Row(
+                      children: [
+                        // Back Button
+                        IconButton(
+                          onPressed: () => Navigator.pop(context),
+                          icon: Icon(
+                            Icons.arrow_back,
+                            color: isDarkMode ? Colors.white : const Color(0xFF10B981),
                           ),
-                          Text(
-                            universityName,
-                            style: GoogleFonts.tajawal(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                              color: const Color(0xFF6B7280),
-                            ),
+                          style: IconButton.styleFrom(
+                            backgroundColor: const Color(0xFF10B981).withOpacity(isDarkMode ? 0.2 : 0.1),
+                            padding: const EdgeInsets.all(8),
                           ),
-                        ],
-                      ),
+                        ),
+                        const SizedBox(width: 16),
+                        // Title
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'مواد $facultyName',
+                                style: GoogleFonts.tajawal(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.w900,
+                                  color: isDarkMode ? Colors.white : const Color(0xFF1F2937),
+                                ),
+                              ),
+                              Text(
+                                universityName,
+                                style: GoogleFonts.tajawal(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                  color: isDarkMode ? Colors.white70 : const Color(0xFF6B7280),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
-            ),
-          ),
 
-          // Search Bar
-          const SliverToBoxAdapter(
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-              child: LecSearchField(),
-            ),
-          ),
-
-          // Lectures List
-          SliverList(
-            delegate: SliverChildBuilderDelegate((context, index) {
-              return Padding(
-                padding: EdgeInsets.fromLTRB(20, index == 0 ? 0 : 0, 20, 16),
-                child: LectureListItem(
-                  lectureNumber: index + 1,
-                  facultyName: facultyName,
+              // Search Bar
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  child: LecSearchField(isDarkMode: isDarkMode),
                 ),
-              );
-            }, childCount: 8), // Display 8 lectures
+              ),
+
+              // Lectures List
+              SliverList(
+                delegate: SliverChildBuilderDelegate((context, index) {
+                  return Padding(
+                    padding: EdgeInsets.fromLTRB(20, index == 0 ? 0 : 0, 20, 16),
+                    child: LectureListItem(
+                      lectureNumber: index + 1,
+                      facultyName: facultyName,
+                    ),
+                  );
+                }, childCount: 8), // Display 8 lectures
+              ),
+
+              // Bottom spacing
+              const SliverToBoxAdapter(child: SizedBox(height: 40)),
+            ],
           ),
-
-          // Show All Lectures Button
-
-          // Bottom spacing
-          const SliverToBoxAdapter(child: SizedBox(height: 40)),
-        ],
-      ),
+        );
+      },
     );
   }
 }
@@ -124,136 +128,142 @@ class LectureListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      elevation: 2,
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
+    return BlocBuilder<ThemeCubit, ThemeState>(
+      builder: (context, themeState) {
+        final isDarkMode = themeState.isDarkMode;
+        
+        return Material(
+          elevation: 2,
           borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 8,
-              offset: const Offset(0, 3),
-            ),
-          ],
-        ),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(16),
-          onTap: () {
-            _showLectureDetails(context, lectureNumber);
-          },
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                // Lecture Icon
-                Container(
-                  width: 60,
-                  height: 60,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF10B981).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(
-                    Icons.play_circle_filled,
-                    size: 32,
-                    color: Color(0xFF10B981),
-                  ),
+          child: Container(
+            decoration: BoxDecoration(
+              color: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(isDarkMode ? 0.2 : 0.05),
+                  blurRadius: 8,
+                  offset: const Offset(0, 3),
                 ),
-
-                const SizedBox(width: 12),
-
-                // Lecture Info
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Lecture Title
-                      Text(
-                        'مادة $lectureNumber',
-                        style: GoogleFonts.tajawal(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w800,
-                          color: const Color(0xFF1F2937),
-                        ),
+              ],
+              border: isDarkMode ? Border.all(color: Colors.white30) : null,
+            ),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(16),
+              onTap: () {
+                _showLectureDetails(context, lectureNumber, isDarkMode);
+              },
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    // Lecture Icon
+                    Container(
+                      width: 60,
+                      height: 60,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF10B981).withOpacity(isDarkMode ? 0.2 : 0.1),
+                        borderRadius: BorderRadius.circular(12),
+                        border: isDarkMode ? Border.all(color: const Color(0xFF10B981).withOpacity(0.4)) : null,
                       ),
-
-                      const SizedBox(height: 4),
-
-                      // Lecture Description
-                      Text(
-                        _getLectureDescription(lectureNumber, facultyName),
-                        style: GoogleFonts.tajawal(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: const Color(0xFF6B7280),
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
+                      child: Icon(
+                        Icons.play_circle_filled,
+                        size: 32,
+                        color: isDarkMode ? const Color(0xFF34D399) : const Color(0xFF10B981),
                       ),
+                    ),
 
-                      const SizedBox(height: 8),
+                    const SizedBox(width: 12),
 
-                      // Lecture Metadata
-                      Row(
+                    // Lecture Info
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Duration
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(
-                                Icons.access_time,
-                                size: 14,
-                                color: Color(0xFF6B7280),
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                '${_getLectureDuration(lectureNumber)} دقيقة',
-                                style: GoogleFonts.tajawal(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: const Color(0xFF6B7280),
-                                ),
-                              ),
-                            ],
+                          // Lecture Title
+                          Text(
+                            'مادة $lectureNumber',
+                            style: GoogleFonts.tajawal(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                              color: isDarkMode ? Colors.white : const Color(0xFF1F2937),
+                            ),
                           ),
 
-                          const SizedBox(width: 16),
+                          const SizedBox(height: 4),
 
-                          // Date
+                          // Lecture Description
+                          Text(
+                            _getLectureDescription(lectureNumber, facultyName),
+                            style: GoogleFonts.tajawal(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: isDarkMode ? Colors.white70 : const Color(0xFF6B7280),
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+
+                          const SizedBox(height: 8),
+
+                          // Lecture Metadata
                           Row(
-                            mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(
-                                Icons.calendar_today,
-                                size: 14,
-                                color: Color(0xFF6B7280),
+                              // Duration
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.access_time,
+                                    size: 14,
+                                    color: isDarkMode ? Colors.white70 : const Color(0xFF6B7280),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    '${_getLectureDuration(lectureNumber)} دقيقة',
+                                    style: GoogleFonts.tajawal(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: isDarkMode ? Colors.white70 : const Color(0xFF6B7280),
+                                    ),
+                                  ),
+                                ],
                               ),
-                              const SizedBox(width: 4),
-                              Text(
-                                _getLectureDate(lectureNumber),
-                                style: GoogleFonts.tajawal(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: const Color(0xFF6B7280),
-                                ),
+
+                              const SizedBox(width: 16),
+
+                              // Date
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.calendar_today,
+                                    size: 14,
+                                    color: isDarkMode ? Colors.white70 : const Color(0xFF6B7280),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    _getLectureDate(lectureNumber),
+                                    style: GoogleFonts.tajawal(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: isDarkMode ? Colors.white70 : const Color(0xFF6B7280),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
                         ],
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-
-                // Play Button
-              ],
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -289,7 +299,7 @@ class LectureListItem extends StatelessWidget {
     return dates[lectureNumber - 1];
   }
 
-  void _showLectureDetails(BuildContext context, int lectureNumber) {
+  void _showLectureDetails(BuildContext context, int lectureNumber, bool isDarkMode) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -297,6 +307,7 @@ class LectureListItem extends StatelessWidget {
       builder: (context) => LectureDetailsSheet(
         lectureNumber: lectureNumber,
         facultyName: facultyName,
+        isDarkMode: isDarkMode,
       ),
     );
   }
@@ -305,19 +316,21 @@ class LectureListItem extends StatelessWidget {
 class LectureDetailsSheet extends StatelessWidget {
   final int lectureNumber;
   final String facultyName;
+  final bool isDarkMode;
 
   const LectureDetailsSheet({
     super.key,
     required this.lectureNumber,
     required this.facultyName,
+    required this.isDarkMode,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -330,7 +343,7 @@ class LectureDetailsSheet extends StatelessWidget {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: Colors.grey[300],
+                color: isDarkMode ? Colors.grey[600] : Colors.grey[300],
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -344,13 +357,14 @@ class LectureDetailsSheet extends StatelessWidget {
                 width: 60,
                 height: 60,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF10B981).withOpacity(0.1),
+                  color: const Color(0xFF10B981).withOpacity(isDarkMode ? 0.2 : 0.1),
                   borderRadius: BorderRadius.circular(12),
+                  border: isDarkMode ? Border.all(color: const Color(0xFF10B981).withOpacity(0.4)) : null,
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.play_circle_filled,
                   size: 32,
-                  color: Color(0xFF10B981),
+                  color: isDarkMode ? const Color(0xFF34D399) : const Color(0xFF10B981),
                 ),
               ),
               const SizedBox(width: 16),
@@ -363,7 +377,7 @@ class LectureDetailsSheet extends StatelessWidget {
                       style: GoogleFonts.tajawal(
                         fontSize: 20,
                         fontWeight: FontWeight.w800,
-                        color: const Color(0xFF1F2937),
+                        color: isDarkMode ? Colors.white : const Color(0xFF1F2937),
                       ),
                     ),
                     Text(
@@ -371,7 +385,7 @@ class LectureDetailsSheet extends StatelessWidget {
                       style: GoogleFonts.tajawal(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
-                        color: const Color(0xFF6B7280),
+                        color: isDarkMode ? Colors.white70 : const Color(0xFF6B7280),
                       ),
                     ),
                   ],
@@ -383,10 +397,10 @@ class LectureDetailsSheet extends StatelessWidget {
           const SizedBox(height: 24),
 
           // Lecture info
-          _buildInfoRow('المدة', '${_getLectureDuration(lectureNumber)} دقيقة'),
-          _buildInfoRow('التاريخ', _getFormattedDate(lectureNumber)),
-          _buildInfoRow('الحالة', 'متاحة'),
-          _buildInfoRow('النوع', 'فيديو'),
+          _buildInfoRow('المدة', '${_getLectureDuration(lectureNumber)} دقيقة', isDarkMode),
+          _buildInfoRow('التاريخ', _getFormattedDate(lectureNumber), isDarkMode),
+          _buildInfoRow('الحالة', 'متاحة', isDarkMode),
+          _buildInfoRow('النوع', 'فيديو', isDarkMode),
 
           const SizedBox(height: 24),
 
@@ -418,7 +432,10 @@ class LectureDetailsSheet extends StatelessWidget {
                 child: OutlinedButton(
                   onPressed: () => Navigator.pop(context),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFF6B7280),
+                    foregroundColor: isDarkMode ? Colors.white70 : const Color(0xFF6B7280),
+                    side: BorderSide(
+                      color: isDarkMode ? Colors.white30 : const Color(0xFFD1D5DB),
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -437,7 +454,7 @@ class LectureDetailsSheet extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoRow(String label, String value) {
+  Widget _buildInfoRow(String label, String value, bool isDarkMode) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
@@ -448,7 +465,7 @@ class LectureDetailsSheet extends StatelessWidget {
             style: GoogleFonts.tajawal(
               fontSize: 14,
               fontWeight: FontWeight.w600,
-              color: const Color(0xFF1F2937),
+              color: isDarkMode ? Colors.white : const Color(0xFF1F2937),
             ),
           ),
           Text(
@@ -456,7 +473,7 @@ class LectureDetailsSheet extends StatelessWidget {
             style: GoogleFonts.tajawal(
               fontSize: 14,
               fontWeight: FontWeight.w500,
-              color: const Color(0xFF6B7280),
+              color: isDarkMode ? Colors.white70 : const Color(0xFF6B7280),
             ),
           ),
         ],
@@ -485,7 +502,7 @@ class LectureDetailsSheet extends StatelessWidget {
   void _playLecture(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('الانتقال اللى مادة  $lectureNumber'),
+        content: Text('الانتقال الى مادة $lectureNumber'),
         backgroundColor: const Color(0xFF10B981),
       ),
     );
@@ -493,10 +510,12 @@ class LectureDetailsSheet extends StatelessWidget {
 }
 
 class LecSearchField extends StatefulWidget {
-  const LecSearchField({super.key});
+  final bool isDarkMode;
+
+  const LecSearchField({super.key, required this.isDarkMode});
 
   @override
-  State<LecSearchField>  createState() => _LecSearchFieldState();
+  State<LecSearchField> createState() => _LecSearchFieldState();
 }
 
 class _LecSearchFieldState extends State<LecSearchField> {
@@ -529,22 +548,23 @@ class _LecSearchFieldState extends State<LecSearchField> {
         child: TextField(
           controller: _controller,
           style: GoogleFonts.tajawal(
-            fontWeight: _hasText
-                ? FontWeight.w700
-                : FontWeight.w500, // Bolder when text exists
+            fontWeight: _hasText ? FontWeight.w700 : FontWeight.w500,
             fontSize: 16,
-            color: const Color(0xFF1F2937),
+            color: widget.isDarkMode ? Colors.white : const Color(0xFF1F2937),
           ),
           decoration: InputDecoration(
             hintText: 'ابحث عن الكورسات, المحاضرات, و الدروس',
             hintStyle: GoogleFonts.tajawal(
               fontSize: 14,
-              fontWeight: FontWeight.w500, // Normal weight for hint
-              color: const Color(0xFF6B7280),
+              fontWeight: FontWeight.w500,
+              color: widget.isDarkMode ? Colors.white70 : const Color(0xFF6B7280),
             ),
-            prefixIcon: const Icon(Icons.search, color: Color(0xFF6B7280)),
+            prefixIcon: Icon(
+              Icons.search, 
+              color: widget.isDarkMode ? Colors.white70 : const Color(0xFF6B7280)
+            ),
             filled: true,
-            fillColor: Colors.white,
+            fillColor: widget.isDarkMode ? const Color(0xFF2D2D2D) : Colors.white,
             contentPadding: const EdgeInsets.symmetric(
               vertical: 16,
               horizontal: 16,
@@ -559,7 +579,10 @@ class _LecSearchFieldState extends State<LecSearchField> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide: const BorderSide(color: Color(0xFF10B981), width: 2),
+              borderSide: BorderSide(
+                color: widget.isDarkMode ? const Color(0xFF34D399) : const Color(0xFF10B981), 
+                width: 2
+              ),
             ),
           ),
         ),

@@ -1,4 +1,4 @@
-
+import 'package:courses_app/bloc/user_role_bloc.dart';
 import 'package:courses_app/core/utils/theme_manager.dart';
 import 'package:courses_app/main_pages/profile/presentation/pages/settings_page.dart';
 import 'package:courses_app/theme_cubit/theme_cubit.dart';
@@ -15,59 +15,107 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  // بيانات المستخدم النموذجية
-  final Map<String, dynamic> userProfile = {
-    'name': 'أحمد محمد السالم',
-    'email': 'ahmed.salem@example.com',
-    'username': '@ahmed_salem',
-    'type': 'انضم الينا كمدرس',
-    'profileImage': 'https://picsum.photos/seed/profile/200/200',
-    'coverImage': 'https://picsum.photos/seed/cover/800/300',
-    'joinDate': 'انضم في مارس 2023',
-    'bio':
-        'مطور تطبيقات محمول ومهتم بالتعلم المستمر في مجال التكنولوجيا والبرمجة.',
-  };
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<UserRoleBloc, UserRoleState>(
+      builder: (context, roleState) {
+        final bool isTeacher = roleState.isTeacher;
+        
+        // بيانات المستخدم النموذجية - updated to use BLoC
+        final Map<String, dynamic> userProfile = {
+          'name': 'أحمد محمد السالم',
+          'email': 'ahmed.salem@example.com',
+          'username': '@ahmed_salem',
+          'type': isTeacher ? 'مدرس' : 'انضم الينا كمدرس',
+          'profileImage': 'https://picsum.photos/seed/profile/200/200',
+          'coverImage': 'https://picsum.photos/seed/cover/800/300',
+          'joinDate': 'انضم في مارس 2023',
+          'bio': isTeacher 
+              ? 'مدرس متخصص في تطوير التطبيقات وتقنية المعلومات.'
+              : 'مطور تطبيقات محمول ومهتم بالتعلم المستمر في مجال التكنولوجيا والبرمجة.',
+        };
 
-  // إحصائيات المستخدم
-  final Map<String, dynamic> userStats = {
-    'enrolled': 12,
-    'completed': 8,
-    'certificates': 5,
-  };
+        // إحصائيات المستخدم
+        final Map<String, dynamic> userStats = {
+          'enrolled': 12,
+          'completed': 8,
+          'certificates': 5,
+        };
 
-  // الشهادات المكتسبة
-  final List<Map<String, dynamic>> certificates = [
-    {
-      'title': 'شهادة Flutter المتقدم',
-      'date': '2024',
-      'color': Colors.blue,
-      'icon': Icons.code,
-    },
-    {
-      'title': 'شهادة UI/UX Design',
-      'date': '2024',
-      'color': Colors.purple,
-      'icon': Icons.design_services,
-    },
-    {
-      'title': 'شهادة التسويق الرقمي',
-      'date': '2023',
-      'color': Colors.orange,
-      'icon': Icons.campaign,
-    },
-    {
-      'title': 'شهادة إدارة المشاريع',
-      'date': '2023',
-      'color': Colors.green,
-      'icon': Icons.business_center,
-    },
-    {
-      'title': 'شهادة تحليل البيانات',
-      'date': '2023',
-      'color': Colors.teal,
-      'icon': Icons.analytics,
-    },
-  ];
+        // الشهادات المكتسبة
+        final List<Map<String, dynamic>> certificates = [
+          {
+            'title': 'شهادة Flutter المتقدم',
+            'date': '2024',
+            'color': Colors.blue,
+            'icon': Icons.code,
+          },
+          {
+            'title': 'شهادة UI/UX Design',
+            'date': '2024',
+            'color': Colors.purple,
+            'icon': Icons.design_services,
+          },
+          {
+            'title': 'شهادة التسويق الرقمي',
+            'date': '2023',
+            'color': Colors.orange,
+            'icon': Icons.campaign,
+          },
+          {
+            'title': 'شهادة إدارة المشاريع',
+            'date': '2023',
+            'color': Colors.green,
+            'icon': Icons.business_center,
+          },
+          {
+            'title': 'شهادة تحليل البيانات',
+            'date': '2023',
+            'color': Colors.teal,
+            'icon': Icons.analytics,
+          },
+        ];
+
+        return BlocBuilder<ThemeCubit, ThemeState>(
+          builder: (context, themeState) {
+            final isDarkMode = themeState.isDarkMode;
+
+            return Theme(
+              data: isDarkMode ? ThemeManager.darkTheme : ThemeManager.lightTheme,
+              child: Scaffold(
+                backgroundColor: _getBackgroundColor(isDarkMode),
+                body: SafeArea(
+                  child: CustomScrollView(
+                    slivers: [
+                      // Header with Cover and Profile Image
+                      SliverToBoxAdapter(child: _buildProfileHeader(isDarkMode)),
+
+                      // User Info Section
+                      SliverToBoxAdapter(child: _buildUserInfo(isDarkMode, isTeacher, userProfile)),
+
+                      // User Statistics
+                      SliverToBoxAdapter(child: _buildUserStats(isDarkMode, userStats)),
+
+                      // Certificates Section
+                      SliverToBoxAdapter(
+                        child: _buildCertificatesSection(isDarkMode, certificates),
+                      ),
+
+                      // Action Buttons
+                      SliverToBoxAdapter(child: _buildActionButtons(isDarkMode)),
+
+                      // Bottom Spacing
+                      const SliverToBoxAdapter(child: SizedBox(height: 40)),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
 
   // Helper method to get text color based on theme
   Color _getTextColor(bool isDarkMode) {
@@ -89,45 +137,6 @@ class _ProfilePageState extends State<ProfilePage> {
     return isDarkMode ? Colors.grey[400]! : Colors.grey[600]!;
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return BlocBuilder<ThemeCubit, ThemeState>(
-      builder: (context, themeState) {
-        final isDarkMode = themeState.isDarkMode;
-        
-        return Theme(
-          data: isDarkMode ? ThemeManager.darkTheme : ThemeManager.lightTheme,
-          child: Scaffold(
-            backgroundColor: _getBackgroundColor(isDarkMode),
-            body: SafeArea(
-              child: CustomScrollView(
-                slivers: [
-                  // Header with Cover and Profile Image
-                  SliverToBoxAdapter(child: _buildProfileHeader(isDarkMode)),
-
-                  // User Info Section
-                  SliverToBoxAdapter(child: _buildUserInfo(isDarkMode)),
-
-                  // User Statistics
-                  SliverToBoxAdapter(child: _buildUserStats(isDarkMode)),
-
-                  // Certificates Section
-                  SliverToBoxAdapter(child: _buildCertificatesSection(isDarkMode)),
-
-                  // Action Buttons
-                  SliverToBoxAdapter(child: _buildActionButtons(isDarkMode)),
-
-                  // Bottom Spacing
-                  const SliverToBoxAdapter(child: SizedBox(height: 40)),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
   Widget _buildProfileHeader(bool isDarkMode) {
     return Container(
       height: 280,
@@ -143,9 +152,10 @@ class _ProfilePageState extends State<ProfilePage> {
                 colors: [const Color(0xFF3B82F6), const Color(0xFF1E40AF)],
               ),
               image: DecorationImage(
-                image: NetworkImage(userProfile['coverImage']),
+                image: NetworkImage('https://picsum.photos/seed/cover/800/300'),
                 fit: BoxFit.cover,
                 colorFilter: ColorFilter.mode(
+                  // ignore: deprecated_member_use
                   Colors.black.withOpacity(0.3),
                   BlendMode.overlay,
                 ),
@@ -159,7 +169,9 @@ class _ProfilePageState extends State<ProfilePage> {
             left: 16,
             child: Container(
               decoration: BoxDecoration(
-                color: (isDarkMode ? Colors.black : Colors.white).withOpacity(0.9),
+                color: (isDarkMode ? Colors.black : Colors.white).withOpacity(
+                  0.9,
+                ),
                 shape: BoxShape.circle,
               ),
             ),
@@ -187,7 +199,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
                 child: CircleAvatar(
                   radius: 57,
-                  backgroundImage: NetworkImage(userProfile['profileImage']),
+                  backgroundImage: const NetworkImage('https://picsum.photos/seed/profile/200/200'),
                   backgroundColor: Colors.grey[200],
                 ),
               ),
@@ -198,7 +210,7 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _buildUserInfo(bool isDarkMode) {
+  Widget _buildUserInfo(bool isDarkMode, bool isTeacher, Map<String, dynamic> userProfile) {
     return Padding(
       padding: const EdgeInsets.all(20.0),
       child: Column(
@@ -222,8 +234,8 @@ class _ProfilePageState extends State<ProfilePage> {
           Text(
             userProfile['email'],
             style: TextStyle(
-              fontSize: 16, 
-              color: _getSecondaryTextColor(isDarkMode)
+              fontSize: 16,
+              color: _getSecondaryTextColor(isDarkMode),
             ),
             textAlign: TextAlign.center,
           ),
@@ -233,41 +245,56 @@ class _ProfilePageState extends State<ProfilePage> {
           Text(
             userProfile['username'],
             style: TextStyle(
-              fontSize: 14, 
-              color: _getSecondaryTextColor(isDarkMode)
+              fontSize: 14,
+              color: _getSecondaryTextColor(isDarkMode),
             ),
             textAlign: TextAlign.center,
           ),
 
           const SizedBox(height: 16),
 
-          // User Level Badge
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF3B82F6), Color(0xFF1E40AF)],
+          // User Level Badge - Make it clickable if user is student
+          GestureDetector(
+            onTap: !isTeacher
+                ? () {
+                    _showBecomeTeacherDialog(isDarkMode);
+                  }
+                : null,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: isTeacher
+                      ? [
+                          Color(0xFF10B981),
+                          Color(0xFF059669),
+                        ] // Green for teacher
+                      : [
+                          Color(0xFF3B82F6),
+                          Color(0xFF1E40AF),
+                        ], // Blue for student
+                ),
+                borderRadius: BorderRadius.circular(20),
               ),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(
-                  Icons.menu_book_sharp,
-                  color: Colors.white,
-                  size: 16,
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  userProfile['type'],
-                  style: GoogleFonts.tajawal(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    isTeacher ? Icons.school : Icons.menu_book_sharp,
                     color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
+                    size: 16,
                   ),
-                ),
-              ],
+                  const SizedBox(width: 4),
+                  Text(
+                    isTeacher ? 'مدرس' : 'انضم الينا كمدرس',
+                    style: GoogleFonts.tajawal(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
 
@@ -291,8 +318,8 @@ class _ProfilePageState extends State<ProfilePage> {
           Text(
             userProfile['joinDate'],
             style: GoogleFonts.tajawal(
-              fontSize: 12, 
-              color: _getSecondaryTextColor(isDarkMode)
+              fontSize: 12,
+              color: _getSecondaryTextColor(isDarkMode),
             ),
           ),
         ],
@@ -300,7 +327,7 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _buildUserStats(bool isDarkMode) {
+  Widget _buildUserStats(bool isDarkMode, Map<String, dynamic> userStats) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20.0),
       child: Container(
@@ -323,17 +350,17 @@ class _ProfilePageState extends State<ProfilePage> {
             if (isTablet) {
               return Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: _buildStatItems(isDarkMode),
+                children: _buildStatItems(isDarkMode, userStats),
               );
             } else {
               return IntrinsicHeight(
                 child: Row(
                   children: [
-                    Expanded(child: _buildStatItems(isDarkMode)[0]),
+                    Expanded(child: _buildStatItems(isDarkMode, userStats)[0]),
                     _buildVerticalDivider(isDarkMode),
-                    Expanded(child: _buildStatItems(isDarkMode)[1]),
+                    Expanded(child: _buildStatItems(isDarkMode, userStats)[1]),
                     _buildVerticalDivider(isDarkMode),
-                    Expanded(child: _buildStatItems(isDarkMode)[2]),
+                    Expanded(child: _buildStatItems(isDarkMode, userStats)[2]),
                   ],
                 ),
               );
@@ -344,7 +371,7 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  List<Widget> _buildStatItems(bool isDarkMode) {
+  List<Widget> _buildStatItems(bool isDarkMode, Map<String, dynamic> userStats) {
     return [
       _buildStatItem(
         icon: Icons.school,
@@ -421,7 +448,7 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _buildCertificatesSection(bool isDarkMode) {
+  Widget _buildCertificatesSection(bool isDarkMode, List<Map<String, dynamic>> certificates) {
     return Padding(
       padding: const EdgeInsets.all(20.0),
       child: Column(
@@ -577,7 +604,9 @@ class _ProfilePageState extends State<ProfilePage> {
                   ),
                   style: OutlinedButton.styleFrom(
                     side: BorderSide(
-                      color: isDarkMode ? Colors.grey[700]! : const Color(0xFFE2E8F0)
+                      color: isDarkMode
+                          ? Colors.grey[700]!
+                          : const Color(0xFFE2E8F0),
                     ),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(
@@ -599,7 +628,9 @@ class _ProfilePageState extends State<ProfilePage> {
                   ),
                   style: OutlinedButton.styleFrom(
                     side: BorderSide(
-                      color: isDarkMode ? Colors.grey[700]! : const Color(0xFFE2E8F0)
+                      color: isDarkMode
+                          ? Colors.grey[700]!
+                          : const Color(0xFFE2E8F0),
                     ),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(
@@ -697,9 +728,7 @@ class _ProfilePageState extends State<ProfilePage> {
         data: isDarkMode ? ThemeManager.darkTheme : ThemeManager.lightTheme,
         child: AlertDialog(
           title: Text('تسجيل الخروج'),
-          content: Text(
-            'هل أنت متأكد من أنك تريد تسجيل الخروج من التطبيق؟',
-          ),
+          content: Text('هل أنت متأكد من أنك تريد تسجيل الخروج من التطبيق؟'),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
@@ -731,5 +760,50 @@ class _ProfilePageState extends State<ProfilePage> {
       ),
     );
     // Navigate to login page or main page
+  }
+
+  void _showBecomeTeacherDialog(bool isDarkMode) {
+    showDialog(
+      context: context,
+      builder: (context) => Theme(
+        data: isDarkMode ? ThemeManager.darkTheme : ThemeManager.lightTheme,
+        child: AlertDialog(
+          title: Text(
+            'انضم كمدرس',
+            style: GoogleFonts.tajawal(fontWeight: FontWeight.bold),
+          ),
+          content: Text(
+            'بأنضمامك كمدرس، ستتمكن من إنشاء ونشر الدورات التعليمية الخاصة بك. هل تريد المتابعة؟',
+            style: GoogleFonts.tajawal(),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('إلغاء', style: GoogleFonts.tajawal()),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                // Use BLoC to become teacher
+                context.read<UserRoleBloc>().add(const BecomeTeacherEvent());
+                Navigator.pop(context);
+                setState(() {}); // Refresh the UI
+
+                // Show success message
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      'مرحباً بك كمدرس! يمكنك الآن نشر دوراتك التعليمية.',
+                      style: GoogleFonts.tajawal(),
+                    ),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              },
+              child: Text('نعم، انضم كمدرس', style: GoogleFonts.tajawal()),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
