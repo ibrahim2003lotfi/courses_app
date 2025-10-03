@@ -1,9 +1,6 @@
-<<<<<<< HEAD
+import 'package:courses_app/main_pages/home/presentation/side%20pages/category_datail_page.dart';
 import 'package:courses_app/theme_cubit/theme_cubit.dart';
 import 'package:courses_app/theme_cubit/theme_state.dart';
-=======
-import 'package:courses_app/main_pages/home/presentation/side%20pages/category_datail_page.dart';
->>>>>>> 9733b3b7817e2ac38d39d4067b5efb503841f1f1
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -162,14 +159,13 @@ class CategoriesPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-<<<<<<< HEAD
     return BlocBuilder<ThemeCubit, ThemeState>(
       builder: (context, themeState) {
         final isDarkMode = themeState.isDarkMode;
-        
+
         return Scaffold(
-          backgroundColor: isDarkMode 
-              ? const Color(0xFF121212) 
+          backgroundColor: isDarkMode
+              ? const Color(0xFF121212)
               : const Color(0xFFF9FAFB),
           appBar: AppBar(
             title: Text(
@@ -179,8 +175,8 @@ class CategoriesPage extends StatelessWidget {
                 color: isDarkMode ? Colors.white : const Color(0xFF1E293B),
               ),
             ),
-            backgroundColor: isDarkMode 
-                ? const Color(0xFF1E1E1E) 
+            backgroundColor: isDarkMode
+                ? const Color(0xFF1E1E1E)
                 : Colors.white,
             elevation: 0,
             leading: IconButton(
@@ -201,34 +197,14 @@ class CategoriesPage extends StatelessWidget {
           ),
         );
       },
-=======
-    return Scaffold(
-      backgroundColor: const Color(0xFFF9FAFB),
-      appBar: AppBar(
-        title: Text(
-          'جميع الأقسام',
-          style: GoogleFonts.tajawal(fontWeight: FontWeight.w800),
-        ),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
-      body: ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: _categorySections.length,
-        itemBuilder: (context, sectionIndex) {
-          final section = _categorySections[sectionIndex];
-          return _buildSection(section, context);
-        },
-      ),
->>>>>>> 9733b3b7817e2ac38d39d4067b5efb503841f1f1
     );
   }
 
-  Widget _buildSection(Map<String, dynamic> section, BuildContext context, bool isDarkMode) {
+  Widget _buildSection(
+    Map<String, dynamic> section,
+    BuildContext context,
+    bool isDarkMode,
+  ) {
     final categories = section['categories'] as List<Map<String, dynamic>>;
 
     return Column(

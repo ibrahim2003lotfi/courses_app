@@ -23,13 +23,8 @@ class TopSearchBar extends StatelessWidget implements PreferredSizeWidget {
             height: 70,
             decoration: BoxDecoration(
               color: themeState.isDarkMode
-<<<<<<< HEAD
                   ? const Color(0xFF1E1E1E) // Use dark theme card color
                   : Colors.white, // Use light theme background
-=======
-                  ? const Color(0xFF1E1E1E)
-                  : Colors.white,
->>>>>>> 9733b3b7817e2ac38d39d4067b5efb503841f1f1
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(
@@ -72,21 +67,7 @@ class TopSearchBar extends StatelessWidget implements PreferredSizeWidget {
 
                     const SizedBox(width: 12),
 
-<<<<<<< HEAD
                     // Title text with theme-aware color
-                    Text(
-                      'منصة الكورسات',
-                      style: GoogleFonts.tajawal(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w900,
-                        color: themeState.isDarkMode
-                            ? Colors
-                                  .white // White text for dark mode
-                            : const Color(
-                                0xFF1F2937,
-                              ), // Original dark gray for light mode
-=======
-                    // Title
                     Expanded(
                       child: Text(
                         'منصة الكورسات',
@@ -95,10 +76,12 @@ class TopSearchBar extends StatelessWidget implements PreferredSizeWidget {
                           fontSize: 22,
                           fontWeight: FontWeight.w900,
                           color: themeState.isDarkMode
-                              ? Colors.white
-                              : const Color(0xFF1F2937),
+                              ? Colors
+                                    .white // White text for dark mode
+                              : const Color(
+                                  0xFF1F2937,
+                                ), // Original dark gray for light mode
                         ),
->>>>>>> 9733b3b7817e2ac38d39d4067b5efb503841f1f1
                       ),
                     ),
 
@@ -222,10 +205,7 @@ class _SearchFieldState extends State<SearchField> {
     );
   }
 }
-<<<<<<< HEAD
-=======
 
->>>>>>> 9733b3b7817e2ac38d39d4067b5efb503841f1f1
 class HeroCarousel extends StatefulWidget {
   final List<String> heroImages;
 
@@ -339,7 +319,9 @@ class _HeroCarouselState extends State<HeroCarousel> {
                                   const SizedBox(height: 16),
                                   // Bigger centered button
                                   Container(
-                                    margin: EdgeInsets.symmetric(horizontal: 15),
+                                    margin: const EdgeInsets.symmetric(
+                                      horizontal: 15,
+                                    ),
                                     decoration: BoxDecoration(
                                       gradient: const LinearGradient(
                                         colors: [
@@ -349,7 +331,6 @@ class _HeroCarouselState extends State<HeroCarousel> {
                                         begin: Alignment.topLeft,
                                         end: Alignment.bottomRight,
                                       ),
-<<<<<<< HEAD
                                       borderRadius: BorderRadius.circular(12),
                                       boxShadow: [
                                         BoxShadow(
@@ -386,22 +367,6 @@ class _HeroCarouselState extends State<HeroCarousel> {
                                               color: Colors.white,
                                             ),
                                           ),
-=======
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      elevation: isDarkMode ? 4 : 2,
-                                      shadowColor: Colors.black.withOpacity(
-                                        isDarkMode ? 0.4 : 0.2,
-                                      ),
-                                    ),
-                                    onPressed: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              CategoriesPage(),
->>>>>>> 9733b3b7817e2ac38d39d4067b5efb503841f1f1
                                         ),
                                       ),
                                     ),
@@ -458,6 +423,7 @@ class _HeroCarouselState extends State<HeroCarousel> {
     );
   }
 }
+
 class CategoriesGrid extends StatelessWidget {
   final List<Map<String, dynamic>> categories;
 
@@ -499,13 +465,7 @@ class CategoriesGrid extends StatelessWidget {
                       child: Text(
                         'عرض الكل',
                         style: GoogleFonts.tajawal(
-<<<<<<< HEAD
-                          color: const Color(
-                            0xFF2563EB,
-                          ), // Keep blue color for both themes
-=======
                           color: const Color(0xFF2563EB),
->>>>>>> 9733b3b7817e2ac38d39d4067b5efb503841f1f1
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -551,10 +511,7 @@ class CategoriesGrid extends StatelessWidget {
   }
 
   Widget _buildCategoryCube(
-<<<<<<< HEAD
-=======
     BuildContext context, // add context ✅
->>>>>>> 9733b3b7817e2ac38d39d4067b5efb503841f1f1
     Map<String, dynamic> category,
     double itemSize, {
     required bool isDarkMode,
@@ -600,13 +557,7 @@ class CategoriesGrid extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-<<<<<<< HEAD
-                    color: Colors.white.withOpacity(
-                      isDarkMode ? 0.3 : 0.2,
-                    ), // Enhanced opacity for dark mode
-=======
                     color: Colors.white.withOpacity(isDarkMode ? 0.3 : 0.2),
->>>>>>> 9733b3b7817e2ac38d39d4067b5efb503841f1f1
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
@@ -810,7 +761,6 @@ class RecommendedCourses extends StatelessWidget {
                               // Button - full width on mobile
                               SizedBox(
                                 width: double.infinity,
-<<<<<<< HEAD
                                 child: Container(
                                   decoration: BoxDecoration(
                                     gradient: const LinearGradient(
@@ -856,30 +806,6 @@ class RecommendedCourses extends StatelessWidget {
                                             item['instructorImage'] ??
                                             'https://picsum.photos/seed/instructor/200/200',
                                       };
-=======
-                                child: ElevatedButton(
-                                  onPressed: () {
-                                    Map<String, dynamic> enhancedCourse = {
-                                      ...item, // Spread the original item
-                                      'category': item['category'] ?? 'برمجة',
-                                      'reviews': item['reviews'] ?? 100,
-                                      'duration': item['duration'] ?? 20,
-                                      'lessons': item['lessons'] ?? 30,
-                                      'level': item['level'] ?? 'متوسط',
-                                      'lastUpdated':
-                                          item['lastUpdated'] ?? '2024',
-                                      'price': item['price'] ?? '₪199',
-                                      'description':
-                                          item['description'] ??
-                                          'دورة تعليمية شاملة تغطي أهم المفاهيم والمهارات في هذا المجال.',
-                                      'tags':
-                                          item['tags'] ??
-                                          ['تعليم', 'تدريب', 'مهارات'],
-                                      'instructorImage':
-                                          item['instructorImage'] ??
-                                          'https://picsum.photos/seed/instructor/200/200',
-                                    };
->>>>>>> 9733b3b7817e2ac38d39d4067b5efb503841f1f1
 
                                       Navigator.push(
                                         context,
@@ -1007,7 +933,6 @@ class RecommendedCourses extends StatelessWidget {
                                 ),
                               ),
                               const SizedBox(width: 12),
-<<<<<<< HEAD
                               Container(
                                 decoration: BoxDecoration(
                                   gradient: const LinearGradient(
@@ -1053,30 +978,6 @@ class RecommendedCourses extends StatelessWidget {
                                           item['instructorImage'] ??
                                           'https://picsum.photos/seed/instructor/200/200',
                                     };
-=======
-                              ElevatedButton(
-                                onPressed: () {
-                                  Map<String, dynamic> enhancedCourse = {
-                                    ...item,
-                                    'category': item['category'] ?? 'برمجة',
-                                    'reviews': item['reviews'] ?? 100,
-                                    'duration': item['duration'] ?? 20,
-                                    'lessons': item['lessons'] ?? 30,
-                                    'level': item['level'] ?? 'متوسط',
-                                    'lastUpdated':
-                                        item['lastUpdated'] ?? '2024',
-                                    'price': item['price'] ?? '₪199',
-                                    'description':
-                                        item['description'] ??
-                                        'دورة تعليمية شاملة تغطي أهم المفاهيم والمهارات في هذا المجال.',
-                                    'tags':
-                                        item['tags'] ??
-                                        ['تعليم', 'تدريب', 'مهارات'],
-                                    'instructorImage':
-                                        item['instructorImage'] ??
-                                        'https://picsum.photos/seed/instructor/200/200',
-                                  };
->>>>>>> 9733b3b7817e2ac38d39d4067b5efb503841f1f1
 
                                     Navigator.push(
                                       context,

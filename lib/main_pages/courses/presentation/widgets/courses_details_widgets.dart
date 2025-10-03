@@ -12,7 +12,6 @@ class PaymentData {
   String confirmPhoneNumber = '';
 }
 
-
 class CourseHeader extends StatelessWidget {
   final Map<String, dynamic> course;
 
@@ -23,7 +22,7 @@ class CourseHeader extends StatelessWidget {
     return BlocBuilder<ThemeCubit, ThemeState>(
       builder: (context, themeState) {
         final isDarkMode = themeState.isDarkMode;
-        
+
         return SliverAppBar(
           expandedHeight: 300,
           floating: false,
@@ -39,11 +38,15 @@ class CourseHeader extends StatelessWidget {
                   loadingBuilder: (context, child, loadingProgress) {
                     if (loadingProgress == null) return child;
                     return Container(
-                      color: isDarkMode ? const Color(0xFF2D2D2D) : const Color(0xFFF3F4F6),
+                      color: isDarkMode
+                          ? const Color(0xFF2D2D2D)
+                          : const Color(0xFFF3F4F6),
                       child: Center(
                         child: CircularProgressIndicator(
                           valueColor: AlwaysStoppedAnimation<Color>(
-                            isDarkMode ? Colors.white70 : const Color(0xFF2563EB),
+                            isDarkMode
+                                ? Colors.white70
+                                : const Color(0xFF2563EB),
                           ),
                         ),
                       ),
@@ -140,7 +143,7 @@ class CourseInfoCard extends StatelessWidget {
     return BlocBuilder<ThemeCubit, ThemeState>(
       builder: (context, themeState) {
         final isDarkMode = themeState.isDarkMode;
-        
+
         return SliverToBoxAdapter(
           child: Container(
             margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -245,14 +248,22 @@ class CourseInfoCard extends StatelessWidget {
       mainAxisSpacing: 12,
       childAspectRatio: 3.5,
       children: [
-        _buildInfoItem(Icons.schedule, '${course['duration'] ?? 20} ساعة', isDarkMode),
+        _buildInfoItem(
+          Icons.schedule,
+          '${course['duration'] ?? 20} ساعة',
+          isDarkMode,
+        ),
         _buildInfoItem(
           Icons.video_library,
           '${course['lessons'] ?? 30} محاضرة',
           isDarkMode,
         ),
         _buildInfoItem(Icons.bar_chart, course['level'] ?? 'متوسط', isDarkMode),
-        _buildInfoItem(Icons.update, 'محدث ${course['lastUpdated'] ?? '2024'}', isDarkMode),
+        _buildInfoItem(
+          Icons.update,
+          'محدث ${course['lastUpdated'] ?? '2024'}',
+          isDarkMode,
+        ),
       ],
     );
   }
@@ -267,9 +278,9 @@ class CourseInfoCard extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
-            icon, 
-            size: 16, 
-            color: isDarkMode ? Colors.white70 : const Color(0xFF6B7280)
+            icon,
+            size: 16,
+            color: isDarkMode ? Colors.white70 : const Color(0xFF6B7280),
           ),
           const SizedBox(width: 8),
           Text(
@@ -321,7 +332,6 @@ class CourseInfoCard extends StatelessWidget {
   }
 }
 
-
 // Bottom Sheet للدفع
 class PaymentBottomSheet extends StatefulWidget {
   final Map<String, dynamic> course;
@@ -343,14 +353,20 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
     PaymentMethod(
       id: 'syriatel',
       name: 'Syriatel Cash',
-      icon: Icons.phone_iphone,
+      imagePath: 'assets/images/syriatel_logo.jpg',
       color: Colors.blue,
     ),
     PaymentMethod(
       id: 'mtn',
       name: 'MTN Cash',
-      icon: Icons.phone_android,
+      imagePath: 'assets/images/MTN_logo.png',
       color: Colors.orange,
+    ),
+    PaymentMethod(
+      id: 'sham',
+      name: 'Sham Cash',
+      imagePath: 'assets/images/shamcache_logo.jpg',
+      color: Colors.green,
     ),
   ];
 
@@ -474,7 +490,9 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
                         style: GoogleFonts.tajawal(
                           fontSize: isMobile ? 20 : 24,
                           fontWeight: FontWeight.w900,
-                          color: isDarkMode ? Colors.white : const Color(0xFF1F2937),
+                          color: isDarkMode
+                              ? Colors.white
+                              : const Color(0xFF1F2937),
                         ),
                       ),
                     ),
@@ -558,9 +576,19 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
             ),
           ),
           const SizedBox(height: 12),
-          _buildInfoRow(Icons.school, widget.course['title'], isMobile, isDarkMode),
+          _buildInfoRow(
+            Icons.school,
+            widget.course['title'],
+            isMobile,
+            isDarkMode,
+          ),
           const SizedBox(height: 8),
-          _buildInfoRow(Icons.person, widget.course['teacher'], isMobile, isDarkMode),
+          _buildInfoRow(
+            Icons.person,
+            widget.course['teacher'],
+            isMobile,
+            isDarkMode,
+          ),
           const SizedBox(height: 8),
           _buildInfoRow(
             Icons.confirmation_number,
@@ -639,20 +667,41 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
                     style: GoogleFonts.tajawal(
                       fontSize: isMobile ? 14 : 16,
                       fontWeight: FontWeight.w600,
-                      color: isDarkMode ? Colors.white : const Color(0xFF1F2937),
+                      color: isDarkMode
+                          ? Colors.white
+                          : const Color(0xFF1F2937),
                     ),
                   ),
                   const SizedBox(width: 12),
-                  Icon(
-                    method.icon,
-                    color: method.color,
-                    size: isMobile ? 20 : 24,
+                  // Using asset image instead of icon
+                  Image.asset(
+                    method.imagePath,
+                    width: isMobile ? 20 : 24,
+                    height: isMobile ? 20 : 24,
+                    errorBuilder: (context, error, stackTrace) {
+                      // Fallback to colored container if image fails to load
+                      return Container(
+                        width: isMobile ? 20 : 24,
+                        height: isMobile ? 20 : 24,
+                        decoration: BoxDecoration(
+                          color: method.color,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Icon(
+                          Icons.payment,
+                          color: Colors.white,
+                          size: isMobile ? 14 : 18,
+                        ),
+                      );
+                    },
                   ),
                 ],
               ),
               activeColor: const Color(0xFF10B981),
               contentPadding: EdgeInsets.zero,
-              tileColor: isDarkMode ? const Color(0xFF2D2D2D) : Colors.transparent,
+              tileColor: isDarkMode
+                  ? const Color(0xFF2D2D2D)
+                  : Colors.transparent,
             ),
           ),
         ),
@@ -743,7 +792,9 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
             style: GoogleFonts.tajawal(
               fontSize: isMobile ? 16 : 18,
               fontWeight: FontWeight.w800,
-              color: isDarkMode ? const Color(0xFF34D399) : const Color(0xFF065F46),
+              color: isDarkMode
+                  ? const Color(0xFF34D399)
+                  : const Color(0xFF065F46),
             ),
           ),
           const SizedBox(height: 16),
@@ -790,7 +841,9 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
               fontSize: isMobile ? 14 : 16,
               fontWeight: isTotal ? FontWeight.w800 : FontWeight.w500,
               color: isTotal
-                  ? (isDarkMode ? const Color(0xFF34D399) : const Color(0xFF065F46))
+                  ? (isDarkMode
+                        ? const Color(0xFF34D399)
+                        : const Color(0xFF065F46))
                   : (isDarkMode ? Colors.white : const Color(0xFF374151)),
             ),
           ),
@@ -800,7 +853,9 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
               fontSize: isMobile ? 14 : 16,
               fontWeight: isTotal ? FontWeight.w900 : FontWeight.w600,
               color: isTotal
-                  ? (isDarkMode ? const Color(0xFF34D399) : const Color(0xFF065F46))
+                  ? (isDarkMode
+                        ? const Color(0xFF34D399)
+                        : const Color(0xFF065F46))
                   : (isDarkMode ? Colors.white : const Color(0xFF374151)),
             ),
           ),
@@ -916,7 +971,9 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
               side: BorderSide(
                 color: isDarkMode ? Colors.grey[600]! : const Color(0xFFD1D5DB),
               ),
-              backgroundColor: isDarkMode ? const Color(0xFF2D2D2D) : Colors.transparent,
+              backgroundColor: isDarkMode
+                  ? const Color(0xFF2D2D2D)
+                  : Colors.transparent,
             ),
             child: Text(
               'إلغاء',
@@ -966,13 +1023,13 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
 class PaymentMethod {
   final String id;
   final String name;
-  final IconData icon;
+  final String imagePath; // Changed from icon to imagePath
   final Color color;
 
   PaymentMethod({
     required this.id,
     required this.name,
-    required this.icon,
+    required this.imagePath, // Changed from icon to imagePath
     required this.color,
   });
 }
@@ -990,7 +1047,6 @@ class SubscriptionType {
   });
 }
 
-
 class CourseTabs extends StatefulWidget {
   final Map<String, dynamic> course;
 
@@ -999,6 +1055,7 @@ class CourseTabs extends StatefulWidget {
   @override
   State<CourseTabs> createState() => _CourseTabsState();
 }
+
 class _CourseTabsState extends State<CourseTabs> {
   int _selectedTab = 0;
 
@@ -1007,7 +1064,7 @@ class _CourseTabsState extends State<CourseTabs> {
     return BlocBuilder<ThemeCubit, ThemeState>(
       builder: (context, themeState) {
         final isDarkMode = themeState.isDarkMode;
-        
+
         return SliverToBoxAdapter(
           child: Container(
             margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
@@ -1134,7 +1191,9 @@ class _CourseTabsState extends State<CourseTabs> {
             return Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: isDarkMode ? const Color(0xFF2D2D2D) : const Color(0xFFEFF6FF),
+                color: isDarkMode
+                    ? const Color(0xFF2D2D2D)
+                    : const Color(0xFFEFF6FF),
                 borderRadius: BorderRadius.circular(20),
                 border: isDarkMode ? Border.all(color: Colors.white30) : null,
               ),
@@ -1171,7 +1230,9 @@ class _CourseTabsState extends State<CourseTabs> {
             margin: const EdgeInsets.only(bottom: 8),
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: isDarkMode ? const Color(0xFF2D2D2D) : const Color(0xFFF8FAFC),
+              color: isDarkMode
+                  ? const Color(0xFF2D2D2D)
+                  : const Color(0xFFF8FAFC),
               borderRadius: BorderRadius.circular(8),
               border: isDarkMode ? Border.all(color: Colors.white30) : null,
             ),
@@ -1197,7 +1258,9 @@ class _CourseTabsState extends State<CourseTabs> {
                     style: GoogleFonts.tajawal(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: isDarkMode ? Colors.white : const Color(0xFF374151),
+                      color: isDarkMode
+                          ? Colors.white
+                          : const Color(0xFF374151),
                     ),
                   ),
                 ),
@@ -1206,7 +1269,9 @@ class _CourseTabsState extends State<CourseTabs> {
                   style: GoogleFonts.tajawal(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
-                    color: isDarkMode ? Colors.white70 : const Color(0xFF6B7280),
+                    color: isDarkMode
+                        ? Colors.white70
+                        : const Color(0xFF6B7280),
                   ),
                 ),
               ],
@@ -1217,7 +1282,7 @@ class _CourseTabsState extends State<CourseTabs> {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            gradient: isDarkMode 
+            gradient: isDarkMode
                 ? const LinearGradient(
                     colors: [Color(0xFF1E3A5F), Color(0xFF2D4A7A)],
                     begin: Alignment.topLeft,
@@ -1230,7 +1295,9 @@ class _CourseTabsState extends State<CourseTabs> {
                   ),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: const Color(0xFF2563EB).withOpacity(isDarkMode ? 0.3 : 0.2),
+              color: const Color(
+                0xFF2563EB,
+              ).withOpacity(isDarkMode ? 0.3 : 0.2),
               width: 1,
             ),
           ),
@@ -1259,7 +1326,9 @@ class _CourseTabsState extends State<CourseTabs> {
                       style: GoogleFonts.tajawal(
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
-                        color: isDarkMode ? Colors.white : const Color(0xFF1F2937),
+                        color: isDarkMode
+                            ? Colors.white
+                            : const Color(0xFF1F2937),
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -1268,7 +1337,9 @@ class _CourseTabsState extends State<CourseTabs> {
                       style: GoogleFonts.tajawal(
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
-                        color: isDarkMode ? Colors.white70 : const Color(0xFF6B7280),
+                        color: isDarkMode
+                            ? Colors.white70
+                            : const Color(0xFF6B7280),
                       ),
                     ),
                   ],
@@ -1299,7 +1370,9 @@ class _CourseTabsState extends State<CourseTabs> {
             margin: const EdgeInsets.only(bottom: 16),
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: isDarkMode ? const Color(0xFF2D2D2D) : const Color(0xFFF8FAFC),
+              color: isDarkMode
+                  ? const Color(0xFF2D2D2D)
+                  : const Color(0xFFF8FAFC),
               borderRadius: BorderRadius.circular(12),
               border: isDarkMode ? Border.all(color: Colors.white30) : null,
             ),
@@ -1324,7 +1397,9 @@ class _CourseTabsState extends State<CourseTabs> {
                             style: GoogleFonts.tajawal(
                               fontSize: 14,
                               fontWeight: FontWeight.w700,
-                              color: isDarkMode ? Colors.white : const Color(0xFF1F2937),
+                              color: isDarkMode
+                                  ? Colors.white
+                                  : const Color(0xFF1F2937),
                             ),
                           ),
                           Row(
@@ -1340,7 +1415,9 @@ class _CourseTabsState extends State<CourseTabs> {
                                 style: GoogleFonts.tajawal(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
-                                  color: isDarkMode ? Colors.white : const Color(0xFF1F2937),
+                                  color: isDarkMode
+                                      ? Colors.white
+                                      : const Color(0xFF1F2937),
                                 ),
                               ),
                             ],
@@ -1352,7 +1429,9 @@ class _CourseTabsState extends State<CourseTabs> {
                       'منذ ${index + 1} أيام',
                       style: GoogleFonts.tajawal(
                         fontSize: 12,
-                        color: isDarkMode ? Colors.white70 : const Color(0xFF6B7280),
+                        color: isDarkMode
+                            ? Colors.white70
+                            : const Color(0xFF6B7280),
                       ),
                     ),
                   ],
@@ -1363,7 +1442,9 @@ class _CourseTabsState extends State<CourseTabs> {
                   style: GoogleFonts.tajawal(
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
-                    color: isDarkMode ? Colors.white70 : const Color(0xFF6B7280),
+                    color: isDarkMode
+                        ? Colors.white70
+                        : const Color(0xFF6B7280),
                     height: 1.5,
                   ),
                 ),
@@ -1388,7 +1469,9 @@ class _CourseTabsState extends State<CourseTabs> {
                   ),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: const Color(0xFF10B981).withOpacity(isDarkMode ? 0.3 : 0.2),
+              color: const Color(
+                0xFF10B981,
+              ).withOpacity(isDarkMode ? 0.3 : 0.2),
               width: 1,
             ),
           ),
@@ -1417,7 +1500,9 @@ class _CourseTabsState extends State<CourseTabs> {
                       style: GoogleFonts.tajawal(
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
-                        color: isDarkMode ? Colors.white : const Color(0xFF1F2937),
+                        color: isDarkMode
+                            ? Colors.white
+                            : const Color(0xFF1F2937),
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -1426,7 +1511,9 @@ class _CourseTabsState extends State<CourseTabs> {
                       style: GoogleFonts.tajawal(
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
-                        color: isDarkMode ? Colors.white70 : const Color(0xFF6B7280),
+                        color: isDarkMode
+                            ? Colors.white70
+                            : const Color(0xFF6B7280),
                       ),
                     ),
                   ],
@@ -1489,7 +1576,9 @@ class _CourseTabsState extends State<CourseTabs> {
                     style: GoogleFonts.tajawal(
                       fontSize: 18,
                       fontWeight: FontWeight.w800,
-                      color: isDarkMode ? Colors.white : const Color(0xFF1F2937),
+                      color: isDarkMode
+                          ? Colors.white
+                          : const Color(0xFF1F2937),
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -1498,7 +1587,9 @@ class _CourseTabsState extends State<CourseTabs> {
                     style: GoogleFonts.tajawal(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
-                      color: isDarkMode ? Colors.white70 : const Color(0xFF6B7280),
+                      color: isDarkMode
+                          ? Colors.white70
+                          : const Color(0xFF6B7280),
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -1506,7 +1597,11 @@ class _CourseTabsState extends State<CourseTabs> {
                     children: [
                       _buildInstructorStat('5.0', 'التقييم', isDarkMode),
                       const SizedBox(width: 16),
-                      _buildInstructorStat(widget.course['students'], 'طالب', isDarkMode),
+                      _buildInstructorStat(
+                        widget.course['students'],
+                        'طالب',
+                        isDarkMode,
+                      ),
                       const SizedBox(width: 16),
                       _buildInstructorStat('15', 'كورس', isDarkMode),
                     ],
@@ -1555,7 +1650,6 @@ class _CourseTabsState extends State<CourseTabs> {
   }
 }
 
-
 class RelatedCourses extends StatelessWidget {
   final List<Map<String, dynamic>> relatedCourses;
 
@@ -1566,7 +1660,7 @@ class RelatedCourses extends StatelessWidget {
     return BlocBuilder<ThemeCubit, ThemeState>(
       builder: (context, themeState) {
         final isDarkMode = themeState.isDarkMode;
-        
+
         return SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
@@ -1594,16 +1688,22 @@ class RelatedCourses extends StatelessWidget {
                         width: 280,
                         child: Container(
                           decoration: BoxDecoration(
-                            color: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
+                            color: isDarkMode
+                                ? const Color(0xFF1E1E1E)
+                                : Colors.white,
                             borderRadius: BorderRadius.circular(16),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(isDarkMode ? 0.2 : 0.05),
+                                color: Colors.black.withOpacity(
+                                  isDarkMode ? 0.2 : 0.05,
+                                ),
                                 blurRadius: 8,
                                 offset: const Offset(0, 3),
                               ),
                             ],
-                            border: isDarkMode ? Border.all(color: Colors.white30) : null,
+                            border: isDarkMode
+                                ? Border.all(color: Colors.white30)
+                                : null,
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1617,29 +1717,42 @@ class RelatedCourses extends StatelessWidget {
                                   width: 280,
                                   height: 120,
                                   fit: BoxFit.cover,
-                                  loadingBuilder: (context, child, loadingProgress) {
-                                    if (loadingProgress == null) return child;
-                                    return Container(
-                                      width: 280,
-                                      height: 120,
-                                      color: isDarkMode ? const Color(0xFF2D2D2D) : const Color(0xFFF3F4F6),
-                                      child: Center(
-                                        child: CircularProgressIndicator(
-                                          valueColor: AlwaysStoppedAnimation<Color>(
-                                            isDarkMode ? Colors.white70 : const Color(0xFF2563EB),
+                                  loadingBuilder:
+                                      (context, child, loadingProgress) {
+                                        if (loadingProgress == null)
+                                          return child;
+                                        return Container(
+                                          width: 280,
+                                          height: 120,
+                                          color: isDarkMode
+                                              ? const Color(0xFF2D2D2D)
+                                              : const Color(0xFFF3F4F6),
+                                          child: Center(
+                                            child: CircularProgressIndicator(
+                                              valueColor:
+                                                  AlwaysStoppedAnimation<Color>(
+                                                    isDarkMode
+                                                        ? Colors.white70
+                                                        : const Color(
+                                                            0xFF2563EB,
+                                                          ),
+                                                  ),
+                                            ),
                                           ),
-                                        ),
-                                      ),
-                                    );
-                                  },
+                                        );
+                                      },
                                   errorBuilder: (context, error, stackTrace) {
                                     return Container(
                                       width: 280,
                                       height: 120,
-                                      color: isDarkMode ? const Color(0xFF2D2D2D) : const Color(0xFFF3F4F6),
+                                      color: isDarkMode
+                                          ? const Color(0xFF2D2D2D)
+                                          : const Color(0xFFF3F4F6),
                                       child: Icon(
                                         Icons.error_outline,
-                                        color: isDarkMode ? Colors.white70 : const Color(0xFF6B7280),
+                                        color: isDarkMode
+                                            ? Colors.white70
+                                            : const Color(0xFF6B7280),
                                         size: 40,
                                       ),
                                     );
@@ -1656,7 +1769,9 @@ class RelatedCourses extends StatelessWidget {
                                       style: GoogleFonts.tajawal(
                                         fontSize: 14,
                                         fontWeight: FontWeight.w700,
-                                        color: isDarkMode ? Colors.white : const Color(0xFF374151),
+                                        color: isDarkMode
+                                            ? Colors.white
+                                            : const Color(0xFF374151),
                                       ),
                                       maxLines: 2,
                                       overflow: TextOverflow.ellipsis,
@@ -1675,7 +1790,9 @@ class RelatedCourses extends StatelessWidget {
                                           style: GoogleFonts.tajawal(
                                             fontSize: 12,
                                             fontWeight: FontWeight.w600,
-                                            color: isDarkMode ? Colors.white : const Color(0xFF374151),
+                                            color: isDarkMode
+                                                ? Colors.white
+                                                : const Color(0xFF374151),
                                           ),
                                         ),
                                         const Spacer(),
