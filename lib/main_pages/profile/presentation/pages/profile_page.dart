@@ -1,5 +1,6 @@
 import 'package:courses_app/bloc/user_role_bloc.dart';
 import 'package:courses_app/core/utils/theme_manager.dart';
+import 'package:courses_app/main_pages/profile/presentation/edit_profile.dart';
 import 'package:courses_app/main_pages/profile/presentation/pages/settings_page.dart';
 import 'package:courses_app/theme_cubit/theme_cubit.dart';
 import 'package:courses_app/theme_cubit/theme_state.dart';
@@ -185,29 +186,29 @@ class _ProfilePageState extends State<ProfilePage> {
             top: 16,
             left: 16,
             child: Container(
-  decoration: BoxDecoration(
-    gradient: LinearGradient(
-      colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
-    ),
-    borderRadius: BorderRadius.circular(6),
-  ),
-  child: Padding(
-    padding: const EdgeInsets.all(1),
-    child: IconButton(
-      icon: Icon(Icons.settings, color: Colors.white, size: 20),
-      onPressed: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => SettingsPage()),
-        );
-      },
-      padding: EdgeInsets.zero,
-      constraints: BoxConstraints(minWidth: 36, minHeight: 36),
-    ),
-  ),
-),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(1),
+                child: IconButton(
+                  icon: Icon(Icons.settings, color: Colors.white, size: 20),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => SettingsPage()),
+                    );
+                  },
+                  padding: EdgeInsets.zero,
+                  constraints: BoxConstraints(minWidth: 36, minHeight: 36),
+                ),
+              ),
+            ),
           ),
 
           // Profile Image
@@ -618,7 +619,10 @@ class _ProfilePageState extends State<ProfilePage> {
             child: InkWell(
               borderRadius: BorderRadius.circular(12),
               onTap: () {
-                _showEditProfileDialog(isDarkMode);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => EditProfilePage()),
+                );
               },
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
