@@ -124,7 +124,7 @@ class _SearchPageState extends State<SearchPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Search Field (from home page)
-                    const SearchField(),
+                    const SearchPageField(),
 
                     // Recent Searches
                     SuggestedSearch(recentSearches: _recentSearches),

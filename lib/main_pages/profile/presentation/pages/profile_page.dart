@@ -185,25 +185,29 @@ class _ProfilePageState extends State<ProfilePage> {
             top: 16,
             left: 16,
             child: Container(
-              decoration: BoxDecoration(
-                color: (isDarkMode ? Colors.black : Colors.white).withOpacity(
-                  0.9,
-                ),
-                shape: BoxShape.circle,
-              ),
-              child: IconButton(
-                icon: Icon(
-                  Icons.settings,
-                  color: isDarkMode ? Colors.white : Colors.black,
-                ),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => SettingsPage()),
-                  );
-                },
-              ),
-            ),
+  decoration: BoxDecoration(
+    gradient: LinearGradient(
+      colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    ),
+    borderRadius: BorderRadius.circular(6),
+  ),
+  child: Padding(
+    padding: const EdgeInsets.all(1),
+    child: IconButton(
+      icon: Icon(Icons.settings, color: Colors.white, size: 20),
+      onPressed: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => SettingsPage()),
+        );
+      },
+      padding: EdgeInsets.zero,
+      constraints: BoxConstraints(minWidth: 36, minHeight: 36),
+    ),
+  ),
+),
           ),
 
           // Profile Image
@@ -299,15 +303,9 @@ class _ProfilePageState extends State<ProfilePage> {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: isTeacher
-                      ? [
-                          Color(0xFF10B981),
-                          Color(0xFF059669),
-                        ] // Green for teacher
-                      : [
-                          Color(0xFF3B82F6),
-                          Color(0xFF1E40AF),
-                        ], // Blue for student
+                  colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
                 borderRadius: BorderRadius.circular(20),
               ),
@@ -599,28 +597,43 @@ class _ProfilePageState extends State<ProfilePage> {
       child: Column(
         children: [
           // Edit Profile Button
-          SizedBox(
+          Container(
             width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: () {
+            height: 56,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Color(0xFF667EEA).withOpacity(0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(12),
+              onTap: () {
                 _showEditProfileDialog(isDarkMode);
               },
-              icon: const Icon(Icons.edit),
-              label: Text(
-                'تعديل الملف الشخصي',
-                style: GoogleFonts.tajawal(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF3B82F6),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                elevation: 2,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.edit, color: Colors.white),
+                  const SizedBox(width: 8),
+                  Text(
+                    'تعديل الملف الشخصي',
+                    style: GoogleFonts.tajawal(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -788,29 +801,46 @@ class _ProfilePageState extends State<ProfilePage> {
             style: GoogleFonts.tajawal(),
           ),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text('إلغاء', style: GoogleFonts.tajawal()),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                // Use BLoC to become teacher
-                context.read<UserRoleBloc>().add(const BecomeTeacherEvent());
-                Navigator.pop(context);
-                setState(() {}); // Refresh the UI
+            Container(
+              height: 48,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(12),
+                onTap: () {
+                  // Use BLoC to become teacher
+                  context.read<UserRoleBloc>().add(const BecomeTeacherEvent());
+                  Navigator.pop(context);
+                  setState(() {}); // Refresh the UI
 
-                // Show success message
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      'مرحباً بك كمدرس! يمكنك الآن نشر دوراتك التعليمية.',
-                      style: GoogleFonts.tajawal(),
+                  // Show success message
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        'مرحباً بك كمدرس! يمكنك الآن نشر دوراتك التعليمية.',
+                        style: GoogleFonts.tajawal(),
+                      ),
+                      backgroundColor: Colors.green,
                     ),
-                    backgroundColor: Colors.green,
+                  );
+                },
+                child: Center(
+                  child: Text(
+                    'نعم، انضم كمدرس',
+                    style: GoogleFonts.tajawal(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
                   ),
-                );
-              },
-              child: Text('نعم، انضم كمدرس', style: GoogleFonts.tajawal()),
+                ),
+              ),
             ),
           ],
         ),

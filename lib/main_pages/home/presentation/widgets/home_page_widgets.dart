@@ -3,13 +3,14 @@ import 'package:courses_app/data/notifiers.dart';
 import 'package:courses_app/main_pages/courses/presentation/pages/course_details_page.dart';
 import 'package:courses_app/main_pages/home/presentation/side%20pages/category_datail_page.dart';
 import 'package:courses_app/main_pages/home/presentation/side%20pages/category_page.dart';
-import 'package:courses_app/main_pages/home/presentation/side%20pages/recommended_page.dart';
 import 'package:courses_app/main_pages/home/presentation/side%20pages/university_pages/univiersities_page.dart';
 import 'package:courses_app/main_pages/home/presentation/widgets/notifications_page.dart';
+import 'package:courses_app/main_pages/search/presentation/pages/search_page.dart';
 import 'package:courses_app/theme_cubit/theme_cubit.dart';
 import 'package:courses_app/theme_cubit/theme_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class TopSearchBar extends StatelessWidget implements PreferredSizeWidget {
@@ -191,6 +192,31 @@ class _HeroCarouselState extends State<HeroCarousel> {
   final PageController _heroController = PageController();
   int _heroPage = 0;
 
+  // Content for each slider
+  final List<Map<String, dynamic>> _sliderContent = [
+    {
+      'title': 'كيفية استخدام برنامجنا 📚',
+      'buttonText': 'تعرف على البرنامج',
+      'description':
+          'اكتشف كل الميزات والأدوات المتاحة لتحقيق أقصى استفادة من منصتنا التعليمية',
+      'route': '/tutorial', // Replace with your actual tutorial page route
+    },
+    {
+      'title': 'انضم إلى مجتمعنا التعليمي 👥',
+      'buttonText': 'انضم الآن',
+      'description':
+          'تفاعل مع الطلاب والمدرسين وشارك في المناقشات لتعزيز تجربتك التعليمية',
+      'route': '/community', // Replace with your actual community page route
+    },
+    {
+      'title': 'خطط التعلم الشخصية 🎯',
+      'buttonText': 'ابدأ التخطيط',
+      'description': 'احصل على خطة تعلم مخصصة تناسب أهدافك ومستواك التعليمي',
+      'route':
+          '/learning-plan', // Replace with your actual learning plan page route
+    },
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -210,6 +236,42 @@ class _HeroCarouselState extends State<HeroCarousel> {
     super.dispose();
   }
 
+  void _navigateToPage(String route) {
+    // Replace this with your actual navigation logic
+    // You can use Navigator.pushNamed or any other navigation method you prefer
+    switch (route) {
+      case '/tutorial':
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => SearchPage(),
+          ), // Replace with your actual page
+        );
+        break;
+      case '/community':
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => SearchPage(),
+          ), // Replace with your actual page
+        );
+        break;
+      case '/learning-plan':
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => SearchPage(),
+          ), // Replace with your actual page
+        );
+        break;
+      default:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => CategoriesPage()),
+        );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<ThemeCubit, ThemeState>(
@@ -219,13 +281,14 @@ class _HeroCarouselState extends State<HeroCarousel> {
         return Padding(
           padding: const EdgeInsets.symmetric(vertical: 8),
           child: SizedBox(
-            height: 200,
+            height: 220, // Slightly increased height to accommodate description
             child: Stack(
               children: [
                 PageView.builder(
                   controller: _heroController,
                   itemCount: widget.heroImages.length,
                   itemBuilder: (context, index) {
+                    final content = _sliderContent[index];
                     return Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       child: ClipRRect(
@@ -272,21 +335,33 @@ class _HeroCarouselState extends State<HeroCarousel> {
                             ),
                             // Centered content
                             Positioned(
-                              bottom: 48, // Moved up to make space for dots
+                              bottom: 48,
                               right: 0,
                               left: 0,
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Text(
-                                    'ابدأ رحلتك التعليمية اليوم 🚀',
+                                    content['title'],
                                     style: GoogleFonts.tajawal(
                                       color: Colors.white,
-                                      fontSize: 22,
+                                      fontSize: 20,
                                       fontWeight: FontWeight.w800,
                                       height: 1.3,
                                     ),
                                     textAlign: TextAlign.center,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    content['description'],
+                                    style: GoogleFonts.tajawal(
+                                      color: Colors.white.withOpacity(0.9),
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500,
+                                      height: 1.4,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                    maxLines: 2,
                                   ),
                                   const SizedBox(height: 16),
                                   // Bigger centered button
@@ -316,26 +391,20 @@ class _HeroCarouselState extends State<HeroCarousel> {
                                     ),
                                     child: InkWell(
                                       onTap: () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) =>
-                                                CategoriesPage(),
-                                          ),
-                                        );
+                                        _navigateToPage(content['route']);
                                       },
                                       borderRadius: BorderRadius.circular(12),
                                       child: Container(
                                         padding: const EdgeInsets.symmetric(
-                                          horizontal: 32, // Increased padding
-                                          vertical: 14, // Increased padding
+                                          horizontal: 32,
+                                          vertical: 14,
                                         ),
                                         child: Center(
                                           child: Text(
-                                            'تصفح الكورسات',
+                                            content['buttonText'],
                                             style: GoogleFonts.tajawal(
                                               fontWeight: FontWeight.w700,
-                                              fontSize: 16, // Bigger font
+                                              fontSize: 16,
                                               color: Colors.white,
                                             ),
                                           ),
@@ -571,12 +640,13 @@ class RecommendedCourses extends StatelessWidget {
         final bool isDarkMode = themeState.isDarkMode;
 
         return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+          padding: const EdgeInsets.symmetric(vertical: 8),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Title with horizontal padding
               Padding(
-                padding: const EdgeInsets.only(bottom: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -587,409 +657,313 @@ class RecommendedCourses extends StatelessWidget {
                         color: isDarkMode ? Colors.white : null,
                       ),
                     ),
-                    TextButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => RecommendedPage(),
-                          ),
-                        );
-                      },
-                      child: Text(
-                        'عرض الكل',
-                        style: GoogleFonts.tajawal(
-                          color: const Color(0xFF2563EB),
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
                   ],
                 ),
               ),
-              ...recommended.map((item) {
-                return Container(
-                  margin: const EdgeInsets.only(bottom: 16),
-                  decoration: BoxDecoration(
-                    color: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(
-                          isDarkMode ? 0.1 : 0.05,
+              const SizedBox(height: 16),
+              // ListView with edge-to-edge scrolling but padding for first and last items
+              SizedBox(
+                height: _calculateCardHeight(context),
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                  ), // Add padding to ListView
+                  itemCount: recommended.length,
+                  separatorBuilder: (context, index) =>
+                      const SizedBox(width: 16),
+                  itemBuilder: (context, index) {
+                    final item = recommended[index];
+                    final cardWidth = _calculateCardWidth(context);
+
+                    return SizedBox(
+                      width: cardWidth,
+                      height: _calculateCardHeight(context),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: isDarkMode
+                              ? const Color(0xFF1E1E1E)
+                              : Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(
+                                isDarkMode ? 0.1 : 0.05,
+                              ),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
                         ),
-                        blurRadius: 12,
-                        offset: const Offset(0, 4),
+                        child: _buildCourseCard(
+                          context,
+                          item,
+                          cardWidth,
+                          isDarkMode,
+                        ),
                       ),
-                    ],
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: LayoutBuilder(
-                      builder: (context, constraints) {
-                        // Use different layouts based on available width
-                        if (constraints.maxWidth < 600) {
-                          // Mobile layout - vertical
-                          return Column(
-                            children: [
-                              // Image and title row
-                              Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  ClipRRect(
-                                    borderRadius: BorderRadius.circular(12),
-                                    child: Image.network(
-                                      item['image'],
-                                      width: 80,
-                                      height: 60,
-                                      fit: BoxFit.cover,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          item['title'],
-                                          style: GoogleFonts.tajawal(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w700,
-                                            color: isDarkMode
-                                                ? Colors.white
-                                                : const Color(0xFF1F2937),
-                                          ),
-                                          maxLines: 2,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          item['teacher'],
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .bodyMedium!
-                                              .copyWith(
-                                                fontWeight: FontWeight.w500,
-                                                color: isDarkMode
-                                                    ? Colors.white70
-                                                    : null,
-                                              ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 12),
-                              // Rating and students row
-                              Row(
-                                children: [
-                                  const Icon(
-                                    Icons.star,
-                                    size: 16,
-                                    color: Colors.amber,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    item['rating'].toStringAsFixed(1),
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodyMedium!
-                                        .copyWith(
-                                          fontWeight: FontWeight.w500,
-                                          color: isDarkMode
-                                              ? Colors.white70
-                                              : null,
-                                        ),
-                                  ),
-                                  const SizedBox(width: 16),
-                                  Icon(
-                                    Icons.people_outline,
-                                    size: 16,
-                                    color: isDarkMode
-                                        ? Colors.white60
-                                        : const Color(0xFF6B7280),
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Expanded(
-                                    child: Text(
-                                      '${item['students']} طالب',
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .bodyMedium!
-                                          .copyWith(
-                                            fontWeight: FontWeight.w500,
-                                            color: isDarkMode
-                                                ? Colors.white70
-                                                : null,
-                                          ),
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 12),
-                              // Button - full width on mobile
-                              SizedBox(
-                                width: double.infinity,
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    gradient: const LinearGradient(
-                                      colors: [
-                                        Color(0xFF667EEA),
-                                        Color(0xFF764BA2),
-                                      ],
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                    ),
-                                    borderRadius: BorderRadius.circular(10),
-                                    boxShadow: isDarkMode
-                                        ? [
-                                            BoxShadow(
-                                              color: Colors.black.withOpacity(
-                                                0.3,
-                                              ),
-                                              blurRadius: 3,
-                                              offset: const Offset(0, 2),
-                                            ),
-                                          ]
-                                        : null,
-                                  ),
-                                  child: InkWell(
-                                    onTap: () {
-                                      Map<String, dynamic> enhancedCourse = {
-                                        ...item, // Spread the original item
-                                        'category': item['category'] ?? 'برمجة',
-                                        'reviews': item['reviews'] ?? 100,
-                                        'duration': item['duration'] ?? 20,
-                                        'lessons': item['lessons'] ?? 30,
-                                        'level': item['level'] ?? 'متوسط',
-                                        'lastUpdated':
-                                            item['lastUpdated'] ?? '2024',
-                                        'price': item['price'] ?? '₪199',
-                                        'description':
-                                            item['description'] ??
-                                            'دورة تعليمية شاملة تغطي أهم المفاهيم والمهارات في هذا المجال.',
-                                        'tags':
-                                            item['tags'] ??
-                                            ['تعليم', 'تدريب', 'مهارات'],
-                                        'instructorImage':
-                                            item['instructorImage'] ??
-                                            'https://picsum.photos/seed/instructor/200/200',
-                                      };
-
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              CourseDetailsPage(
-                                                course: enhancedCourse,
-                                              ),
-                                        ),
-                                      );
-                                    },
-                                    borderRadius: BorderRadius.circular(10),
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 16,
-                                        vertical:
-                                            12, // Increased from 10 to 12 to make it taller
-                                      ),
-                                      child: Center(
-                                        child: Text(
-                                          'التفاصيل',
-                                          style: GoogleFonts.tajawal(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w700,
-                                            color: Colors.white,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          );
-                        } else {
-                          // Tablet/Desktop layout - horizontal
-                          return Row(
-                            children: [
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(12),
-                                child: Image.network(
-                                  item['image'],
-                                  width: constraints.maxWidth < 800 ? 80 : 100,
-                                  height: constraints.maxWidth < 800 ? 60 : 80,
-                                  fit: BoxFit.cover,
-                                ),
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      item['title'],
-                                      style: GoogleFonts.tajawal(
-                                        fontSize: constraints.maxWidth < 800
-                                            ? 14
-                                            : 16,
-                                        fontWeight: FontWeight.w700,
-                                        color: isDarkMode
-                                            ? Colors.white
-                                            : const Color(0xFF1F2937),
-                                      ),
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                    const SizedBox(height: 6),
-                                    Text(
-                                      item['teacher'],
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .bodyMedium!
-                                          .copyWith(
-                                            fontWeight: FontWeight.w500,
-                                            color: isDarkMode
-                                                ? Colors.white70
-                                                : null,
-                                          ),
-                                    ),
-                                    const SizedBox(height: 6),
-                                    Row(
-                                      children: [
-                                        const Icon(
-                                          Icons.star,
-                                          size: 16,
-                                          color: Colors.amber,
-                                        ),
-                                        const SizedBox(width: 4),
-                                        Text(
-                                          item['rating'].toStringAsFixed(1),
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .bodyMedium!
-                                              .copyWith(
-                                                fontWeight: FontWeight.w500,
-                                                color: isDarkMode
-                                                    ? Colors.white70
-                                                    : null,
-                                              ),
-                                        ),
-                                        const SizedBox(width: 16),
-                                        Icon(
-                                          Icons.people_outline,
-                                          size: 16,
-                                          color: isDarkMode
-                                              ? Colors.white60
-                                              : const Color(0xFF6B7280),
-                                        ),
-                                        const SizedBox(width: 4),
-                                        Text(
-                                          '${item['students']} طالب',
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .bodyMedium!
-                                              .copyWith(
-                                                fontWeight: FontWeight.w500,
-                                                color: isDarkMode
-                                                    ? Colors.white70
-                                                    : null,
-                                              ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Container(
-                                decoration: BoxDecoration(
-                                  gradient: const LinearGradient(
-                                    colors: [
-                                      Color(0xFF667EEA),
-                                      Color(0xFF764BA2),
-                                    ],
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
-                                  ),
-                                  borderRadius: BorderRadius.circular(10),
-                                  boxShadow: isDarkMode
-                                      ? [
-                                          BoxShadow(
-                                            color: Colors.black.withOpacity(
-                                              0.3,
-                                            ),
-                                            blurRadius: 3,
-                                            offset: const Offset(0, 2),
-                                          ),
-                                        ]
-                                      : null,
-                                ),
-                                child: InkWell(
-                                  onTap: () {
-                                    Map<String, dynamic> enhancedCourse = {
-                                      ...item,
-                                      'category': item['category'] ?? 'برمجة',
-                                      'reviews': item['reviews'] ?? 100,
-                                      'duration': item['duration'] ?? 20,
-                                      'lessons': item['lessons'] ?? 30,
-                                      'level': item['level'] ?? 'متوسط',
-                                      'lastUpdated':
-                                          item['lastUpdated'] ?? '2024',
-                                      'price': item['price'] ?? '₪199',
-                                      'description':
-                                          item['description'] ??
-                                          'دورة تعليمية شاملة تغطي أهم المفاهيم والمهارات في هذا المجال.',
-                                      'tags':
-                                          item['tags'] ??
-                                          ['تعليم', 'تدريب', 'مهارات'],
-                                      'instructorImage':
-                                          item['instructorImage'] ??
-                                          'https://picsum.photos/seed/instructor/200/200',
-                                    };
-
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => CourseDetailsPage(
-                                          course: enhancedCourse,
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                  borderRadius: BorderRadius.circular(10),
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 16,
-                                      vertical: 10,
-                                    ),
-                                    child: Text(
-                                      'التفاصيل',
-                                      style: GoogleFonts.tajawal(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w700,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          );
-                        }
-                      },
-                    ),
-                  ),
-                );
-              }),
+                    );
+                  },
+                ),
+              ),
             ],
           ),
         );
       },
     );
+  }
+
+  double _calculateCardWidth(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+
+    if (screenWidth < 600) {
+      return screenWidth * 0.75;
+    } else if (screenWidth < 900) {
+      return 300;
+    } else {
+      return 260;
+    }
+  }
+
+  double _calculateCardHeight(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+
+    if (screenWidth < 600) {
+      return 260;
+    } else if (screenWidth < 900) {
+      return 240;
+    } else {
+      return 220;
+    }
+  }
+
+  Widget _buildCourseCard(
+    BuildContext context,
+    Map<String, dynamic> item,
+    double cardWidth,
+    bool isDarkMode,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.all(12),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              // Course Image with taller aspect ratio
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  width: double.infinity,
+                  height: constraints.maxHeight * 0.5,
+                  child: Image.network(
+                    item['image'],
+                    fit: BoxFit.cover,
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return Container(
+                        color: isDarkMode ? Colors.grey[800] : Colors.grey[200],
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            value: loadingProgress.expectedTotalBytes != null
+                                ? loadingProgress.cumulativeBytesLoaded /
+                                      loadingProgress.expectedTotalBytes!
+                                : null,
+                          ),
+                        ),
+                      );
+                    },
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        color: isDarkMode ? Colors.grey[800] : Colors.grey[200],
+                        child: Icon(
+                          Icons.image_not_supported,
+                          color: isDarkMode
+                              ? Colors.grey[600]
+                              : Colors.grey[400],
+                          size: 40,
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+
+              // Course Title
+              Flexible(
+                child: Text(
+                  item['title'],
+                  style: GoogleFonts.tajawal(
+                    fontSize: _calculateTitleFontSize(context),
+                    fontWeight: FontWeight.w700,
+                    color: isDarkMode ? Colors.white : const Color(0xFF1F2937),
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(height: 4),
+
+              // Teacher Name
+              Text(
+                item['teacher'],
+                style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                  fontWeight: FontWeight.w500,
+                  color: isDarkMode ? Colors.white70 : const Color(0xFF6B7280),
+                  fontSize: _calculateSubtitleFontSize(context),
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 6),
+
+              // Rating and Students Row
+              Row(
+                children: [
+                  const Icon(Icons.star, size: 14, color: Colors.amber),
+                  const SizedBox(width: 2),
+                  Text(
+                    item['rating'].toStringAsFixed(1),
+                    style: Theme.of(context).textTheme.bodySmall!.copyWith(
+                      fontWeight: FontWeight.w500,
+                      color: isDarkMode ? Colors.white70 : null,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Icon(
+                    Icons.people_outline,
+                    size: 14,
+                    color: isDarkMode
+                        ? Colors.white60
+                        : const Color(0xFF6B7280),
+                  ),
+                  const SizedBox(width: 2),
+                  Text(
+                    _formatStudentCount(item['students']),
+                    style: Theme.of(context).textTheme.bodySmall!.copyWith(
+                      fontWeight: FontWeight.w500,
+                      color: isDarkMode ? Colors.white70 : null,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+
+              // Details Button
+              Container(
+                height: 38,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(8),
+                  boxShadow: isDarkMode
+                      ? [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.3),
+                            blurRadius: 3,
+                            offset: const Offset(0, 2),
+                          ),
+                        ]
+                      : null,
+                ),
+                child: InkWell(
+                  onTap: () {
+                    Map<String, dynamic> enhancedCourse = {
+                      ...item,
+                      'category': item['category'] ?? 'برمجة',
+                      'reviews': item['reviews'] ?? 100,
+                      'duration': item['duration'] ?? 20,
+                      'lessons': item['lessons'] ?? 30,
+                      'level': item['level'] ?? 'متوسط',
+                      'lastUpdated': item['lastUpdated'] ?? '2024',
+                      'price': item['price'] ?? '₪199',
+                      'description':
+                          item['description'] ??
+                          'دورة تعليمية شاملة تغطي أهم المفاهيم والمهارات في هذا المجال.',
+                      'tags': item['tags'] ?? ['تعليم', 'تدريب', 'مهارات'],
+                      'instructorImage':
+                          item['instructorImage'] ??
+                          'https://picsum.photos/seed/instructor/200/200',
+                    };
+
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            CourseDetailsPage(course: enhancedCourse),
+                      ),
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(8),
+                  child: Center(
+                    child: Text(
+                      'التفاصيل',
+                      style: GoogleFonts.tajawal(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  double _calculateImageHeight(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+
+    if (screenWidth < 600) {
+      return 120;
+    } else if (screenWidth < 900) {
+      return 110;
+    } else {
+      return 100;
+    }
+  }
+
+  double _calculateTitleFontSize(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+
+    if (screenWidth < 600) {
+      return 13;
+    } else if (screenWidth < 900) {
+      return 12;
+    } else {
+      return 11;
+    }
+  }
+
+  double _calculateSubtitleFontSize(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+
+    if (screenWidth < 600) {
+      return 12;
+    } else if (screenWidth < 900) {
+      return 11;
+    } else {
+      return 10;
+    }
+  }
+
+  String _formatStudentCount(dynamic students) {
+    if (students is int) {
+      if (students > 1000) {
+        return '${(students / 1000).toStringAsFixed(1)}K';
+      }
+      return students.toString();
+    }
+    return students?.toString() ?? '0';
   }
 }
 
@@ -1028,7 +1002,7 @@ class TrendingCourses extends StatelessWidget {
                     child: Text(
                       'عرض الكل',
                       style: GoogleFonts.tajawal(
-                        color: const Color(0xFF2563EB), // Keep brand color
+                        color: const Color(0xFF2563EB),
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -1037,103 +1011,38 @@ class TrendingCourses extends StatelessWidget {
               ),
             ),
 
-            // Horizontal courses list edge-to-edge
-            SizedBox(
-              height: 180,
-              child: ListView.separated(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                scrollDirection: Axis.horizontal,
-                itemCount: trending.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 16),
-                itemBuilder: (context, idx) {
-                  final t = trending[idx];
-                  return SizedBox(
-                    width: 200,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: theme.cardColor, // Use theme card color
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(
-                              isDarkMode ? 0.1 : 0.05,
-                            ),
-                            blurRadius: 8,
-                            offset: const Offset(0, 3),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Image section
-                          ClipRRect(
-                            borderRadius: const BorderRadius.vertical(
-                              top: Radius.circular(16),
-                            ),
-                            child: Stack(
-                              children: [
-                                Image.network(
-                                  t['image'],
-                                  width: 200,
-                                  height: 100,
-                                  fit: BoxFit.cover,
-                                ),
-                                Positioned(
-                                  top: 8,
-                                  right: 8,
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                      vertical: 4,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: const Color(
-                                        0xFFEF4444,
-                                      ), // Keep discount color
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: Text(
-                                      t['price'],
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          // Content section
-                          Expanded(
-                            child: Padding(
-                              padding: const EdgeInsets.all(12),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    t['title'],
-                                    style: GoogleFonts.tajawal(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w700,
-                                      color: theme
-                                          .colorScheme
-                                          .onSurface, // Use theme text color
-                                    ),
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
+            // Vertical courses list
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 15),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final screenWidth = constraints.maxWidth;
+                  final crossAxisCount = _calculateCrossAxisCount(screenWidth);
+                  final cardHeight = _calculateCardHeight(screenWidth);
+
+                  return GridView.builder(
+                    physics: const NeverScrollableScrollPhysics(),
+                    shrinkWrap: true,
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: crossAxisCount,
+                      crossAxisSpacing: 16,
+                      mainAxisSpacing: 16,
+                      childAspectRatio: _calculateAspectRatio(screenWidth),
                     ),
+                    itemCount: trending.length,
+                    itemBuilder: (context, index) {
+                      final course = trending[index];
+                      return SizedBox(
+                        height: cardHeight,
+                        child: _buildCourseCard(
+                          context,
+                          course,
+                          theme,
+                          isDarkMode,
+                          screenWidth,
+                        ),
+                      );
+                    },
                   );
                 },
               ),
@@ -1141,6 +1050,351 @@ class TrendingCourses extends StatelessWidget {
           ],
         );
       },
+    );
+  }
+
+  int _calculateCrossAxisCount(double screenWidth) {
+    if (screenWidth < 600) {
+      return 1;
+    } else if (screenWidth < 900) {
+      return 2;
+    } else if (screenWidth < 1200) {
+      return 3;
+    } else {
+      return 4;
+    }
+  }
+
+  double _calculateCardHeight(double screenWidth) {
+    if (screenWidth < 600) {
+      return 120; // Mobile height
+    } else if (screenWidth < 900) {
+      return 180; // Tablet height
+    } else {
+      return 200; // Desktop height
+    }
+  }
+
+  double _calculateAspectRatio(double screenWidth) {
+    if (screenWidth < 600) {
+      return 3.5; // Wider for mobile horizontal layout
+    } else if (screenWidth < 900) {
+      return 0.8; // Adjusted for tablet
+    } else {
+      return 0.75; // Adjusted for desktop
+    }
+  }
+
+  Widget _buildCourseCard(
+    BuildContext context,
+    Map<String, dynamic> course,
+    ThemeData theme,
+    bool isDarkMode,
+    double screenWidth,
+  ) {
+    final isMobile = screenWidth < 600;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(isDarkMode ? 0.1 : 0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: isMobile
+          ? _buildMobileCard(context, course, theme, isDarkMode)
+          : _buildDesktopCard(context, course, theme, isDarkMode, screenWidth),
+    );
+  }
+
+  Widget _buildMobileCard(
+    BuildContext context,
+    Map<String, dynamic> course,
+    ThemeData theme,
+    bool isDarkMode,
+  ) {
+    return Row(
+      children: [
+        // Image section - fixed width
+        SizedBox(
+          width: 100,
+          child: ClipRRect(
+            borderRadius: const BorderRadius.horizontal(
+              right: Radius.circular(16),
+            ),
+            child: Stack(
+              children: [
+                Image.network(
+                  course['image'],
+                  width: double.infinity,
+                  height: double.infinity,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      color: isDarkMode ? Colors.grey[800] : Colors.grey[200],
+                      child: Icon(
+                        Icons.image_not_supported,
+                        color: isDarkMode ? Colors.grey[600] : Colors.grey[400],
+                      ),
+                    );
+                  },
+                ),
+                Positioned(
+                  top: 6,
+                  right: 6,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEF4444),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      course['price'] ?? '₪199',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        // Content section
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.all(10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // Title
+                Flexible(
+                  child: Text(
+                    course['title'],
+                    style: GoogleFonts.tajawal(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+
+                // Course info
+                _buildMobileCourseInfo(context, course, isDarkMode),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDesktopCard(
+    BuildContext context,
+    Map<String, dynamic> course,
+    ThemeData theme,
+    bool isDarkMode,
+    double screenWidth,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Image section with fixed height
+        SizedBox(
+          height: screenWidth < 900 ? 100 : 120,
+          child: ClipRRect(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+            child: Stack(
+              children: [
+                Image.network(
+                  course['image'],
+                  width: double.infinity,
+                  height: double.infinity,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      color: isDarkMode ? Colors.grey[800] : Colors.grey[200],
+                      child: Icon(
+                        Icons.image_not_supported,
+                        color: isDarkMode ? Colors.grey[600] : Colors.grey[400],
+                      ),
+                    );
+                  },
+                ),
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEF4444),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      course['price'] ?? '₪199',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        // Content section
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // Title
+                Flexible(
+                  child: Text(
+                    course['title'],
+                    style: GoogleFonts.tajawal(
+                      fontSize: screenWidth < 900 ? 13 : 14,
+                      fontWeight: FontWeight.w700,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+
+                // Course info for larger screens
+                if (screenWidth >= 900)
+                  _buildDesktopCourseInfo(context, course, isDarkMode),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMobileCourseInfo(
+    BuildContext context,
+    Map<String, dynamic> course,
+    bool isDarkMode,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 6),
+        // Rating and students
+        Row(
+          children: [
+            const Icon(Icons.star, size: 14, color: Colors.amber),
+            const SizedBox(width: 2),
+            Text(
+              (course['rating'] ?? 4.5).toStringAsFixed(1),
+              style: Theme.of(context).textTheme.bodySmall!.copyWith(
+                fontWeight: FontWeight.w500,
+                color: isDarkMode ? Colors.white70 : null,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Icon(
+              Icons.people_outline,
+              size: 14,
+              color: isDarkMode ? Colors.white60 : const Color(0xFF6B7280),
+            ),
+            const SizedBox(width: 2),
+            Text(
+              '${course['students'] ?? '1000'}',
+              style: Theme.of(context).textTheme.bodySmall!.copyWith(
+                fontWeight: FontWeight.w500,
+                color: isDarkMode ? Colors.white70 : null,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        // Teacher name
+        Text(
+          course['teacher'] ?? 'مدرس متخصص',
+          style: Theme.of(context).textTheme.bodySmall!.copyWith(
+            color: isDarkMode ? Colors.white60 : const Color(0xFF6B7280),
+            fontSize: 11,
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDesktopCourseInfo(
+    BuildContext context,
+    Map<String, dynamic> course,
+    bool isDarkMode,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 8),
+        // Rating row
+        Row(
+          children: [
+            const Icon(Icons.star, size: 16, color: Colors.amber),
+            const SizedBox(width: 4),
+            Text(
+              (course['rating'] ?? 4.5).toStringAsFixed(1),
+              style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                fontWeight: FontWeight.w500,
+                color: isDarkMode ? Colors.white70 : null,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Icon(
+              Icons.people_outline,
+              size: 16,
+              color: isDarkMode ? Colors.white60 : const Color(0xFF6B7280),
+            ),
+            const SizedBox(width: 4),
+            Text(
+              '${course['students'] ?? '1000'} طالب',
+              style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                fontWeight: FontWeight.w500,
+                color: isDarkMode ? Colors.white70 : null,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        // Teacher name
+        Text(
+          course['teacher'] ?? 'مدرس متخصص',
+          style: Theme.of(context).textTheme.bodySmall!.copyWith(
+            color: isDarkMode ? Colors.white60 : const Color(0xFF6B7280),
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ],
     );
   }
 }
@@ -1472,17 +1726,7 @@ class Footer extends StatelessWidget {
                                 TextButton(
                                   onPressed: () {},
                                   child: Text(
-                                    'اتصل بنا',
-                                    style: GoogleFonts.tajawal(
-                                      color: textSecondaryColor,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ),
-                                TextButton(
-                                  onPressed: () {},
-                                  child: Text(
-                                    'سياسة الخصوصية',
+                                    'تواصل معنا',
                                     style: GoogleFonts.tajawal(
                                       color: textSecondaryColor,
                                       fontWeight: FontWeight.w500,
@@ -1578,17 +1822,7 @@ class Footer extends StatelessWidget {
                                 TextButton(
                                   onPressed: () {},
                                   child: Text(
-                                    'اتصل بنا',
-                                    style: GoogleFonts.tajawal(
-                                      color: textSecondaryColor,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ),
-                                TextButton(
-                                  onPressed: () {},
-                                  child: Text(
-                                    'سياسة الخصوصية',
+                                    "تواصل معنا",
                                     style: GoogleFonts.tajawal(
                                       color: textSecondaryColor,
                                       fontWeight: FontWeight.w500,
@@ -1631,21 +1865,31 @@ class Footer extends StatelessWidget {
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 16),
+
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
+                            // Instagram
                             IconButton(
                               onPressed: () {},
-                              icon: Icon(Icons.facebook, color: iconColor),
+                              icon: FaIcon(
+                                FontAwesomeIcons.instagram,
+                                color: iconColor,
+                              ),
                             ),
+                            // LinkedIn
                             IconButton(
                               onPressed: () {},
-                              icon: Icon(Icons.link_rounded, color: iconColor),
+                              icon: FaIcon(
+                                FontAwesomeIcons.linkedin,
+                                color: iconColor,
+                              ),
                             ),
+                            // Email
                             IconButton(
                               onPressed: () {},
-                              icon: Icon(
-                                Icons.alternate_email,
+                              icon: FaIcon(
+                                FontAwesomeIcons.envelope,
                                 color: iconColor,
                               ),
                             ),

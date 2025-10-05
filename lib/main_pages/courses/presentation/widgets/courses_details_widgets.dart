@@ -32,6 +32,7 @@ class CourseHeader extends StatelessWidget {
             background: Stack(
               fit: StackFit.expand,
               children: [
+                
                 Image.network(
                   course['image'],
                   fit: BoxFit.cover,
@@ -79,7 +80,14 @@ class CourseHeader extends StatelessWidget {
                           vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF10B981),
+                          gradient: LinearGradient(
+                            colors: [
+                              Color(0xFF667EEA),
+                              Color(0xFF764BA2),
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
@@ -308,22 +316,38 @@ class CourseInfoCard extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 8),
-        ElevatedButton(
-          onPressed: () => _showPaymentBottomSheet(context),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF10B981),
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+        Container(
+          height: 48,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Color(0xFF667EEA),
+                Color(0xFF764BA2),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
-            elevation: 2,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Color(0xFF667EEA).withOpacity(0.3),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
-          child: Text(
-            'اشترك الآن',
-            style: GoogleFonts.tajawal(
-              fontWeight: FontWeight.w700,
-              fontSize: 16,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: () => _showPaymentBottomSheet(context),
+            child: Center(
+              child: Text(
+                'اشترك الآن',
+                style: GoogleFonts.tajawal(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 16,
+                  color: Colors.white,
+                ),
+              ),
             ),
           ),
         ),
@@ -684,7 +708,14 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
                         width: isMobile ? 20 : 24,
                         height: isMobile ? 20 : 24,
                         decoration: BoxDecoration(
-                          color: method.color,
+                          gradient: LinearGradient(
+                            colors: [
+                              Color(0xFF667EEA),
+                              Color(0xFF764BA2),
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Icon(
@@ -961,57 +992,68 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
     return Row(
       children: [
         Expanded(
-          child: OutlinedButton(
-            onPressed: () => Navigator.of(context).pop(),
-            style: OutlinedButton.styleFrom(
-              padding: EdgeInsets.symmetric(vertical: isMobile ? 16 : 18),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              side: BorderSide(
+          child: Container(
+            height: 48,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
                 color: isDarkMode ? Colors.grey[600]! : const Color(0xFFD1D5DB),
               ),
-              backgroundColor: isDarkMode
-                  ? const Color(0xFF2D2D2D)
-                  : Colors.transparent,
             ),
-            child: Text(
-              'إلغاء',
-              style: GoogleFonts.tajawal(
-                fontSize: isMobile ? 16 : 18,
-                fontWeight: FontWeight.w700,
-                color: isDarkMode ? Colors.white70 : const Color(0xFF6B7280),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(12),
+              onTap: () => Navigator.of(context).pop(),
+              child: Center(
+                child: Text(
+                  'إلغاء',
+                  style: GoogleFonts.tajawal(
+                    fontSize: isMobile ? 16 : 18,
+                    fontWeight: FontWeight.w700,
+                    color: isDarkMode ? Colors.white70 : const Color(0xFF6B7280),
+                  ),
+                ),
               ),
             ),
           ),
         ),
         SizedBox(width: isMobile ? 12 : 16),
         Expanded(
-          child: ElevatedButton(
-            onPressed: _isLoading ? null : _processPayment,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF10B981),
-              padding: EdgeInsets.symmetric(vertical: isMobile ? 16 : 18),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+          child: Container(
+            height: 48,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Color(0xFF667EEA),
+                  Color(0xFF764BA2),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(12),
+              onTap: _isLoading ? null : _processPayment,
+              child: Center(
+                child: _isLoading
+                    ? SizedBox(
+                        height: isMobile ? 20 : 24,
+                        width: isMobile ? 20 : 24,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation(Colors.white),
+                        ),
+                      )
+                    : Text(
+                        'تأكيد الدفع',
+                        style: GoogleFonts.tajawal(
+                          fontSize: isMobile ? 16 : 18,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                        ),
+                      ),
               ),
             ),
-            child: _isLoading
-                ? SizedBox(
-                    height: isMobile ? 20 : 24,
-                    width: isMobile ? 20 : 24,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation(Colors.white),
-                    ),
-                  )
-                : Text(
-                    'تأكيد الدفع',
-                    style: GoogleFonts.tajawal(
-                      fontSize: isMobile ? 16 : 18,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
           ),
         ),
       ],
@@ -1191,18 +1233,22 @@ class _CourseTabsState extends State<CourseTabs> {
             return Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: isDarkMode
-                    ? const Color(0xFF2D2D2D)
-                    : const Color(0xFFEFF6FF),
+                gradient: LinearGradient(
+                  colors: [
+                    Color(0xFF667EEA),
+                    Color(0xFF764BA2),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
                 borderRadius: BorderRadius.circular(20),
-                border: isDarkMode ? Border.all(color: Colors.white30) : null,
               ),
               child: Text(
                 tags[index],
                 style: GoogleFonts.tajawal(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: isDarkMode ? Colors.white : const Color(0xFF2563EB),
+                  color: Colors.white,
                 ),
               ),
             );
@@ -1242,7 +1288,14 @@ class _CourseTabsState extends State<CourseTabs> {
                   width: 32,
                   height: 32,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF10B981),
+                    gradient: LinearGradient(
+                      colors: [
+                        Color(0xFF667EEA),
+                        Color(0xFF764BA2),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: const Icon(
@@ -1282,22 +1335,17 @@ class _CourseTabsState extends State<CourseTabs> {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            gradient: isDarkMode
-                ? const LinearGradient(
-                    colors: [Color(0xFF1E3A5F), Color(0xFF2D4A7A)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  )
-                : const LinearGradient(
-                    colors: [Color(0xFFEFF6FF), Color(0xFFDBEAFE)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
+            gradient: LinearGradient(
+              colors: [
+                Color(0xFF667EEA),
+                Color(0xFF764BA2),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: const Color(
-                0xFF2563EB,
-              ).withOpacity(isDarkMode ? 0.3 : 0.2),
+              color: Colors.white.withOpacity(0.2),
               width: 1,
             ),
           ),
@@ -1307,7 +1355,7 @@ class _CourseTabsState extends State<CourseTabs> {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF2563EB),
+                  color: Colors.white.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: const Icon(
@@ -1326,9 +1374,7 @@ class _CourseTabsState extends State<CourseTabs> {
                       style: GoogleFonts.tajawal(
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
-                        color: isDarkMode
-                            ? Colors.white
-                            : const Color(0xFF1F2937),
+                        color: Colors.white,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -1337,9 +1383,7 @@ class _CourseTabsState extends State<CourseTabs> {
                       style: GoogleFonts.tajawal(
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
-                        color: isDarkMode
-                            ? Colors.white70
-                            : const Color(0xFF6B7280),
+                        color: Colors.white.withOpacity(0.8),
                       ),
                     ),
                   ],
@@ -1456,22 +1500,17 @@ class _CourseTabsState extends State<CourseTabs> {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            gradient: isDarkMode
-                ? const LinearGradient(
-                    colors: [Color(0xFF1A3C2A), Color(0xFF2D5A3D)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  )
-                : const LinearGradient(
-                    colors: [Color(0xFFF0FDF4), Color(0xFFDCFCE7)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
+            gradient: LinearGradient(
+              colors: [
+                Color(0xFF667EEA),
+                Color(0xFF764BA2),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: const Color(
-                0xFF10B981,
-              ).withOpacity(isDarkMode ? 0.3 : 0.2),
+              color: Colors.white.withOpacity(0.2),
               width: 1,
             ),
           ),
@@ -1481,7 +1520,7 @@ class _CourseTabsState extends State<CourseTabs> {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF10B981),
+                  color: Colors.white.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: const Icon(
@@ -1500,9 +1539,7 @@ class _CourseTabsState extends State<CourseTabs> {
                       style: GoogleFonts.tajawal(
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
-                        color: isDarkMode
-                            ? Colors.white
-                            : const Color(0xFF1F2937),
+                        color: Colors.white,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -1511,9 +1548,7 @@ class _CourseTabsState extends State<CourseTabs> {
                       style: GoogleFonts.tajawal(
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
-                        color: isDarkMode
-                            ? Colors.white70
-                            : const Color(0xFF6B7280),
+                        color: Colors.white.withOpacity(0.8),
                       ),
                     ),
                   ],
@@ -1543,15 +1578,18 @@ class _CourseTabsState extends State<CourseTabs> {
           children: [
             Container(
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
+                gradient: LinearGradient(
+                  colors: [
+                    Color(0xFF667EEA),
+                    Color(0xFF764BA2),
+                  ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFFF59E0B).withOpacity(0.3),
+                    color: Color(0xFF667EEA).withOpacity(0.3),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),

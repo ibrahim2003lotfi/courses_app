@@ -374,4 +374,56 @@ class PopularCategories extends StatelessWidget {
       ),
     );
   }
+}class SearchPageField extends StatelessWidget {
+  const SearchPageField({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      child: Material(
+        elevation: 2,
+        borderRadius: BorderRadius.circular(16),
+        shadowColor: Colors.black.withOpacity(0.1),
+        child: TextField(
+
+          style: GoogleFonts.tajawal(
+            fontWeight: FontWeight.w700, // Bolder font when typing
+            fontSize: 16,
+            color: Colors.black, // Darker color for typed text
+          ),
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: Colors.white,
+            contentPadding: const EdgeInsets.symmetric(
+              vertical: 16,
+              horizontal: 16,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide.none,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide.none,
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide.none,
+            ),
+            prefixIcon: const Icon(
+              Icons.search,
+              color: Color(0xFF6B7280),
+            ),
+            hintText: 'ابحث عن الكورسات, المحاضرات, و الدروس',
+            hintStyle: GoogleFonts.tajawal(
+              fontWeight: FontWeight.w500,
+              fontSize: 16,
+              color: const Color(0xFF6B7280),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }

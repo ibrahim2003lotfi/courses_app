@@ -96,6 +96,7 @@ class _HomePageState extends State<HomePage> {
             SliverToBoxAdapter(child: HeroCarousel(heroImages: heroImages)),
             SliverToBoxAdapter(child: CategoriesGrid(categories: categories)),
             SliverToBoxAdapter(child: RecommendedCourses(recommended: recommended)),
+            
             SliverToBoxAdapter(child: TrendingCourses(trending: trending)),
             SliverToBoxAdapter(child: ExtrasSection()),
             SliverToBoxAdapter(child: SizedBox(height: 20)),

@@ -37,15 +37,28 @@ class UniversitiesPage extends StatelessWidget {
                     child: Row(
                       children: [
                         // Back Button
-                        IconButton(
-                          onPressed: () => Navigator.pop(context),
-                          icon: Icon(
-                            Icons.arrow_back,
-                            color: isDarkMode ? Colors.white : const Color(0xFF10B981),
+                        Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                Color(0xFF667EEA),
+                                Color(0xFF764BA2),
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(8),
                           ),
-                          style: IconButton.styleFrom(
-                            backgroundColor: const Color(0xFF10B981).withOpacity(isDarkMode ? 0.2 : 0.1),
-                            padding: const EdgeInsets.all(8),
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(8),
+                            onTap: () => Navigator.pop(context),
+                            child: Padding(
+                              padding: const EdgeInsets.all(8),
+                              child: Icon(
+                                Icons.arrow_back,
+                                color: Colors.white,
+                              ),
+                            ),
                           ),
                         ),
                         const SizedBox(width: 16),
@@ -246,11 +259,24 @@ class UniversityListItem extends StatelessWidget {
 
                           const SizedBox(height: 12),
 
-                          // Button
-                          SizedBox(
+                          // Button as Container with InkWell
+                          Container(
                             width: double.infinity,
-                            child: ElevatedButton(
-                              onPressed: () {
+                            height: 48,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  Color(0xFF667EEA),
+                                  Color(0xFF764BA2),
+                                ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(12),
+                              onTap: () {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
@@ -260,19 +286,14 @@ class UniversityListItem extends StatelessWidget {
                                   ),
                                 );
                               },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF10B981),
-                                foregroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                padding: const EdgeInsets.symmetric(vertical: 12),
-                              ),
-                              child: Text(
-                                'عرض الكليات',
-                                style: GoogleFonts.tajawal(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w700,
+                              child: Center(
+                                child: Text(
+                                  'عرض الكليات',
+                                  style: GoogleFonts.tajawal(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white,
+                                  ),
                                 ),
                               ),
                             ),
@@ -400,48 +421,65 @@ class UniversityDetailsSheet extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            FacultiesPage(universityName: university['name']),
-                      ),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF10B981),
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  height: 48,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        Color(0xFF667EEA),
+                        Color(0xFF764BA2),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Text(
-                    'عرض الاكليات',
-                    style: GoogleFonts.tajawal(fontWeight: FontWeight.w700),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(12),
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              FacultiesPage(universityName: university['name']),
+                        ),
+                      );
+                    },
+                    child: Center(
+                      child: Text(
+                        'عرض الاكليات',
+                        style: GoogleFonts.tajawal(
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
                   ),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: OutlinedButton(
-                  onPressed: () => Navigator.pop(context),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: isDarkMode ? Colors.white70 : const Color(0xFF6B7280),
-                    side: BorderSide(
+                child: Container(
+                  height: 48,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
                       color: isDarkMode ? Colors.white30 : const Color(0xFFD1D5DB),
                     ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
-                  child: Text(
-                    'إلغاء',
-                    style: GoogleFonts.tajawal(fontWeight: FontWeight.w700),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(12),
+                    onTap: () => Navigator.pop(context),
+                    child: Center(
+                      child: Text(
+                        'إلغاء',
+                        style: GoogleFonts.tajawal(
+                          fontWeight: FontWeight.w700,
+                          color: isDarkMode ? Colors.white70 : const Color(0xFF6B7280),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
               ),
