@@ -8,14 +8,33 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-class CoursesPage extends StatefulWidget {
+class CoursesPage extends StatelessWidget {
   const CoursesPage({super.key});
 
   @override
-  State<CoursesPage> createState() => _CoursesPageState();
+  Widget build(BuildContext context) {
+    return BlocBuilder<UserRoleBloc, UserRoleState>(
+      builder: (context, roleState) {
+        // Rebuild entire page when role changes
+        return _CoursesPageContent(
+          key: ValueKey(roleState.isTeacher), // Force rebuild when role changes
+          isTeacher: roleState.isTeacher,
+        );
+      },
+    );
+  }
 }
 
-class _CoursesPageState extends State<CoursesPage>
+class _CoursesPageContent extends StatefulWidget {
+  final bool isTeacher;
+
+  const _CoursesPageContent({super.key, required this.isTeacher});
+
+  @override
+  State<_CoursesPageContent> createState() => _CoursesPageContentState();
+}
+
+class _CoursesPageContentState extends State<_CoursesPageContent>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
@@ -120,7 +139,6 @@ class _CoursesPageState extends State<CoursesPage>
     },
   ];
 
-  // New published courses data
   final List<Map<String, dynamic>> publishedCourses = [
     {
       'id': 'p1',
@@ -191,7 +209,10 @@ class _CoursesPageState extends State<CoursesPage>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: _getTabCount(), vsync: this);
+    _tabController = TabController(
+      length: widget.isTeacher ? 3 : 2,
+      vsync: this,
+    );
   }
 
   @override
@@ -200,23 +221,14 @@ class _CoursesPageState extends State<CoursesPage>
     super.dispose();
   }
 
-  // Helper method to get the number of tabs based on user role
-  int _getTabCount() {
-    final userRoleBloc = context.read<UserRoleBloc>();
-    return userRoleBloc.isTeacher ? 3 : 2;
-  }
-
   // Helper method to get responsive font size
   double _getResponsiveFontSize(BuildContext context) {
     double width = MediaQuery.of(context).size.width;
     if (width > 600) {
-      // Tablet
       return 26;
     } else if (width > 400) {
-      // Large phone
       return 22;
     } else {
-      // Small phone
       return 18;
     }
   }
@@ -238,75 +250,57 @@ class _CoursesPageState extends State<CoursesPage>
     final baseFontSize = _getResponsiveFontSize(context);
     final smallFontSize = _getResponsiveSmallFontSize(context);
 
-    return BlocBuilder<UserRoleBloc, UserRoleState>(
-      builder: (context, roleState) {
-        final bool isTeacher = roleState.isTeacher;
+    return BlocBuilder<ThemeCubit, ThemeState>(
+      builder: (context, themeState) {
+        final bool isDarkMode = themeState.isDarkMode;
+        final themeData = isDarkMode
+            ? ThemeManager.darkTheme
+            : ThemeManager.lightTheme;
 
-        return BlocBuilder<ThemeCubit, ThemeState>(
-          builder: (context, themeState) {
-            final bool isDarkMode = themeState.isDarkMode;
-            final themeData = isDarkMode
-                ? ThemeManager.darkTheme
-                : ThemeManager.lightTheme;
+        return Scaffold(
+          backgroundColor: themeData.scaffoldBackgroundColor,
+          body: SafeArea(
+            child: Column(
+              children: [
+                // TopSearchBar widget
+                const TopSearchBar(),
 
-            // Update tab controller length if needed
-            if (_tabController.length != _getTabCount()) {
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                setState(() {
-                  _tabController = TabController(
-                    length: _getTabCount(),
-                    vsync: this,
-                  );
-                });
-              });
-            }
-
-            return Scaffold(
-              backgroundColor: themeData.scaffoldBackgroundColor,
-              body: SafeArea(
-                child: Column(
-                  children: [
-                    // TopSearchBar widget
-                    const TopSearchBar(),
-
-                    // Custom AppBar with Tabs - without nested Scaffold
-                    Container(
-                      color: themeData.appBarTheme.backgroundColor,
-                      child: Column(
-                        children: [
-                          // TabBar
-                          TabBar(
-                            controller: _tabController,
-                            tabs: _buildTabs(isTeacher, smallFontSize),
-                            labelColor: themeData.colorScheme.primary,
-                            unselectedLabelColor: isDarkMode
-                                ? Colors.grey[400]
-                                : Colors.grey[600],
-                            indicatorColor: themeData.colorScheme.primary,
-                            indicatorWeight: 3,
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    // TabBarView
-                    Expanded(
-                      child: TabBarView(
+                // Custom AppBar with Tabs
+                Container(
+                  color: themeData.appBarTheme.backgroundColor,
+                  child: Column(
+                    children: [
+                      // TabBar
+                      TabBar(
                         controller: _tabController,
-                        children: _buildTabViews(
-                          context, // Add this - pass context as first parameter
-                          isTeacher,
-                          baseFontSize,
-                          smallFontSize,
-                          isDarkMode,
-                        ),
+                        tabs: _buildTabs(widget.isTeacher, smallFontSize),
+                        labelColor: themeData.colorScheme.primary,
+                        unselectedLabelColor: isDarkMode
+                            ? Colors.grey[400]
+                            : Colors.grey[600],
+                        indicatorColor: themeData.colorScheme.primary,
+                        indicatorWeight: 3,
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            );
-          },
+
+                // TabBarView
+                Expanded(
+                  child: TabBarView(
+                    controller: _tabController,
+                    children: _buildTabViews(
+                      context,
+                      widget.isTeacher,
+                      baseFontSize,
+                      smallFontSize,
+                      isDarkMode,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         );
       },
     );
@@ -355,14 +349,13 @@ class _CoursesPageState extends State<CoursesPage>
   }
 
   List<Widget> _buildTabViews(
-    BuildContext context, // Add this parameter
+    BuildContext context,
     bool isTeacher,
     double baseFontSize,
     double smallFontSize,
     bool isDarkMode,
   ) {
     final views = <Widget>[
-      // Change to List<Widget> instead of specific type
       CoursesListView(
         courses: subscribedCourses,
         showProgress: true,
@@ -392,7 +385,7 @@ class _CoursesPageState extends State<CoursesPage>
           baseFontSize: baseFontSize,
           smallFontSize: smallFontSize,
           isDarkMode: isDarkMode,
-          parentContext: context, // Now context is available here
+          parentContext: context,
         ),
       );
     }
