@@ -1,11 +1,10 @@
+// published_courses_tab.dart
 import 'package:courses_app/core/utils/theme_manager.dart';
 import 'package:courses_app/main_pages/courses/presentation/pages/course_details_page.dart';
-import 'package:courses_app/main_pages/home/presentation/widgets/home_page_widgets.dart';
-import 'package:courses_app/theme_cubit/theme_cubit.dart';
-import 'package:courses_app/theme_cubit/theme_state.dart';
-import 'package:courses_app/bloc/user_role_bloc.dart';
+import 'package:courses_app/main_pages/courses/presentation/widgets/add_courses.dart';
+
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
+
 import 'package:google_fonts/google_fonts.dart';
 
 // New Published Courses Tab Widget
@@ -43,7 +42,7 @@ class _PublishedCoursesTabState extends State<PublishedCoursesTab> {
         Padding(
           padding: const EdgeInsets.all(16.0),
           child: ElevatedButton.icon(
-            onPressed: () => _showAddCourseDialog(widget.parentContext),
+            onPressed: () => _navigateToAddCoursePage(widget.parentContext),
             icon: const Icon(Icons.add),
             label: Text(
               'إضافة دورة جديدة',
@@ -135,24 +134,18 @@ class _PublishedCoursesTabState extends State<PublishedCoursesTab> {
     );
   }
 
-  void _showAddCourseDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AddCourseDialog(
-        baseFontSize: widget.baseFontSize,
-        smallFontSize: widget.smallFontSize,
-        isDarkMode: widget.isDarkMode,
-        onCourseAdded: (newCourse) {
-          // Handle adding new course to the list
-          setState(() {
-            // In a real app, you would add to your data source
-          });
-        },
-      ),
+  void _navigateToAddCoursePage(BuildContext context) {
+    // Navigate to the add course page instead of showing a dialog
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => AddCoursePage()),
     );
   }
 
-  void _showCourseOptionsBottomSheet(BuildContext context, Map<String, dynamic> course) {
+  void _showCourseOptionsBottomSheet(
+    BuildContext context,
+    Map<String, dynamic> course,
+  ) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -164,7 +157,7 @@ class _PublishedCoursesTabState extends State<PublishedCoursesTab> {
         isDarkMode: widget.isDarkMode,
         onEdit: () {
           Navigator.pop(context);
-          _showEditCourseDialog(context, course);
+          _navigateToEditCoursePage(context, course);
         },
         onDelete: () {
           Navigator.pop(context);
@@ -183,25 +176,21 @@ class _PublishedCoursesTabState extends State<PublishedCoursesTab> {
     );
   }
 
-  void _showEditCourseDialog(BuildContext context, Map<String, dynamic> course) {
-    showDialog(
-      context: context,
-      builder: (context) => AddCourseDialog(
-        baseFontSize: widget.baseFontSize,
-        smallFontSize: widget.smallFontSize,
-        isDarkMode: widget.isDarkMode,
-        courseToEdit: course,
-        onCourseAdded: (editedCourse) {
-          // Handle course editing
-          setState(() {
-            // In a real app, you would update your data source
-          });
-        },
-      ),
+  void _navigateToEditCoursePage(
+    BuildContext context,
+    Map<String, dynamic> course,
+  ) {
+    // Navigate to the edit course page instead of showing a dialog
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => AddCoursePage()),
     );
   }
 
-  void _showDeleteConfirmationDialog(BuildContext context, Map<String, dynamic> course) {
+  void _showDeleteConfirmationDialog(
+    BuildContext context,
+    Map<String, dynamic> course,
+  ) {
     showDialog(
       context: context,
       builder: (context) => DeleteConfirmationDialog(
@@ -510,237 +499,6 @@ class PublishedCourseCard extends StatelessWidget {
           const Icon(Icons.more_vert, color: Colors.grey),
         ],
       ),
-    );
-  }
-}
-
-// Add/Edit Course Dialog
-class AddCourseDialog extends StatefulWidget {
-  final double baseFontSize;
-  final double smallFontSize;
-  final bool isDarkMode;
-  final Map<String, dynamic>? courseToEdit;
-  final Function(Map<String, dynamic>) onCourseAdded;
-
-  const AddCourseDialog({
-    super.key,
-    required this.baseFontSize,
-    required this.smallFontSize,
-    required this.isDarkMode,
-    this.courseToEdit,
-    required this.onCourseAdded,
-  });
-
-  @override
-  State<AddCourseDialog> createState() => _AddCourseDialogState();
-}
-
-class _AddCourseDialogState extends State<AddCourseDialog> {
-  final _formKey = GlobalKey<FormState>();
-  final _titleController = TextEditingController();
-  final _teacherController = TextEditingController();
-  final _priceController = TextEditingController();
-  final _descriptionController = TextEditingController();
-  final _categoryController = TextEditingController();
-
-  @override
-  void initState() {
-    super.initState();
-    if (widget.courseToEdit != null) {
-      _titleController.text = widget.courseToEdit!['title'];
-      _teacherController.text = widget.courseToEdit!['teacher'];
-      _priceController.text = widget.courseToEdit!['price'];
-      _descriptionController.text = widget.courseToEdit!['description'];
-      _categoryController.text = widget.courseToEdit!['category'];
-    }
-  }
-
-  @override
-  void dispose() {
-    _titleController.dispose();
-    _teacherController.dispose();
-    _priceController.dispose();
-    _descriptionController.dispose();
-    _categoryController.dispose();
-    super.dispose();
-  }
-
-  void _submitForm() {
-    if (_formKey.currentState!.validate()) {
-      final newCourse = {
-        'id':
-            widget.courseToEdit?['id'] ??
-            'p${DateTime.now().millisecondsSinceEpoch}',
-        'title': _titleController.text,
-        'teacher': _teacherController.text,
-        'price': _priceController.text,
-        'description': _descriptionController.text,
-        'category': _categoryController.text,
-        'image':
-            'https://picsum.photos/seed/${DateTime.now().millisecondsSinceEpoch}/400/300',
-        'rating': 4.5,
-        'reviews': 0,
-        'students': '0',
-        'duration': 0,
-        'lessons': 0,
-        'level': 'مبتدئ',
-        'lastUpdated': '2024',
-        'status': 'مسودة',
-        'enrollments': 0,
-      };
-
-      widget.onCourseAdded(newCourse);
-      Navigator.pop(context);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final themeData = widget.isDarkMode
-        ? ThemeManager.darkTheme
-        : ThemeManager.lightTheme;
-
-    return Dialog(
-      backgroundColor: themeData.scaffoldBackgroundColor,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: SingleChildScrollView(
-          child: Form(
-            key: _formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  widget.courseToEdit == null
-                      ? 'إضافة دورة جديدة'
-                      : 'تعديل الدورة',
-                  style: GoogleFonts.tajawal(
-                    fontSize: widget.baseFontSize,
-                    fontWeight: FontWeight.w900,
-                    color: themeData.colorScheme.onBackground,
-                  ),
-                ),
-                const SizedBox(height: 24),
-
-                _buildTextField(
-                  controller: _titleController,
-                  label: 'عنوان الدورة',
-                  hintText: 'أدخل عنوان الدورة',
-                  validator: (value) =>
-                      value!.isEmpty ? 'يرجى إدخال العنوان' : null,
-                ),
-                const SizedBox(height: 16),
-
-                _buildTextField(
-                  controller: _teacherController,
-                  label: 'اسم المدرس',
-                  hintText: 'أدخل اسم المدرس',
-                  validator: (value) =>
-                      value!.isEmpty ? 'يرجى إدخال اسم المدرس' : null,
-                ),
-                const SizedBox(height: 16),
-
-                _buildTextField(
-                  controller: _categoryController,
-                  label: 'الفئة',
-                  hintText: 'أدخل فئة الدورة',
-                  validator: (value) =>
-                      value!.isEmpty ? 'يرجى إدخال الفئة' : null,
-                ),
-                const SizedBox(height: 16),
-
-                _buildTextField(
-                  controller: _priceController,
-                  label: 'السعر',
-                  hintText: 'أدخل سعر الدورة',
-                  validator: (value) =>
-                      value!.isEmpty ? 'يرجى إدخال السعر' : null,
-                ),
-                const SizedBox(height: 16),
-
-                _buildTextField(
-                  controller: _descriptionController,
-                  label: 'الوصف',
-                  hintText: 'أدخل وصف الدورة',
-                  maxLines: 3,
-                  validator: (value) =>
-                      value!.isEmpty ? 'يرجى إدخال الوصف' : null,
-                ),
-                const SizedBox(height: 24),
-
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: Text(
-                          'إلغاء',
-                          style: GoogleFonts.tajawal(
-                            fontSize: widget.smallFontSize,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: _submitForm,
-                        child: Text(
-                          widget.courseToEdit == null ? 'إضافة' : 'حفظ',
-                          style: GoogleFonts.tajawal(
-                            fontSize: widget.smallFontSize,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String label,
-    required String hintText,
-    required String? Function(String?) validator,
-    int maxLines = 1,
-  }) {
-    final themeData = widget.isDarkMode
-        ? ThemeManager.darkTheme
-        : ThemeManager.lightTheme;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: GoogleFonts.tajawal(
-            fontSize: widget.smallFontSize,
-            fontWeight: FontWeight.w700,
-            color: themeData.colorScheme.onBackground,
-          ),
-        ),
-        const SizedBox(height: 4),
-        TextFormField(
-          controller: controller,
-          maxLines: maxLines,
-          style: GoogleFonts.tajawal(fontSize: widget.smallFontSize),
-          decoration: InputDecoration(
-            hintText: hintText,
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-          ),
-          validator: validator,
-        ),
-      ],
     );
   }
 }
