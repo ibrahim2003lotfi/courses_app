@@ -20,7 +20,7 @@ class _ProfilePageState extends State<ProfilePage> {
     return BlocBuilder<UserRoleBloc, UserRoleState>(
       builder: (context, roleState) {
         final bool isTeacher = roleState.isTeacher;
-        
+
         // بيانات المستخدم النموذجية - updated to use BLoC
         final Map<String, dynamic> userProfile = {
           'name': 'أحمد محمد السالم',
@@ -30,7 +30,7 @@ class _ProfilePageState extends State<ProfilePage> {
           'profileImage': 'https://picsum.photos/seed/profile/200/200',
           'coverImage': 'https://picsum.photos/seed/cover/800/300',
           'joinDate': 'انضم في مارس 2023',
-          'bio': isTeacher 
+          'bio': isTeacher
               ? 'مدرس متخصص في تطوير التطبيقات وتقنية المعلومات.'
               : 'مطور تطبيقات محمول ومهتم بالتعلم المستمر في مجال التكنولوجيا والبرمجة.',
         };
@@ -81,28 +81,45 @@ class _ProfilePageState extends State<ProfilePage> {
             final isDarkMode = themeState.isDarkMode;
 
             return Theme(
-              data: isDarkMode ? ThemeManager.darkTheme : ThemeManager.lightTheme,
+              data: isDarkMode
+                  ? ThemeManager.darkTheme
+                  : ThemeManager.lightTheme,
               child: Scaffold(
                 backgroundColor: _getBackgroundColor(isDarkMode),
                 body: SafeArea(
                   child: CustomScrollView(
                     slivers: [
                       // Header with Cover and Profile Image
-                      SliverToBoxAdapter(child: _buildProfileHeader(isDarkMode)),
+                      SliverToBoxAdapter(
+                        child: _buildProfileHeader(isDarkMode),
+                      ),
 
                       // User Info Section
-                      SliverToBoxAdapter(child: _buildUserInfo(isDarkMode, isTeacher, userProfile)),
+                      SliverToBoxAdapter(
+                        child: _buildUserInfo(
+                          isDarkMode,
+                          isTeacher,
+                          userProfile,
+                        ),
+                      ),
 
                       // User Statistics
-                      SliverToBoxAdapter(child: _buildUserStats(isDarkMode, userStats)),
+                      SliverToBoxAdapter(
+                        child: _buildUserStats(isDarkMode, userStats),
+                      ),
 
                       // Certificates Section
                       SliverToBoxAdapter(
-                        child: _buildCertificatesSection(isDarkMode, certificates),
+                        child: _buildCertificatesSection(
+                          isDarkMode,
+                          certificates,
+                        ),
                       ),
 
                       // Action Buttons
-                      SliverToBoxAdapter(child: _buildActionButtons(isDarkMode)),
+                      SliverToBoxAdapter(
+                        child: _buildActionButtons(isDarkMode),
+                      ),
 
                       // Bottom Spacing
                       const SliverToBoxAdapter(child: SizedBox(height: 40)),
@@ -163,7 +180,7 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
           ),
 
-          // Back Button
+          // Settings Button - Added in top right corner
           Positioned(
             top: 16,
             left: 16,
@@ -173,6 +190,18 @@ class _ProfilePageState extends State<ProfilePage> {
                   0.9,
                 ),
                 shape: BoxShape.circle,
+              ),
+              child: IconButton(
+                icon: Icon(
+                  Icons.settings,
+                  color: isDarkMode ? Colors.white : Colors.black,
+                ),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => SettingsPage()),
+                  );
+                },
               ),
             ),
           ),
@@ -199,7 +228,9 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
                 child: CircleAvatar(
                   radius: 57,
-                  backgroundImage: const NetworkImage('https://picsum.photos/seed/profile/200/200'),
+                  backgroundImage: const NetworkImage(
+                    'https://picsum.photos/seed/profile/200/200',
+                  ),
                   backgroundColor: Colors.grey[200],
                 ),
               ),
@@ -210,7 +241,11 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _buildUserInfo(bool isDarkMode, bool isTeacher, Map<String, dynamic> userProfile) {
+  Widget _buildUserInfo(
+    bool isDarkMode,
+    bool isTeacher,
+    Map<String, dynamic> userProfile,
+  ) {
     return Padding(
       padding: const EdgeInsets.all(20.0),
       child: Column(
@@ -371,7 +406,10 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  List<Widget> _buildStatItems(bool isDarkMode, Map<String, dynamic> userStats) {
+  List<Widget> _buildStatItems(
+    bool isDarkMode,
+    Map<String, dynamic> userStats,
+  ) {
     return [
       _buildStatItem(
         icon: Icons.school,
@@ -448,7 +486,10 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _buildCertificatesSection(bool isDarkMode, List<Map<String, dynamic>> certificates) {
+  Widget _buildCertificatesSection(
+    bool isDarkMode,
+    List<Map<String, dynamic>> certificates,
+  ) {
     return Padding(
       padding: const EdgeInsets.all(20.0),
       child: Column(
@@ -586,60 +627,30 @@ class _ProfilePageState extends State<ProfilePage> {
 
           const SizedBox(height: 16),
 
-          // Settings and Help Buttons Row
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => SettingsPage()),
-                    );
-                  },
-                  icon: const Icon(Icons.settings),
-                  label: Text(
-                    'الإعدادات',
-                    style: TextStyle(color: _getTextColor(isDarkMode)),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    side: BorderSide(
-                      color: isDarkMode
-                          ? Colors.grey[700]!
-                          : const Color(0xFFE2E8F0),
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
+          // Help Button - Removed Settings button from here since we added it to the header
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () {
+                _showHelpDialog(isDarkMode);
+              },
+              icon: const Icon(Icons.help_outline),
+              label: Text(
+                'المساعدة',
+                style: TextStyle(color: _getTextColor(isDarkMode)),
+              ),
+              style: OutlinedButton.styleFrom(
+                side: BorderSide(
+                  color: isDarkMode
+                      ? Colors.grey[700]!
+                      : const Color(0xFFE2E8F0),
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () {
-                    _showHelpDialog(isDarkMode);
-                  },
-                  icon: const Icon(Icons.help_outline),
-                  label: Text(
-                    'المساعدة',
-                    style: TextStyle(color: _getTextColor(isDarkMode)),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    side: BorderSide(
-                      color: isDarkMode
-                          ? Colors.grey[700]!
-                          : const Color(0xFFE2E8F0),
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
 
           const SizedBox(height: 24),

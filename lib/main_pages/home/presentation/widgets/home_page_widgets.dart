@@ -1,4 +1,5 @@
 import 'package:courses_app/core/utils/theme_manager.dart';
+import 'package:courses_app/data/notifiers.dart';
 import 'package:courses_app/main_pages/courses/presentation/pages/course_details_page.dart';
 import 'package:courses_app/main_pages/home/presentation/side%20pages/category_datail_page.dart';
 import 'package:courses_app/main_pages/home/presentation/side%20pages/category_page.dart';
@@ -116,32 +117,8 @@ class TopSearchBar extends StatelessWidget implements PreferredSizeWidget {
   Size get preferredSize => const Size.fromHeight(70);
 }
 
-class SearchField extends StatefulWidget {
+class SearchField extends StatelessWidget {
   const SearchField({super.key});
-
-  @override
-  State<SearchField> createState() => _SearchFieldState();
-}
-
-class _SearchFieldState extends State<SearchField> {
-  final TextEditingController _controller = TextEditingController();
-  bool _hasText = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller.addListener(() {
-      setState(() {
-        _hasText = _controller.text.isNotEmpty;
-      });
-    });
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -155,47 +132,42 @@ class _SearchFieldState extends State<SearchField> {
             elevation: isDarkMode ? 1 : 2,
             borderRadius: BorderRadius.circular(16),
             shadowColor: Colors.black.withOpacity(isDarkMode ? 0.2 : 0.1),
-            child: TextField(
-              controller: _controller,
-              style: GoogleFonts.tajawal(
-                fontWeight: _hasText ? FontWeight.w700 : FontWeight.w500,
-                fontSize: 16,
-                color: isDarkMode ? Colors.white : const Color(0xFF1F2937),
-              ),
-              decoration: InputDecoration(
-                hintText: 'ابحث عن الكورسات, المحاضرات, و الدروس',
-                hintStyle: GoogleFonts.tajawal(
-                  fontWeight: FontWeight.w500,
-                  color: isDarkMode
-                      ? const Color(0xFF9CA3AF)
-                      : const Color(0xFF6B7280),
-                ),
-                prefixIcon: Icon(
-                  Icons.search,
-                  color: isDarkMode
-                      ? const Color(0xFF9CA3AF)
-                      : const Color(0xFF6B7280),
-                ),
-                filled: true,
-                fillColor: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
-                contentPadding: const EdgeInsets.symmetric(
+            child: InkWell(
+              onTap: () {
+                selectedPageNotifier.value = 1;
+              },
+              borderRadius: BorderRadius.circular(16),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
                   vertical: 16,
                   horizontal: 16,
                 ),
-                border: OutlineInputBorder(
+                decoration: BoxDecoration(
+                  color: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
                   borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide.none,
                 ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide.none,
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(
-                    color: const Color(0xFF2563EB),
-                    width: 2,
-                  ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.search,
+                      color: isDarkMode
+                          ? const Color(0xFF9CA3AF)
+                          : const Color(0xFF6B7280),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Text(
+                        'ابحث عن الكورسات, المحاضرات, و الدروس',
+                        style: GoogleFonts.tajawal(
+                          fontWeight: FontWeight.w500,
+                          fontSize: 16,
+                          color: isDarkMode
+                              ? const Color(0xFF9CA3AF)
+                              : const Color(0xFF6B7280),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),

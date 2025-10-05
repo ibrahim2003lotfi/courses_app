@@ -1,4 +1,5 @@
 import 'package:courses_app/core/utils/theme_manager.dart';
+import 'package:courses_app/main_pages/home/presentation/side%20pages/category_datail_page.dart';
 import 'package:courses_app/theme_cubit/theme_cubit.dart';
 import 'package:courses_app/theme_cubit/theme_state.dart';
 import 'package:flutter/material.dart';
@@ -15,8 +16,10 @@ class SearchSuggestionsGrid extends StatelessWidget {
     return BlocBuilder<ThemeCubit, ThemeState>(
       builder: (context, themeState) {
         final isDarkMode = themeState.isDarkMode;
-        final theme = isDarkMode ? ThemeManager.darkTheme : ThemeManager.lightTheme;
-        
+        final theme = isDarkMode
+            ? ThemeManager.darkTheme
+            : ThemeManager.lightTheme;
+
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
           child: Column(
@@ -66,7 +69,11 @@ class SearchSuggestionsGrid extends StatelessWidget {
     );
   }
 
-  Widget _buildSuggestionItem(Map<String, dynamic> suggestion, BuildContext context, ThemeData theme) {
+  Widget _buildSuggestionItem(
+    Map<String, dynamic> suggestion,
+    BuildContext context,
+    ThemeData theme,
+  ) {
     return Material(
       elevation: 2,
       borderRadius: BorderRadius.circular(12),
@@ -80,7 +87,9 @@ class SearchSuggestionsGrid extends StatelessWidget {
           ),
           boxShadow: [
             BoxShadow(
-              color: (suggestion['gradient'] as List<Color>).last.withOpacity(0.2),
+              color: (suggestion['gradient'] as List<Color>).last.withOpacity(
+                0.2,
+              ),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -88,7 +97,21 @@ class SearchSuggestionsGrid extends StatelessWidget {
         ),
         child: InkWell(
           borderRadius: BorderRadius.circular(12),
-          onTap: () {},
+          onTap: () {
+            // Navigate to CategoryDetailPage
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => CategoryDetailPage(
+                  category: {
+                    'name': suggestion['text'],
+                    'icon': suggestion['icon'],
+                    'gradient': suggestion['gradient'],
+                  },
+                ),
+              ),
+            );
+          },
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Row(
@@ -132,8 +155,10 @@ class SuggestedSearch extends StatelessWidget {
     return BlocBuilder<ThemeCubit, ThemeState>(
       builder: (context, themeState) {
         final isDarkMode = themeState.isDarkMode;
-        final theme = isDarkMode ? ThemeManager.darkTheme : ThemeManager.lightTheme;
-        
+        final theme = isDarkMode
+            ? ThemeManager.darkTheme
+            : ThemeManager.lightTheme;
+
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           child: Column(
@@ -169,10 +194,12 @@ class SuggestedSearch extends StatelessWidget {
                         decoration: BoxDecoration(
                           color: theme.cardColor,
                           borderRadius: BorderRadius.circular(8),
-                          border: isDarkMode ? null : Border.all(
-                            color: Colors.grey.shade200,
-                            width: 1,
-                          ),
+                          border: isDarkMode
+                              ? null
+                              : Border.all(
+                                  color: Colors.grey.shade200,
+                                  width: 1,
+                                ),
                         ),
                         child: ListTile(
                           dense: true,
@@ -189,8 +216,28 @@ class SuggestedSearch extends StatelessWidget {
                               fontSize: 14,
                             ),
                           ),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                          onTap: () {},
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 4,
+                          ),
+                          onTap: () {
+                            // Navigate to CategoryDetailPage with search term
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => CategoryDetailPage(
+                                  category: {
+                                    'name': search,
+                                    'icon': Icons.search,
+                                    'gradient': const [
+                                      Color(0xFF667EEA),
+                                      Color(0xFF764BA2),
+                                    ],
+                                  },
+                                ),
+                              ),
+                            );
+                          },
                           minLeadingWidth: 0,
                           minVerticalPadding: 8,
                         ),
@@ -217,8 +264,10 @@ class PopularCategories extends StatelessWidget {
     return BlocBuilder<ThemeCubit, ThemeState>(
       builder: (context, themeState) {
         final isDarkMode = themeState.isDarkMode;
-        final theme = isDarkMode ? ThemeManager.darkTheme : ThemeManager.lightTheme;
-        
+        final theme = isDarkMode
+            ? ThemeManager.darkTheme
+            : ThemeManager.lightTheme;
+
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
           child: Column(
@@ -243,7 +292,8 @@ class PopularCategories extends StatelessWidget {
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
                   itemCount: categories.length,
-                  separatorBuilder: (context, index) => const SizedBox(width: 16),
+                  separatorBuilder: (context, index) =>
+                      const SizedBox(width: 16),
                   itemBuilder: (context, index) {
                     final category = categories[index];
                     return _buildCategoryCard(category, context, theme);
@@ -257,7 +307,11 @@ class PopularCategories extends StatelessWidget {
     );
   }
 
-  Widget _buildCategoryCard(Map<String, dynamic> category, BuildContext context, ThemeData theme) {
+  Widget _buildCategoryCard(
+    Map<String, dynamic> category,
+    BuildContext context,
+    ThemeData theme,
+  ) {
     return Material(
       elevation: 2,
       borderRadius: BorderRadius.circular(16),
@@ -272,7 +326,9 @@ class PopularCategories extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: (category['gradient'] as List<Color>).last.withOpacity(0.3),
+              color: (category['gradient'] as List<Color>).last.withOpacity(
+                0.3,
+              ),
               blurRadius: 8,
               offset: const Offset(0, 3),
             ),
@@ -280,7 +336,15 @@ class PopularCategories extends StatelessWidget {
         ),
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
-          onTap: () {},
+          onTap: () {
+            // Navigate to CategoryDetailPage
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => CategoryDetailPage(category: category),
+              ),
+            );
+          },
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
