@@ -1,5 +1,6 @@
 import 'package:courses_app/bloc/user_role_bloc.dart';
 import 'package:courses_app/core/utils/theme_manager.dart';
+import 'package:courses_app/main_pages/profile/presentation/edit_profile.dart';
 import 'package:courses_app/main_pages/profile/presentation/pages/settings_page.dart';
 import 'package:courses_app/theme_cubit/theme_cubit.dart';
 import 'package:courses_app/theme_cubit/theme_state.dart';
@@ -603,7 +604,10 @@ class _ProfilePageState extends State<ProfilePage> {
             width: double.infinity,
             child: ElevatedButton.icon(
               onPressed: () {
-                _showEditProfileDialog(isDarkMode);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => EditProfilePage()),
+                );
               },
               icon: const Icon(Icons.edit),
               label: Text(
@@ -681,32 +685,6 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  void _showEditProfileDialog(bool isDarkMode) {
-    showDialog(
-      context: context,
-      builder: (context) => Theme(
-        data: isDarkMode ? ThemeManager.darkTheme : ThemeManager.lightTheme,
-        child: AlertDialog(
-          title: Text('تعديل الملف الشخصي'),
-          content: Text('سيتم فتح صفحة تعديل البيانات الشخصية.'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text('إلغاء'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-                // Navigate to edit profile page
-              },
-              child: Text('موافق'),
-            ),
-          ],
-        ),
       ),
     );
   }

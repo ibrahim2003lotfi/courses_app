@@ -32,7 +32,7 @@ class _SettingsPageState extends State<SettingsPage> {
         final isDarkMode = state.isDarkMode;
 
         return Scaffold(
-          backgroundColor: isDarkMode 
+          backgroundColor: isDarkMode
               ? ThemeManager.darkTheme.scaffoldBackgroundColor
               : ThemeManager.lightTheme.scaffoldBackgroundColor,
           appBar: _buildAppBar(context, isTablet, isDarkMode),
@@ -55,15 +55,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         trailing: const Icon(Icons.chevron_right),
                         isDarkMode: isDarkMode,
                       ),
-                      _buildDivider(isDarkMode),
-                      _buildListTile(
-                        icon: Icons.email_outlined,
-                        title: 'إدارة البريد الإلكتروني',
-                        subtitle: 'تحديث عنوان البريد الإلكتروني',
-                        onTap: () => _showEmailManagementDialog(),
-                        trailing: const Icon(Icons.chevron_right),
-                        isDarkMode: isDarkMode,
-                      ),
+
                       _buildDivider(isDarkMode),
                       _buildListTile(
                         icon: Icons.delete_outline,
@@ -94,15 +86,7 @@ class _SettingsPageState extends State<SettingsPage> {
                             context.read<ThemeCubit>().toggleTheme(),
                         isDarkMode: isDarkMode,
                       ),
-                      _buildDivider(isDarkMode),
-                      _buildListTile(
-                        icon: Icons.language,
-                        title: 'لغة التطبيق',
-                        subtitle: selectedLanguage,
-                        onTap: () => _showLanguageDialog(),
-                        trailing: const Icon(Icons.chevron_right),
-                        isDarkMode: isDarkMode,
-                      ),
+
                       _buildDivider(isDarkMode),
                       _buildSwitchTile(
                         icon: Icons.notifications,
@@ -124,30 +108,14 @@ class _SettingsPageState extends State<SettingsPage> {
                     icon: Icons.security,
                     isDarkMode: isDarkMode,
                     children: [
-                      _buildListTile(
-                        icon: Icons.devices,
-                        title: 'إدارة الأجهزة',
-                        subtitle: 'عرض الأجهزة المرتبطة بحسابك',
-                        onTap: () => _showDeviceManagementDialog(),
-                        trailing: const Icon(Icons.chevron_right),
-                        isDarkMode: isDarkMode,
-                      ),
                       _buildDivider(isDarkMode),
                       _buildSwitchTile(
                         icon: Icons.verified_user,
                         title: 'التحقق بخطوتين',
                         subtitle: 'تأمين إضافي لحسابك',
                         value: twoFactorAuth,
-                        onChanged: (value) => setState(() => twoFactorAuth = value),
-                        isDarkMode: isDarkMode,
-                      ),
-                      _buildDivider(isDarkMode),
-                      _buildSwitchTile(
-                        icon: Icons.share,
-                        title: 'مشاركة البيانات',
-                        subtitle: 'السماح بمشاركة البيانات لتحسين الخدمة',
-                        value: dataSharing,
-                        onChanged: (value) => setState(() => dataSharing = value),
+                        onChanged: (value) =>
+                            setState(() => twoFactorAuth = value),
                         isDarkMode: isDarkMode,
                       ),
                     ],
@@ -208,7 +176,9 @@ class _SettingsPageState extends State<SettingsPage> {
                       onPressed: () {
                         Navigator.pushReplacement(
                           context,
-                          MaterialPageRoute(builder: (context) => const LoginPage()),
+                          MaterialPageRoute(
+                            builder: (context) => const LoginPage(),
+                          ),
                         );
                       },
                       icon: const Icon(Icons.logout),
@@ -222,7 +192,9 @@ class _SettingsPageState extends State<SettingsPage> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.red,
                         foregroundColor: Colors.white,
-                        padding: EdgeInsets.symmetric(vertical: isTablet ? 18 : 16),
+                        padding: EdgeInsets.symmetric(
+                          vertical: isTablet ? 18 : 16,
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -241,17 +213,23 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  PreferredSizeWidget _buildAppBar(BuildContext context, bool isTablet, bool isDarkMode) {
+  PreferredSizeWidget _buildAppBar(
+    BuildContext context,
+    bool isTablet,
+    bool isDarkMode,
+  ) {
     return AppBar(
-      backgroundColor: isDarkMode 
+      backgroundColor: isDarkMode
           ? ThemeManager.darkTheme.appBarTheme.backgroundColor
           : ThemeManager.lightTheme.appBarTheme.backgroundColor,
       elevation: 0,
       leading: IconButton(
-        icon: Icon(Icons.arrow_back, 
-            color: isDarkMode 
-                ? ThemeManager.darkTheme.appBarTheme.iconTheme?.color
-                : ThemeManager.lightTheme.appBarTheme.iconTheme?.color),
+        icon: Icon(
+          Icons.arrow_back,
+          color: isDarkMode
+              ? ThemeManager.darkTheme.appBarTheme.iconTheme?.color
+              : ThemeManager.lightTheme.appBarTheme.iconTheme?.color,
+        ),
         onPressed: () => Navigator.pop(context),
       ),
       title: Text(
@@ -277,7 +255,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
     return Container(
       decoration: BoxDecoration(
-        color: isDarkMode 
+        color: isDarkMode
             ? ThemeManager.darkTheme.cardColor
             : ThemeManager.lightTheme.cardColor,
         borderRadius: BorderRadius.circular(16),
@@ -369,7 +347,9 @@ class _SettingsPageState extends State<SettingsPage> {
         style: GoogleFonts.tajawal(
           fontSize: isTablet ? 18 : 16,
           fontWeight: FontWeight.w600,
-          color: titleColor ?? (isDarkMode ? Colors.white : const Color(0xFF1E293B)),
+          color:
+              titleColor ??
+              (isDarkMode ? Colors.white : const Color(0xFF1E293B)),
         ),
       ),
       subtitle: Text(
@@ -464,25 +444,6 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  void _showEmailManagementDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(
-          'إدارة البريد الإلكتروني',
-          style: GoogleFonts.tajawal(fontWeight: FontWeight.bold),
-        ),
-        content: const Text('سيتم توجيهك لصفحة إدارة البريد الإلكتروني.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('إغلاق'),
-          ),
-        ],
-      ),
-    );
-  }
-
   void _showDeleteAccountDialog() {
     showDialog(
       context: context,
@@ -509,59 +470,6 @@ class _SettingsPageState extends State<SettingsPage> {
               'حذف الحساب',
               style: TextStyle(color: Colors.white),
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showLanguageDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(
-          'اختر اللغة',
-          style: GoogleFonts.tajawal(fontWeight: FontWeight.bold),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: languages.map((language) {
-            return RadioListTile<String>(
-              title: Text(language),
-              value: language,
-              groupValue: selectedLanguage,
-              onChanged: (value) {
-                setState(() {
-                  selectedLanguage = value!;
-                });
-                Navigator.pop(context);
-              },
-            );
-          }).toList(),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('إلغاء'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showDeviceManagementDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(
-          'إدارة الأجهزة',
-          style: GoogleFonts.tajawal(fontWeight: FontWeight.bold),
-        ),
-        content: const Text('سيتم عرض الأجهزة المرتبطة بحسابك.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('إغلاق'),
           ),
         ],
       ),
