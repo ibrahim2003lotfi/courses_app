@@ -32,7 +32,6 @@ class CourseHeader extends StatelessWidget {
             background: Stack(
               fit: StackFit.expand,
               children: [
-                
                 Image.network(
                   course['image'],
                   fit: BoxFit.cover,
@@ -81,10 +80,7 @@ class CourseHeader extends StatelessWidget {
                         ),
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
-                            colors: [
-                              Color(0xFF667EEA),
-                              Color(0xFF764BA2),
-                            ],
+                            colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                           ),
@@ -320,10 +316,7 @@ class CourseInfoCard extends StatelessWidget {
           height: 48,
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [
-                Color(0xFF667EEA),
-                Color(0xFF764BA2),
-              ],
+              colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -709,10 +702,7 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
                         height: isMobile ? 20 : 24,
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
-                            colors: [
-                              Color(0xFF667EEA),
-                              Color(0xFF764BA2),
-                            ],
+                            colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                           ),
@@ -1009,7 +999,9 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
                   style: GoogleFonts.tajawal(
                     fontSize: isMobile ? 16 : 18,
                     fontWeight: FontWeight.w700,
-                    color: isDarkMode ? Colors.white70 : const Color(0xFF6B7280),
+                    color: isDarkMode
+                        ? Colors.white70
+                        : const Color(0xFF6B7280),
                   ),
                 ),
               ),
@@ -1022,10 +1014,7 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
             height: 48,
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [
-                  Color(0xFF667EEA),
-                  Color(0xFF764BA2),
-                ],
+                colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -1185,7 +1174,8 @@ class _CourseTabsState extends State<CourseTabs> {
     );
   }
 
-  Widget _buildTabContent(bool isDarkMode) {
+ Widget _buildTabContent(bool isDarkMode) {
+  try {
     switch (_selectedTab) {
       case 0:
         return _buildDescription(isDarkMode);
@@ -1198,7 +1188,21 @@ class _CourseTabsState extends State<CourseTabs> {
       default:
         return _buildDescription(isDarkMode);
     }
+  } catch (e, stackTrace) {
+    print('Error in _buildTabContent for tab $_selectedTab: $e');
+    print('Stack trace: $stackTrace');
+    return Container(
+      padding: EdgeInsets.all(16),
+      child: Text(
+        'حدث خطأ في تحميل المحتوى. الرجاء المحاولة مرة أخرى.',
+        style: GoogleFonts.tajawal(
+          color: Colors.red,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
   }
+}
 
   Widget _buildDescription(bool isDarkMode) {
     return Column(
@@ -1234,10 +1238,7 @@ class _CourseTabsState extends State<CourseTabs> {
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [
-                    Color(0xFF667EEA),
-                    Color(0xFF764BA2),
-                  ],
+                  colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -1289,10 +1290,7 @@ class _CourseTabsState extends State<CourseTabs> {
                   height: 32,
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
-                      colors: [
-                        Color(0xFF667EEA),
-                        Color(0xFF764BA2),
-                      ],
+                      colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
@@ -1336,18 +1334,12 @@ class _CourseTabsState extends State<CourseTabs> {
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [
-                Color(0xFF667EEA),
-                Color(0xFF764BA2),
-              ],
+              colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: Colors.white.withOpacity(0.2),
-              width: 1,
-            ),
+            border: Border.all(color: Colors.white.withOpacity(0.2), width: 1),
           ),
           child: Row(
             children: [
@@ -1501,18 +1493,12 @@ class _CourseTabsState extends State<CourseTabs> {
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [
-                Color(0xFF667EEA),
-                Color(0xFF764BA2),
-              ],
+              colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: Colors.white.withOpacity(0.2),
-              width: 1,
-            ),
+            border: Border.all(color: Colors.white.withOpacity(0.2), width: 1),
           ),
           child: Row(
             children: [
@@ -1562,106 +1548,164 @@ class _CourseTabsState extends State<CourseTabs> {
   }
 
   Widget _buildInstructor(bool isDarkMode) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'عن المدرب',
-          style: GoogleFonts.tajawal(
-            fontSize: 18,
-            fontWeight: FontWeight.w800,
-            color: isDarkMode ? Colors.white : const Color(0xFF1F2937),
+    try {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'عن المدرب',
+            style: GoogleFonts.tajawal(
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+              color: isDarkMode ? Colors.white : const Color(0xFF1F2937),
+            ),
           ),
-        ),
-        const SizedBox(height: 16),
-        Row(
-          children: [
-            Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    Color(0xFF667EEA),
-                    Color(0xFF764BA2),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              // Safe image widget with error handling
+              Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Color(0xFF667EEA).withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
                   ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
                 ),
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: Color(0xFF667EEA).withOpacity(0.3),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
+                padding: const EdgeInsets.all(2),
+                child: ClipOval(
+                  child: Container(
+                    width: 80,
+                    height: 80,
+                    color: Colors.grey[300],
+                    child: _buildInstructorImage(isDarkMode),
                   ),
-                ],
-              ),
-              padding: const EdgeInsets.all(2),
-              child: CircleAvatar(
-                radius: 40,
-                backgroundImage: NetworkImage(
-                  widget.course['instructorImage'] ??
-                      'https://picsum.photos/seed/instructor/200/200',
                 ),
               ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    widget.course['teacher'],
-                    style: GoogleFonts.tajawal(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                      color: isDarkMode
-                          ? Colors.white
-                          : const Color(0xFF1F2937),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'خبير في ${widget.course['category'] ?? 'التخصص'}',
-                    style: GoogleFonts.tajawal(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: isDarkMode
-                          ? Colors.white70
-                          : const Color(0xFF6B7280),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      _buildInstructorStat('5.0', 'التقييم', isDarkMode),
-                      const SizedBox(width: 16),
-                      _buildInstructorStat(
-                        widget.course['students'],
-                        'طالب',
-                        isDarkMode,
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.course['teacher']?.toString() ?? 'مدرب',
+                      style: GoogleFonts.tajawal(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: isDarkMode
+                            ? Colors.white
+                            : const Color(0xFF1F2937),
                       ),
-                      const SizedBox(width: 16),
-                      _buildInstructorStat('15', 'كورس', isDarkMode),
-                    ],
-                  ),
-                ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'خبير في ${widget.course['category']?.toString() ?? 'التخصص'}',
+                      style: GoogleFonts.tajawal(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: isDarkMode
+                            ? Colors.white70
+                            : const Color(0xFF6B7280),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        _buildInstructorStat('5.0', 'التقييم', isDarkMode),
+                        const SizedBox(width: 16),
+                        _buildInstructorStat(
+                          widget.course['students']?.toString() ?? '1000',
+                          'طالب',
+                          isDarkMode,
+                        ),
+                        const SizedBox(width: 16),
+                        _buildInstructorStat('15', 'كورس', isDarkMode),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        Text(
-          'مدرب محترف بخبرة تزيد عن 5 سنوات في المجال. حاصل على شهادات متقدمة ويتمتع بأسلوب شرح مبسط وسهل الفهم.',
-          style: GoogleFonts.tajawal(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            color: isDarkMode ? Colors.white70 : const Color(0xFF6B7280),
-            height: 1.6,
+            ],
           ),
-          textAlign: TextAlign.right,
-        ),
-      ],
-    );
+          const SizedBox(height: 16),
+          Text(
+            widget.course['description']?.toString() ??
+                'مدرب محترف بخبرة تزيد عن 5 سنوات في المجال. حاصل على شهادات متقدمة ويتمتع بأسلوب شرح مبسط وسهل الفهم.',
+            style: GoogleFonts.tajawal(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: isDarkMode ? Colors.white70 : const Color(0xFF6B7280),
+              height: 1.6,
+            ),
+            textAlign: TextAlign.right,
+          ),
+        ],
+      );
+    } catch (e, stackTrace) {
+      print('Error in _buildInstructor: $e');
+      print('Stack trace: $stackTrace');
+      return Column(
+        children: [
+          Text(
+            'حدث خطأ في تحميل بيانات المدرب',
+            style: GoogleFonts.tajawal(
+              color: Colors.red,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          Text('Error: $e'),
+        ],
+      );
+    }
+  }
+
+  Widget _buildInstructorImage(bool isDarkMode) {
+    final imageUrl =
+        widget.course['instructorImage']?.toString() ??
+        'https://picsum.photos/seed/instructor/200/200';
+
+    try {
+      return Image.network(
+        imageUrl,
+        width: 80,
+        height: 80,
+        fit: BoxFit.cover,
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return Center(
+            child: CircularProgressIndicator(
+              value: loadingProgress.expectedTotalBytes != null
+                  ? loadingProgress.cumulativeBytesLoaded /
+                        loadingProgress.expectedTotalBytes!
+                  : null,
+            ),
+          );
+        },
+        errorBuilder: (context, error, stackTrace) {
+          print('Image loading error: $error');
+          return Icon(
+            Icons.person,
+            size: 40,
+            color: isDarkMode ? Colors.white70 : Colors.grey[600],
+          );
+        },
+      );
+    } catch (e) {
+      print('Image widget error: $e');
+      return Icon(
+        Icons.person,
+        size: 40,
+        color: isDarkMode ? Colors.white70 : Colors.grey[600],
+      );
+    }
   }
 
   Widget _buildInstructorStat(String value, String label, bool isDarkMode) {

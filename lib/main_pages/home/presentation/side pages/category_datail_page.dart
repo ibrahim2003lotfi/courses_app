@@ -599,6 +599,11 @@ class _CategoryDetailPageState extends State<CategoryDetailPage> {
     ThemeData themeData,
     bool isDarkMode,
   ) {
+    final String imageUrl = course['image'] ?? 'https://picsum.photos/400/300';
+    final String title = course['title'] ?? 'عنوان غير متوفر';
+    final String teacher = course['teacher'] ?? 'مدرس غير معروف';
+    final dynamic rating = course['rating'] ?? 0.0;
+    final String price = course['price'] ?? '₪0';
     return Container(
       width: 160,
       decoration: BoxDecoration(
@@ -623,7 +628,7 @@ class _CategoryDetailPageState extends State<CategoryDetailPage> {
                 top: Radius.circular(16),
               ),
               child: Image.network(
-                course['image'],
+                imageUrl,
                 width: 160,
                 height: 90,
                 fit: BoxFit.cover,
@@ -636,7 +641,7 @@ class _CategoryDetailPageState extends State<CategoryDetailPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      course['title'],
+                      title,
                       style: GoogleFonts.tajawal(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
@@ -647,7 +652,7 @@ class _CategoryDetailPageState extends State<CategoryDetailPage> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      course['teacher'],
+                      teacher,
                       style: GoogleFonts.tajawal(
                         fontSize: 10,
                         fontWeight: FontWeight.w500,
@@ -667,7 +672,7 @@ class _CategoryDetailPageState extends State<CategoryDetailPage> {
                             ),
                             const SizedBox(width: 2),
                             Text(
-                              course['rating'].toString(),
+                              rating.toString(),
                               style: GoogleFonts.tajawal(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w600,
@@ -676,7 +681,7 @@ class _CategoryDetailPageState extends State<CategoryDetailPage> {
                           ],
                         ),
                         Text(
-                          course['price'],
+                          price,
                           style: GoogleFonts.tajawal(
                             fontSize: 12,
                             fontWeight: FontWeight.w900,
@@ -1208,22 +1213,55 @@ class _CategoryDetailPageState extends State<CategoryDetailPage> {
   }
 
   void _navigateToCourseDetails(Map<String, dynamic> course) {
-    // Enhance course data with missing fields for CourseDetailsPage compatibility
+    // Ensure all fields are properly formatted and have fallbacks
     Map<String, dynamic> enhancedCourse = {
       ...course,
-      'category': widget.category['name'] ?? 'البرمجة',
-      'reviews': course['reviews'] ?? (course['students'] * 0.1).round(),
-      'lastUpdated': course['lastUpdated'] ?? 'ديسمبر 2024',
+      'id': course['id']?.toString() ?? '1',
+      'title': course['title']?.toString() ?? 'دورة تعليمية',
+      'teacher': course['teacher']?.toString() ?? 'مدرب',
+      'category': widget.category['name']?.toString() ?? 'البرمجة',
+      'image': course['image']?.toString() ?? 'https://picsum.photos/400/300',
+      'rating': course['rating'] is double
+          ? course['rating']
+          : course['rating'] is int
+          ? course['rating'].toDouble()
+          : double.tryParse(course['rating']?.toString() ?? '4.5') ?? 4.5,
+      'students': course['students'] is int
+          ? course['students']
+          : int.tryParse(course['students']?.toString() ?? '1000') ?? 1000,
+      'price': course['price']?.toString() ?? '₪99',
+      'level': course['level']?.toString() ?? 'متوسط',
+      'duration': course['duration'] is int
+          ? course['duration']
+          : int.tryParse(course['duration']?.toString() ?? '20') ?? 20,
+      'lessons': course['lessons'] is int
+          ? course['lessons']
+          : int.tryParse(course['lessons']?.toString() ?? '30') ?? 30,
+      'reviews': course['reviews'] is int
+          ? course['reviews']
+          : int.tryParse(course['reviews']?.toString() ?? '125') ?? 125,
+      'lastUpdated': course['lastUpdated']?.toString() ?? 'ديسمبر 2024',
       'description':
-          course['description'] ??
+          course['description']?.toString() ??
           'دورة تعليمية شاملة تغطي أهم المفاهيم والمهارات في مجال ${widget.category['name']}. تم تصميم هذه الدورة بعناية لتوفر للطلاب التعليم النظري والتطبيق العملي.',
-      'tags':
-          course['tags'] ??
-          [widget.category['name'] ?? 'البرمجة', 'تعليم', 'تدريب', 'مهارات'],
+      'tags': course['tags'] is List
+          ? course['tags']
+          : [
+              widget.category['name']?.toString() ?? 'البرمجة',
+              'تعليم',
+              'تدريب',
+              'مهارات',
+            ],
       'instructorImage':
-          course['instructorImage'] ??
-          'https://picsum.photos/seed/instructor${course['id']}/200/200',
+          course['instructorImage']?.toString() ??
+          'https://picsum.photos/seed/instructor${course['id'] ?? '1'}/200/200',
     };
+
+    // Print for debugging
+    print('Enhanced course data:');
+    enhancedCourse.forEach((key, value) {
+      print('$key: $value (${value.runtimeType})');
+    });
 
     Navigator.push(
       context,

@@ -41,26 +41,50 @@ class _PublishedCoursesTabState extends State<PublishedCoursesTab> {
         // Add New Course Button
         Padding(
           padding: const EdgeInsets.all(16.0),
-          child: ElevatedButton.icon(
-            onPressed: () => _navigateToAddCoursePage(widget.parentContext),
-            icon: const Icon(Icons.add),
-            label: Text(
-              'إضافة دورة جديدة',
-              style: GoogleFonts.tajawal(
-                fontSize: widget.baseFontSize * 0.8,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: themeData.colorScheme.primary,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              elevation: 2,
+          child: Container(
+  height: 56, // Matches the ElevatedButton height (16 vertical padding * 2 + content height)
+  decoration: BoxDecoration(
+    gradient: const LinearGradient(
+      colors: [
+        Color(0xFF667EEA),
+        Color(0xFF764BA2),
+      ],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    ),
+    borderRadius: BorderRadius.circular(12),
+    boxShadow: [
+      BoxShadow(
+        color: Colors.black.withOpacity(0.1),
+        blurRadius: 2,
+        offset: const Offset(0, 2),
+      ),
+    ],
+  ),
+  child: InkWell(
+    onTap: () => _navigateToAddCoursePage(widget.parentContext),
+    borderRadius: BorderRadius.circular(12),
+    child: Padding(
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.add, color: Colors.white),
+          const SizedBox(width: 8),
+          Text(
+            'إضافة دورة جديدة',
+            style: GoogleFonts.tajawal(
+              fontSize: widget.baseFontSize * 0.8,
+              fontWeight: FontWeight.w700,
+              color: Colors.white,
             ),
           ),
+        ],
+      ),
+    ),
+  ),
+)
         ),
 
         // Courses List
