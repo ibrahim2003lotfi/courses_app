@@ -267,7 +267,17 @@ class _SplashScreenState extends State<SplashScreen>
                   ),
                 ],
               ),
-              child: const Icon(Icons.school, size: 70, color: Colors.white),
+              child: Padding(
+                padding: const EdgeInsets.all(
+                  20.0,
+                ), // Add padding to control image size
+                child: Image.asset(
+                  'assets/images/logo_ed.png',
+                  fit: BoxFit.contain, // or BoxFit.cover
+                  color: Colors.white, // Optional: applies color tint
+                  // colorBlendMode: BlendMode.srcIn, // Uncomment if you want to fully tint the image
+                ),
+              ),
             ),
           ),
         );

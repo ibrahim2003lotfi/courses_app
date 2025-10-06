@@ -43,28 +43,11 @@ class TopSearchBar extends StatelessWidget implements PreferredSizeWidget {
                 return Row(
                   children: [
                     // Logo
-                    Container(
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFF2563EB), Color(0xFF1D4ED8)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFF2563EB).withOpacity(0.3),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      padding: const EdgeInsets.all(10),
-                      child: const Icon(
-                        Icons.school,
-                        color: Colors.white,
-                        size: 28,
-                      ),
+                    Image.asset(
+                      'assets/images/logo_ed.png', // Replace with your actual asset path
+                      width: 43,
+                      height: 43,
+                      fit: BoxFit.cover,
                     ),
 
                     const SizedBox(width: 12),

@@ -201,10 +201,18 @@ class _WelcomePageState extends State<WelcomePage>
                         ),
                       ],
                     ),
-                    child: const Icon(
-                      Icons.school,
-                      size: 60,
-                      color: Colors.white,
+                    child: Padding(
+                      padding: const EdgeInsets.all(
+                        30.0,
+                      ), // Adjust padding to control image size
+                      child: Image.asset(
+                        'assets/images/logo_ed.png',
+                        fit: BoxFit.contain,
+                        color: Colors
+                            .white, // Optional: for white tint like the icon
+                        colorBlendMode: BlendMode
+                            .srcIn, // Uncomment if you want full white tint
+                      ),
                     ),
                   ),
                   const SizedBox(height: 20),
