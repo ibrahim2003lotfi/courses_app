@@ -1,28 +1,35 @@
+// Update your main.dart
 import 'package:courses_app/bloc/user_role_bloc.dart';
+import 'package:courses_app/core/utils/onboarding_manager.dart';
 import 'package:courses_app/core/utils/theme_manager.dart';
 import 'package:courses_app/main_pages/splash/splash_page.dart';
+import 'package:courses_app/onboarding/onboarding_screen.dart';
 import 'package:courses_app/theme_cubit/theme_cubit.dart';
 import 'package:courses_app/theme_cubit/theme_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Check if onboarding is completed
+  final isOnboardingCompleted = await OnboardingManager.isOnboardingCompleted();
+  
   runApp(
     MultiBlocProvider(
       providers: [
         BlocProvider(create: (_) => ThemeCubit()),
-        BlocProvider(create: (_) => UserRoleBloc()), // Make sure this line exists
-        // Add other blocs here...
+        BlocProvider(create: (_) => UserRoleBloc()),
       ],
-      child: const MyApp(),
+      child: MyApp(isOnboardingCompleted: isOnboardingCompleted),
     ),
   );
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final bool isOnboardingCompleted;
+  
+  const MyApp({super.key, required this.isOnboardingCompleted});
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +41,7 @@ class MyApp extends StatelessWidget {
           darkTheme: ThemeManager.darkTheme,
           themeMode: state.isDarkMode ? ThemeMode.dark : ThemeMode.light,
           debugShowCheckedModeBanner: false,
-          home: const SplashScreen(),
+          home: isOnboardingCompleted ? const SplashScreen() : const OnboardingScreen(),
         );
       },
     );
