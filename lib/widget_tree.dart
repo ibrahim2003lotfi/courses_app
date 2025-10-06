@@ -23,32 +23,37 @@ class WidgetTree extends StatefulWidget {
 
 class _WidgetTreeState extends State<WidgetTree>
     with AutomaticKeepAliveClientMixin {
-  final PageController _pageController = PageController();
-
-  @override
-  void initState() {
-    super.initState();
-    selectedPageNotifier.addListener(_onPageChanged);
-  }
-
-  void _onPageChanged() {
-    if (_pageController.hasClients) {
-      // استخدام jumpToPage للقفز المباشر بين الصفحات
-      _pageController.jumpToPage(selectedPageNotifier.value);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     super.build(context);
     return Scaffold(
-      body: PageView(
-        controller: _pageController,
-        physics: const NeverScrollableScrollPhysics(),
-        onPageChanged: (index) {
-          selectedPageNotifier.value = index;
+      body: ValueListenableBuilder<int>(
+        valueListenable: selectedPageNotifier,
+        builder: (context, selectedPage, _) {
+          return AnimatedSwitcher(
+            duration: const Duration(milliseconds: 400),
+            switchInCurve: Curves.easeOutCubic,
+            switchOutCurve: Curves.easeInCubic,
+            transitionBuilder: (Widget child, Animation<double> animation) {
+              return FadeTransition(
+                opacity: animation,
+                child: ScaleTransition(
+                  scale: Tween<double>(begin: 0.92, end: 1.0).animate(
+                    CurvedAnimation(
+                      parent: animation,
+                      curve: Curves.easeOutCubic,
+                    ),
+                  ),
+                  child: child,
+                ),
+              );
+            },
+            child: KeyedSubtree(
+              key: ValueKey<int>(selectedPage),
+              child: pages[selectedPage],
+            ),
+          );
         },
-        children: pages.map((page) => KeepAliveWrapper(child: page)).toList(),
       ),
       bottomNavigationBar: const NavBarWidget(),
     );

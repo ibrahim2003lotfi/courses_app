@@ -702,32 +702,6 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  void _showEditProfileDialog(bool isDarkMode) {
-    showDialog(
-      context: context,
-      builder: (context) => Theme(
-        data: isDarkMode ? ThemeManager.darkTheme : ThemeManager.lightTheme,
-        child: AlertDialog(
-          title: Text('تعديل الملف الشخصي'),
-          content: Text('سيتم فتح صفحة تعديل البيانات الشخصية.'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text('إلغاء'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-                // Navigate to edit profile page
-              },
-              child: Text('موافق'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   void _showHelpDialog(bool isDarkMode) {
     showDialog(
       context: context,
