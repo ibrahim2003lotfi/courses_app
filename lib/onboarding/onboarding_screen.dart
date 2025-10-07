@@ -302,6 +302,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       });
                     },
                     itemCount: _pages.length,
+                    // Disable swipe when validation fails
+                    physics: _canContinue || _currentPage == 0 || _currentPage == _pages.length - 1
+                        ? const AlwaysScrollableScrollPhysics()
+                        : const NeverScrollableScrollPhysics(),
                     itemBuilder: (context, index) {
                       return _buildPageContent(index, isDarkMode, theme);
                     },
@@ -313,18 +317,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   padding: const EdgeInsets.all(20),
                   child: Column(
                     children: [
-                      // Validation message (only show when cannot continue)
+                      // Instruction message (shown initially instead of error)
                       if (!_canContinue && _currentPage != 0 && _currentPage != _pages.length - 1)
                         Padding(
                           padding: const EdgeInsets.only(bottom: 12),
                           child: Text(
                             _currentPage == 1 
-                                ? 'يجب اختيار حالتك التعليمية للمتابعة'
-                                : 'يجب اختيار 3 اهتمامات على الأقل',
+                                ? 'اختر حالتك التعليمية للمتابعة'
+                                : 'اختر 3 اهتمامات على الأقل للمتابعة',
                             style: GoogleFonts.tajawal(
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
-                              color: const Color(0xFFEF4444),
+                              color: isDarkMode ? Colors.white70 : const Color(0xFF6B7280),
                             ),
                             textAlign: TextAlign.center,
                           ),
