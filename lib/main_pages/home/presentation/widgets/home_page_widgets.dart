@@ -447,7 +447,6 @@ class _HeroCarouselState extends State<HeroCarousel> {
     );
   }
 }
-
 class CategoriesGrid extends StatelessWidget {
   final List<Map<String, dynamic>> categories;
 
@@ -472,7 +471,8 @@ class CategoriesGrid extends StatelessWidget {
                   children: [
                     Text(
                       'الأقسام',
-                      style: Theme.of(context).textTheme.titleLarge!.copyWith(
+                      style: GoogleFonts.tajawal(
+                        fontSize: Theme.of(context).textTheme.titleLarge!.fontSize,
                         fontWeight: FontWeight.w800,
                         color: isDarkMode ? Colors.white : null,
                       ),
@@ -865,7 +865,7 @@ class RecommendedCourses extends StatelessWidget {
                       'lessons': item['lessons'] ?? 30,
                       'level': item['level'] ?? 'متوسط',
                       'lastUpdated': item['lastUpdated'] ?? '2024',
-                      'price': item['price'] ?? '₪199',
+                      'price': item['price'] ?? '200,000 S.P',
                       'description':
                           item['description'] ??
                           'دورة تعليمية شاملة تغطي أهم المفاهيم والمهارات في هذا المجال.',
@@ -955,6 +955,44 @@ class TrendingCourses extends StatelessWidget {
 
   const TrendingCourses({super.key, required this.trending});
 
+  void _navigateToCourseDetails(BuildContext context, Map<String, dynamic> course) {
+    try {
+      // Create enhanced course data with all required fields
+      Map<String, dynamic> enhancedCourse = {
+        'title': course['title'] ?? 'دورة تعليمية',
+        'image': course['image'] ?? 'https://picsum.photos/400/300',
+        'teacher': course['teacher'] ?? 'مدرس متخصص',
+        'category': course['category'] ?? 'برمجة',
+        'rating': course['rating'] ?? 4.5,
+        'reviews': course['reviews'] ?? 100,
+        'students': course['students']?.toString() ?? '1,000',
+        'duration': course['duration'] ?? 20,
+        'lessons': course['lessons'] ?? 30,
+        'level': course['level'] ?? 'متوسط',
+        'lastUpdated': course['lastUpdated'] ?? '2024',
+        'price': course['price'] ?? '200,000 S.P',
+        'description': course['description'] ?? 'دورة تعليمية شاملة تغطي أهم المفاهيم والمهارات في هذا المجال.',
+        'tags': course['tags'] ?? ['تعليم', 'تدريب', 'مهارات'],
+        'instructorImage': course['instructorImage'] ?? 'https://picsum.photos/200/200',
+      };
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => CourseDetailsPage(course: enhancedCourse),
+        ),
+      );
+    } catch (e) {
+      print('Navigation error: $e');
+      // Show error message or fallback
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('حدث خطأ في فتح تفاصيل الدورة'),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<ThemeCubit, ThemeState>(
@@ -963,6 +1001,12 @@ class TrendingCourses extends StatelessWidget {
         final theme = isDarkMode
             ? ThemeManager.darkTheme
             : ThemeManager.lightTheme;
+
+        // Safe check for trending data
+        final safeTrending = trending ?? [];
+        if (safeTrending.isEmpty) {
+          return Container(); // Return empty container if no data
+        }
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -975,21 +1019,16 @@ class TrendingCourses extends StatelessWidget {
                 children: [
                   Text(
                     'الأكثر شيوعًا',
-                    style: Theme.of(context).textTheme.titleLarge!.copyWith(
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      color: theme.colorScheme.onBackground,
+                    ) ?? TextStyle(
+                      fontSize: 20,
                       fontWeight: FontWeight.w800,
                       color: theme.colorScheme.onBackground,
                     ),
                   ),
-                  TextButton(
-                    onPressed: () {},
-                    child: Text(
-                      'عرض الكل',
-                      style: GoogleFonts.tajawal(
-                        color: const Color(0xFF2563EB),
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
+                  
                 ],
               ),
             ),
@@ -997,37 +1036,23 @@ class TrendingCourses extends StatelessWidget {
             // Vertical courses list
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 15),
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final screenWidth = constraints.maxWidth;
-                  final crossAxisCount = _calculateCrossAxisCount(screenWidth);
-                  final cardHeight = _calculateCardHeight(screenWidth);
-
-                  return GridView.builder(
-                    physics: const NeverScrollableScrollPhysics(),
-                    shrinkWrap: true,
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: crossAxisCount,
-                      crossAxisSpacing: 16,
-                      mainAxisSpacing: 16,
-                      childAspectRatio: _calculateAspectRatio(screenWidth),
+              child: Column(
+                children: safeTrending.map((course) {
+                  final safeCourse = course ?? {};
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    child: InkWell(
+                      onTap: () => _navigateToCourseDetails(context, safeCourse),
+                      borderRadius: BorderRadius.circular(16),
+                      child: _buildVerticalCourseCard(
+                        context,
+                        safeCourse,
+                        theme,
+                        isDarkMode,
+                      ),
                     ),
-                    itemCount: trending.length,
-                    itemBuilder: (context, index) {
-                      final course = trending[index];
-                      return SizedBox(
-                        height: cardHeight,
-                        child: _buildCourseCard(
-                          context,
-                          course,
-                          theme,
-                          isDarkMode,
-                          screenWidth,
-                        ),
-                      );
-                    },
                   );
-                },
+                }).toList(),
               ),
             ),
           ],
@@ -1036,50 +1061,16 @@ class TrendingCourses extends StatelessWidget {
     );
   }
 
-  int _calculateCrossAxisCount(double screenWidth) {
-    if (screenWidth < 600) {
-      return 1;
-    } else if (screenWidth < 900) {
-      return 2;
-    } else if (screenWidth < 1200) {
-      return 3;
-    } else {
-      return 4;
-    }
-  }
-
-  double _calculateCardHeight(double screenWidth) {
-    if (screenWidth < 600) {
-      return 120; // Mobile height
-    } else if (screenWidth < 900) {
-      return 180; // Tablet height
-    } else {
-      return 200; // Desktop height
-    }
-  }
-
-  double _calculateAspectRatio(double screenWidth) {
-    if (screenWidth < 600) {
-      return 3.5; // Wider for mobile horizontal layout
-    } else if (screenWidth < 900) {
-      return 0.8; // Adjusted for tablet
-    } else {
-      return 0.75; // Adjusted for desktop
-    }
-  }
-
-  Widget _buildCourseCard(
+  // Vertical course card layout
+  Widget _buildVerticalCourseCard(
     BuildContext context,
     Map<String, dynamic> course,
     ThemeData theme,
     bool isDarkMode,
-    double screenWidth,
   ) {
-    final isMobile = screenWidth < 600;
-
     return Container(
       decoration: BoxDecoration(
-        color: theme.cardColor,
+        color: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -1089,196 +1080,94 @@ class TrendingCourses extends StatelessWidget {
           ),
         ],
       ),
-      child: isMobile
-          ? _buildMobileCard(context, course, theme, isDarkMode)
-          : _buildDesktopCard(context, course, theme, isDarkMode, screenWidth),
-    );
-  }
-
-  Widget _buildMobileCard(
-    BuildContext context,
-    Map<String, dynamic> course,
-    ThemeData theme,
-    bool isDarkMode,
-  ) {
-    return Row(
-      children: [
-        // Image section - fixed width
-        SizedBox(
-          width: 100,
-          child: ClipRRect(
-            borderRadius: const BorderRadius.horizontal(
-              right: Radius.circular(16),
-            ),
-            child: Stack(
-              children: [
-                Image.network(
-                  course['image'],
-                  width: double.infinity,
-                  height: double.infinity,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      color: isDarkMode ? Colors.grey[800] : Colors.grey[200],
-                      child: Icon(
-                        Icons.image_not_supported,
-                        color: isDarkMode ? Colors.grey[600] : Colors.grey[400],
+      child: Row(
+        children: [
+          // Image section - fixed width
+          SizedBox(
+            width: 100,
+            height: 100, // Fixed height to match content
+            child: ClipRRect(
+              borderRadius: const BorderRadius.horizontal(
+                right: Radius.circular(16),
+              ),
+              child: Stack(
+                children: [
+                  Image.network(
+                    course['image'] ?? 'https://picsum.photos/400/300',
+                    width: double.infinity,
+                    height: double.infinity,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        color: isDarkMode ? Colors.grey[800] : Colors.grey[200],
+                        child: Icon(
+                          Icons.image_not_supported,
+                          color: isDarkMode ? Colors.grey[600] : Colors.grey[400],
+                          size: 30,
+                        ),
+                      );
+                    },
+                  ),
+                  Positioned(
+                    top: 6,
+                    right: 6,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 3,
                       ),
-                    );
-                  },
-                ),
-                Positioned(
-                  top: 6,
-                  right: 6,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 6,
-                      vertical: 3,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFEF4444),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(
-                      course['price'] ?? '₪199',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEF4444),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        course['price']?.toString() ?? '200,000 S.P',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
-        ),
 
-        // Content section
-        Expanded(
-          child: Padding(
-            padding: const EdgeInsets.all(10),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                // Title
-                Flexible(
-                  child: Text(
-                    course['title'],
+          // Content section
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  // Title
+                  Text(
+                    course['title']?.toString() ?? 'دورة تعليمية',
                     style: GoogleFonts.tajawal(
-                      fontSize: 13,
+                      fontSize: 14,
                       fontWeight: FontWeight.w700,
-                      color: theme.colorScheme.onSurface,
+                      color: isDarkMode ? Colors.white : const Color(0xFF1F2937),
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                ),
+                  const SizedBox(height: 8),
 
-                // Course info
-                _buildMobileCourseInfo(context, course, isDarkMode),
-              ],
+                  // Course info
+                  _buildCourseInfo(context, course, isDarkMode),
+                ],
+              ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
-  Widget _buildDesktopCard(
-    BuildContext context,
-    Map<String, dynamic> course,
-    ThemeData theme,
-    bool isDarkMode,
-    double screenWidth,
-  ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Image section with fixed height
-        SizedBox(
-          height: screenWidth < 900 ? 100 : 120,
-          child: ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-            child: Stack(
-              children: [
-                Image.network(
-                  course['image'],
-                  width: double.infinity,
-                  height: double.infinity,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      color: isDarkMode ? Colors.grey[800] : Colors.grey[200],
-                      child: Icon(
-                        Icons.image_not_supported,
-                        color: isDarkMode ? Colors.grey[600] : Colors.grey[400],
-                      ),
-                    );
-                  },
-                ),
-                Positioned(
-                  top: 8,
-                  right: 8,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFEF4444),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      course['price'] ?? '₪199',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-
-        // Content section
-        Expanded(
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                // Title
-                Flexible(
-                  child: Text(
-                    course['title'],
-                    style: GoogleFonts.tajawal(
-                      fontSize: screenWidth < 900 ? 13 : 14,
-                      fontWeight: FontWeight.w700,
-                      color: theme.colorScheme.onSurface,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-
-                // Course info for larger screens
-                if (screenWidth >= 900)
-                  _buildDesktopCourseInfo(context, course, isDarkMode),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildMobileCourseInfo(
+  Widget _buildCourseInfo(
     BuildContext context,
     Map<String, dynamic> course,
     bool isDarkMode,
@@ -1286,17 +1175,20 @@ class TrendingCourses extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SizedBox(height: 6),
         // Rating and students
         Row(
           children: [
             const Icon(Icons.star, size: 14, color: Colors.amber),
             const SizedBox(width: 2),
             Text(
-              (course['rating'] ?? 4.5).toStringAsFixed(1),
-              style: Theme.of(context).textTheme.bodySmall!.copyWith(
+              (course['rating'] ?? 4.5).toString(),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 fontWeight: FontWeight.w500,
                 color: isDarkMode ? Colors.white70 : null,
+              ) ?? TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: isDarkMode ? Colors.white70 : Colors.black,
               ),
             ),
             const SizedBox(width: 8),
@@ -1307,10 +1199,14 @@ class TrendingCourses extends StatelessWidget {
             ),
             const SizedBox(width: 2),
             Text(
-              '${course['students'] ?? '1000'}',
-              style: Theme.of(context).textTheme.bodySmall!.copyWith(
+              course['students']?.toString() ?? '1000',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 fontWeight: FontWeight.w500,
                 color: isDarkMode ? Colors.white70 : null,
+              ) ?? TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: isDarkMode ? Colors.white70 : Colors.black,
               ),
             ),
           ],
@@ -1318,60 +1214,11 @@ class TrendingCourses extends StatelessWidget {
         const SizedBox(height: 4),
         // Teacher name
         Text(
-          course['teacher'] ?? 'مدرس متخصص',
-          style: Theme.of(context).textTheme.bodySmall!.copyWith(
+          course['teacher']?.toString() ?? 'مدرس متخصص',
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
             color: isDarkMode ? Colors.white60 : const Color(0xFF6B7280),
-            fontSize: 11,
-          ),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDesktopCourseInfo(
-    BuildContext context,
-    Map<String, dynamic> course,
-    bool isDarkMode,
-  ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SizedBox(height: 8),
-        // Rating row
-        Row(
-          children: [
-            const Icon(Icons.star, size: 16, color: Colors.amber),
-            const SizedBox(width: 4),
-            Text(
-              (course['rating'] ?? 4.5).toStringAsFixed(1),
-              style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                fontWeight: FontWeight.w500,
-                color: isDarkMode ? Colors.white70 : null,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Icon(
-              Icons.people_outline,
-              size: 16,
-              color: isDarkMode ? Colors.white60 : const Color(0xFF6B7280),
-            ),
-            const SizedBox(width: 4),
-            Text(
-              '${course['students'] ?? '1000'} طالب',
-              style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                fontWeight: FontWeight.w500,
-                color: isDarkMode ? Colors.white70 : null,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 6),
-        // Teacher name
-        Text(
-          course['teacher'] ?? 'مدرس متخصص',
-          style: Theme.of(context).textTheme.bodySmall!.copyWith(
+          ) ?? TextStyle(
+            fontSize: 12,
             color: isDarkMode ? Colors.white60 : const Color(0xFF6B7280),
           ),
           maxLines: 1,

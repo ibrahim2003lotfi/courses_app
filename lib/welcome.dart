@@ -12,38 +12,38 @@ class WelcomePage extends StatefulWidget {
 
 class _WelcomePageState extends State<WelcomePage>
     with TickerProviderStateMixin {
-  late PageController _pageController;
   late AnimationController _animationController;
   late AnimationController _floatingController;
+  late AnimationController _glowController;
   late Animation<double> _fadeAnimation;
   late Animation<double> _slideAnimation;
   late Animation<double> _floatingAnimation;
+  late Animation<double> _glowAnimation;
 
   final List<Map<String, dynamic>> _features = [
     {
-      'icon': Icons.video_library,
-      'title': 'كورسات مجانية ومدفوعة',
-      'description': 'مجموعة متنوعة من الكورسات لجميع المستويات والميزانيات',
-      'color': const Color(0xFF3B82F6),
+      'icon': Icons.video_library_rounded,
+      'title': 'كورسات متنوعة',
+      'description': 'مجانية ومدفوعة',
+      'color': Color(0xFF667EEA),
     },
     {
-      'icon': Icons.verified,
+      'icon': Icons.verified_rounded,
       'title': 'شهادات معتمدة',
-      'description': 'احصل على شهادات رسمية معترف بها في السوق المهني',
-      'color': const Color(0xFF10B981),
+      'description': 'معترف بها مهنيًا',
+      'color': Color(0xFF764BA2),
     },
     {
-      'icon': Icons.update,
-      'title': 'محتوى متجدد باستمرار',
-      'description': 'كورسات جديدة ومحدثة باستمرار لمواكبة التطورات العالمية',
-      'color': const Color(0xFFF59E0B),
+      'icon': Icons.update_rounded,
+      'title': 'محتوى متجدد',
+      'description': 'محدث باستمرار',
+      'color': Color(0xFFF093FB),
     },
   ];
 
   @override
   void initState() {
     super.initState();
-    _pageController = PageController();
 
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 1500),
@@ -52,6 +52,11 @@ class _WelcomePageState extends State<WelcomePage>
 
     _floatingController = AnimationController(
       duration: const Duration(seconds: 3),
+      vsync: this,
+    )..repeat(reverse: true);
+
+    _glowController = AnimationController(
+      duration: const Duration(seconds: 2),
       vsync: this,
     )..repeat(reverse: true);
 
@@ -73,54 +78,68 @@ class _WelcomePageState extends State<WelcomePage>
       CurvedAnimation(parent: _floatingController, curve: Curves.easeInOut),
     );
 
-    _animationController.forward();
+    _glowAnimation = Tween<double>(begin: 0.5, end: 1.0).animate(
+      CurvedAnimation(parent: _glowController, curve: Curves.easeInOut),
+    );
 
-    // Auto-scroll carousel
+    _animationController.forward();
   }
 
   @override
   void dispose() {
-    _pageController.dispose();
     _animationController.dispose();
     _floatingController.dispose();
+    _glowController.dispose();
     super.dispose();
-  }
-
-  double _getResponsiveFontSize(BuildContext context, {double base = 16}) {
-    final width = MediaQuery.of(context).size.width;
-    if (width > 600) return base * 1.2;
-    if (width > 400) return base;
-    return base * 0.9;
   }
 
   @override
   Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isSmallScreen = screenHeight < 700;
+    final isVerySmallScreen = screenHeight < 600;
+
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Color(0xFF1E293B), Color(0xFF334155), Color(0xFF3B82F6)],
-            stops: [0.0, 0.6, 1.0],
+            colors: [
+              Color(0xFF1A103C),
+              Color(0xFF2D1B69),
+              Color(0xFF667EEA),
+              Color(0xFF764BA2),
+            ],
+            stops: [0.0, 0.4, 0.7, 1.0],
           ),
         ),
         child: SafeArea(
           child: Stack(
             children: [
+              _buildBackgroundPattern(),
               _buildFloatingElements(),
-              SingleChildScrollView(
-                child: Column(
-                  children: [
-                    _buildLogoAndTitle(),
-
-                    _buildFeaturesSection(),
-                    _buildCallToAction(),
-                    _buildFooter(),
-                  ],
-                ),
-              ),
+              _buildContent(isSmallScreen, isVerySmallScreen, screenWidth),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBackgroundPattern() {
+    return IgnorePointer(
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: RadialGradient(
+            center: Alignment.center,
+            radius: 1.2,
+            colors: [
+              Colors.white.withOpacity(0.03),
+              Colors.transparent,
+            ],
+            stops: const [0.1, 0.8],
           ),
         ),
       ),
@@ -133,37 +152,53 @@ class _WelcomePageState extends State<WelcomePage>
       builder: (context, child) {
         return Stack(
           children: [
+            // Top right element
             Positioned(
-              top: 50 + _floatingAnimation.value,
+              top: 60 + _floatingAnimation.value,
               right: 30,
-              child: Container(
-                width: 60,
-                height: 60,
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.lightbulb_outline,
-                  color: Colors.white70,
-                  size: 30,
-                ),
-              ),
-            ),
-            Positioned(
-              top: 120 - _floatingAnimation.value,
-              left: 40,
               child: Container(
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.1),
+                  gradient: const LinearGradient(
+                    colors: [
+                      Color(0xFF667EEA),
+                      Color(0xFF764BA2),
+                    ],
+                  ),
                   shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF667EEA).withOpacity(0.4),
+                      blurRadius: 12,
+                      spreadRadius: 2,
+                    ),
+                  ],
                 ),
-                child: const Icon(
-                  Icons.star_outline,
-                  color: Colors.white70,
-                  size: 20,
+              ),
+            ),
+            // Top left element
+            Positioned(
+              top: 100 - _floatingAnimation.value,
+              left: 20,
+              child: Container(
+                width: 30,
+                height: 30,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [
+                      Color(0xFFF093FB),
+                      Color(0xFFF5576C),
+                    ],
+                  ),
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFF5576C).withOpacity(0.3),
+                      blurRadius: 10,
+                      spreadRadius: 1,
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -173,79 +208,415 @@ class _WelcomePageState extends State<WelcomePage>
     );
   }
 
-  Widget _buildLogoAndTitle() {
+  Widget _buildContent(bool isSmallScreen, bool isVerySmallScreen, double screenWidth) {
+    // Calculate sizes based on screen dimensions
+    final logoSize = isVerySmallScreen ? 80.0 : (isSmallScreen ? 100.0 : 110.0);
+    final titleFontSize = isVerySmallScreen ? 20.0 : (isSmallScreen ? 22.0 : 24.0);
+    final subtitleFontSize = isVerySmallScreen ? 12.0 : (isSmallScreen ? 13.0 : 14.0);
+    final featuresTitleFontSize = isVerySmallScreen ? 16.0 : (isSmallScreen ? 18.0 : 20.0);
+    final buttonHeight = isVerySmallScreen ? 48.0 : (isSmallScreen ? 52.0 : 56.0);
+    final buttonFontSize = isVerySmallScreen ? 14.0 : (isSmallScreen ? 15.0 : 16.0);
+    
+    // Calculate feature card size based on available width
+    final availableWidth = screenWidth - 48; // 24 padding on each side
+    final cardWidth = (availableWidth - 24) / 3; // 12 spacing between cards
+
     return AnimatedBuilder(
-      animation: _animationController,
+      animation: Listenable.merge([_animationController, _glowController]),
       builder: (context, child) {
         return Transform.translate(
           offset: Offset(0, _slideAnimation.value),
           child: Opacity(
             opacity: _fadeAnimation.value,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
               child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Container(
-                    width: 120,
-                    height: 120,
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF60A5FA), Color(0xFF3B82F6)],
-                      ),
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.2),
-                          blurRadius: 20,
-                          offset: const Offset(0, 10),
+                  // Logo and Title Section - Flexible to take available space
+                  Flexible(
+                    flex: 3,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          width: logoSize,
+                          height: logoSize,
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [
+                                Color(0xFF667EEA),
+                                Color(0xFF764BA2),
+                              ],
+                            ),
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFF667EEA).withOpacity(0.5 * _glowAnimation.value),
+                                blurRadius: 25,
+                                spreadRadius: 8,
+                              ),
+                            ],
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Container(
+                              decoration: const BoxDecoration(
+                                color: Colors.white,
+                                shape: BoxShape.circle,
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.all(10),
+                                child: Image.asset(
+                                  'assets/images/logo_ed.png',
+                                  fit: BoxFit.contain,
+                                  color: const Color(0xFF667EEA),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          'مرحبًا بك في منصة الكورسات',
+                          style: GoogleFonts.tajawal(
+                            fontSize: isVerySmallScreen ? 14 : 15,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white.withOpacity(0.9),
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'ابدأ رحلتك التعليمية الآن',
+                          style: GoogleFonts.tajawal(
+                            fontSize: titleFontSize,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                            height: 1.2,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          'تعلم البرمجة، التصميم، اللغات والمزيد',
+                          style: GoogleFonts.tajawal(
+                            fontSize: subtitleFontSize,
+                            fontWeight: FontWeight.w400,
+                            color: Colors.white.withOpacity(0.8),
+                          ),
+                          textAlign: TextAlign.center,
                         ),
                       ],
                     ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(
-                        30.0,
-                      ), // Adjust padding to control image size
-                      child: Image.asset(
-                        'assets/images/logo_ed.png',
-                        fit: BoxFit.contain,
-                        color: Colors
-                            .white, // Optional: for white tint like the icon
-                        colorBlendMode: BlendMode
-                            .srcIn, // Uncomment if you want full white tint
-                      ),
+                  ),
+
+                  // Features Section - Fixed height
+                  Flexible(
+                    flex: 2,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          'مميزات المنصة',
+                          style: GoogleFonts.tajawal(
+                            fontSize: featuresTitleFontSize,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          height: isVerySmallScreen ? 100 : 110,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: _features.map((feature) {
+                              return SizedBox(
+                                width: cardWidth,
+                                child: Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                      colors: [
+                                        Colors.white.withOpacity(0.1),
+                                        Colors.white.withOpacity(0.05),
+                                      ],
+                                    ),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: Colors.white.withOpacity(0.15),
+                                    ),
+                                  ),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Container(
+                                        width: 32,
+                                        height: 32,
+                                        decoration: BoxDecoration(
+                                          gradient: LinearGradient(
+                                            colors: [
+                                              feature['color'].withOpacity(0.8),
+                                              feature['color'].withOpacity(0.4),
+                                            ],
+                                          ),
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        child: Icon(
+                                          feature['icon'],
+                                          color: Colors.white,
+                                          size: 16,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 6),
+                                      Text(
+                                        feature['title'],
+                                        style: GoogleFonts.tajawal(
+                                          fontSize: isVerySmallScreen ? 10 : 11,
+                                          fontWeight: FontWeight.w700,
+                                          color: Colors.white,
+                                          height: 1.2,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                        maxLines: 2,
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        feature['description'],
+                                        style: GoogleFonts.tajawal(
+                                          fontSize: isVerySmallScreen ? 8 : 9,
+                                          fontWeight: FontWeight.w400,
+                                          color: Colors.white.withOpacity(0.8),
+                                          height: 1.3,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                        maxLines: 2,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 20),
-                  Text(
-                    'مرحبًا بك في Courses App',
-                    style: GoogleFonts.tajawal(
-                      fontSize: _getResponsiveFontSize(context, base: 18),
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white70,
+
+                  // Buttons Section - Fixed height
+                  Flexible(
+                    flex: 2,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        // Start Learning Button - Sapphire & Amethyst Gradient
+                        SizedBox(
+                          width: double.infinity,
+                          height: buttonHeight,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [
+                                  Color(0xFF4F46E5), // Deep sapphire
+                                  Color(0xFF7C3AED), // Royal purple
+                                  Color(0xFF8B5CF6), // Light amethyst
+                                ],
+                                stops: [0.0, 0.5, 1.0],
+                              ),
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(0xFF7C3AED).withOpacity(0.5),
+                                  blurRadius: 20,
+                                  offset: const Offset(0, 8),
+                                ),
+                                BoxShadow(
+                                  color: const Color(0xFF4F46E5).withOpacity(0.3),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 3),
+                                ),
+                              ],
+                            ),
+                            child: ElevatedButton(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (context) => LoginPage()),
+                                );
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.transparent,
+                                foregroundColor: Colors.white,
+                                shadowColor: Colors.transparent,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.rocket_launch_rounded,
+                                    size: 22,
+                                    color: Colors.white.withOpacity(0.95),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Text(
+                                    'ابدأ التعلم الآن',
+                                    style: GoogleFonts.tajawal(
+                                      fontSize: buttonFontSize,
+                                      fontWeight: FontWeight.w700,
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Browse as Guest Button - Emerald & Teal Gradient
+                        SizedBox(
+                          width: double.infinity,
+                          height: buttonHeight,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [
+                                  Color(0xFF10B981), // Emerald
+                                  Color(0xFF059669), // Dark emerald
+                                  Color(0xFF047857), // Deep emerald
+                                ],
+                                stops: [0.0, 0.6, 1.0],
+                              ),
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(0xFF10B981).withOpacity(0.4),
+                                  blurRadius: 15,
+                                  offset: const Offset(0, 6),
+                                ),
+                                BoxShadow(
+                                  color: const Color(0xFF059669).withOpacity(0.3),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                              border: Border.all(
+                                color: const Color(0xFF6EE7B7).withOpacity(0.3),
+                                width: 1.5,
+                              ),
+                            ),
+                            child: ElevatedButton(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (context) => WidgetTree()),
+                                );
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.transparent,
+                                foregroundColor: Colors.white,
+                                shadowColor: Colors.transparent,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.explore_rounded,
+                                    size: 22,
+                                    color: Colors.white.withOpacity(0.95),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Text(
+                                    'تصفح كضيف',
+                                    style: GoogleFonts.tajawal(
+                                      fontSize: buttonFontSize,
+                                      fontWeight: FontWeight.w700,
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                    textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 30),
-                  Text(
-                    'ابدأ رحلتك التعليمية الآن',
-                    style: GoogleFonts.tajawal(
-                      fontSize: _getResponsiveFontSize(context, base: 28),
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                      height: 1.2,
+
+                  // Footer - Minimal space
+                  Flexible(
+                    flex: 1,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Text(
+                          'بإنشائك حسابًا، فإنك توافق على',
+                          style: GoogleFonts.tajawal(
+                            fontSize: isVerySmallScreen ? 8 : 9,
+                            fontWeight: FontWeight.w400,
+                            color: Colors.white.withOpacity(0.6),
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 2),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            TextButton(
+                              onPressed: () {
+                                _showDialog('الشروط والأحكام', 'نص الشروط والأحكام...');
+                              },
+                              style: TextButton.styleFrom(
+                                padding: EdgeInsets.zero,
+                                minimumSize: Size.zero,
+                              ),
+                              child: Text(
+                                'الشروط والأحكام',
+                                style: GoogleFonts.tajawal(
+                                  fontSize: isVerySmallScreen ? 8 : 9,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.white.withOpacity(0.8),
+                                  decoration: TextDecoration.underline,
+                                ),
+                              ),
+                            ),
+                            Text(
+                              ' و ',
+                              style: GoogleFonts.tajawal(
+                                fontSize: isVerySmallScreen ? 8 : 9,
+                                color: Colors.white.withOpacity(0.6),
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                _showDialog('سياسة الخصوصية', 'نص سياسة الخصوصية...');
+                              },
+                              style: TextButton.styleFrom(
+                                padding: EdgeInsets.zero,
+                                minimumSize: Size.zero,
+                              ),
+                              child: Text(
+                                'سياسة الخصوصية',
+                                style: GoogleFonts.tajawal(
+                                  fontSize: isVerySmallScreen ? 8 : 9,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.white.withOpacity(0.8),
+                                  decoration: TextDecoration.underline,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'تعلم البرمجة، التصميم، اللغات، والعديد من المجالات الأخرى مع أفضل الخبراء',
-                    style: GoogleFonts.tajawal(
-                      fontSize: _getResponsiveFontSize(context, base: 16),
-                      fontWeight: FontWeight.w400,
-                      color: Colors.white70,
-                      height: 1.5,
-                    ),
-                    textAlign: TextAlign.center,
                   ),
                 ],
               ),
@@ -256,223 +627,64 @@ class _WelcomePageState extends State<WelcomePage>
     );
   }
 
-  Widget _buildFeaturesSection() {
-    return Container(
-      margin: const EdgeInsets.all(20),
-      child: Column(
-        children: [
-          Text(
-            'مزايا التطبيق',
-            style: GoogleFonts.tajawal(
-              fontSize: _getResponsiveFontSize(context, base: 24),
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(height: 20),
-          ..._features.map(
-            (feature) => Container(
-              margin: const EdgeInsets.only(bottom: 16),
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.05),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: Colors.white.withOpacity(0.1),
-                  width: 1,
+  void _showDialog(String title, String content) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: const Color(0xFF2D1B69),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                title,
+                style: GoogleFonts.tajawal(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
                 ),
               ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 50,
-                    height: 50,
-                    decoration: BoxDecoration(
-                      color: feature['color'].withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(feature['icon'], color: Colors.white, size: 24),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          feature['title'],
-                          style: GoogleFonts.tajawal(
-                            fontSize: _getResponsiveFontSize(context, base: 16),
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          feature['description'],
-                          style: GoogleFonts.tajawal(
-                            fontSize: _getResponsiveFontSize(context, base: 14),
-                            fontWeight: FontWeight.w400,
-                            color: Colors.white70,
-                            height: 1.4,
-                          ),
-                        ),
+              const SizedBox(height: 16),
+              Text(
+                content,
+                style: GoogleFonts.tajawal(
+                  fontSize: 14,
+                  color: Colors.white.withOpacity(0.8),
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [
+                        Color(0xFF667EEA),
+                        Color(0xFF764BA2),
                       ],
                     ),
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCallToAction() {
-    return Container(
-      margin: const EdgeInsets.all(20),
-      child: Column(
-        children: [
-          SizedBox(
-            width: double.infinity,
-            height: 56,
-            child: ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => LoginPage()),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white,
-                foregroundColor: const Color(0xFF1E293B),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                elevation: 8,
-                shadowColor: Colors.black.withOpacity(0.3),
-              ),
-              child: Text(
-                'ابدأ الآن',
-                style: GoogleFonts.tajawal(
-                  fontSize: _getResponsiveFontSize(context, base: 18),
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            height: 56,
-            child: OutlinedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => WidgetTree()),
-                );
-              },
-              style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.white,
-                side: const BorderSide(color: Colors.white, width: 2),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-              ),
-              child: Text(
-                'تصفح كضيف',
-                style: GoogleFonts.tajawal(
-                  fontSize: _getResponsiveFontSize(context, base: 16),
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFooter() {
-    return Container(
-      margin: const EdgeInsets.all(20),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.2),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        children: [
-          Text(
-            'بإنشائك حسابًا، فإنك توافق على شروط الاستخدام وسياسة الخصوصية الخاصة بنا.',
-            style: GoogleFonts.tajawal(
-              fontSize: _getResponsiveFontSize(context, base: 12),
-              fontWeight: FontWeight.w400,
-              color: Colors.white60,
-              height: 1.5,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 16),
-          Wrap(
-            alignment: WrapAlignment.center,
-            children: [
-              TextButton(
-                onPressed: () {
-                  // Show terms dialog
-                  _showDialog('الشروط والأحكام', 'نص الشروط والأحكام...');
-                },
-                child: Text(
-                  'الشروط والأحكام',
-                  style: GoogleFonts.tajawal(
-                    fontSize: _getResponsiveFontSize(context, base: 12),
-                    fontWeight: FontWeight.w500,
-                    color: Colors.white70,
-                    decoration: TextDecoration.underline,
-                  ),
-                ),
-              ),
-              Text(' • ', style: TextStyle(color: Colors.white60)),
-              TextButton(
-                onPressed: () {
-                  // Show privacy policy dialog
-                  _showDialog('سياسة الخصوصية', 'نص سياسة الخصوصية...');
-                },
-                child: Text(
-                  'سياسة الخصوصية',
-                  style: GoogleFonts.tajawal(
-                    fontSize: _getResponsiveFontSize(context, base: 12),
-                    fontWeight: FontWeight.w500,
-                    color: Colors.white70,
-                    decoration: TextDecoration.underline,
+                  child: TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: Text(
+                      'إغلاق',
+                      style: GoogleFonts.tajawal(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
                 ),
               ),
             ],
           ),
-        ],
-      ),
-    );
-  }
-
-  void _showDialog(String title, String content) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(
-          title,
-          style: GoogleFonts.tajawal(fontWeight: FontWeight.bold),
         ),
-        content: Text(content, style: GoogleFonts.tajawal()),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              'إغلاق',
-              style: GoogleFonts.tajawal(fontWeight: FontWeight.w600),
-            ),
-          ),
-        ],
       ),
     );
   }

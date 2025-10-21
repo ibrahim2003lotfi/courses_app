@@ -304,7 +304,7 @@ class CourseInfoCard extends StatelessWidget {
     return Column(
       children: [
         Text(
-          course['price'] ?? '₪199',
+          course['price'] ?? '200,000 S.P',
           style: GoogleFonts.tajawal(
             fontSize: 28,
             fontWeight: FontWeight.w900,
@@ -349,7 +349,6 @@ class CourseInfoCard extends StatelessWidget {
   }
 }
 
-// Bottom Sheet للدفع
 class PaymentBottomSheet extends StatefulWidget {
   final Map<String, dynamic> course;
 
@@ -365,7 +364,6 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
   bool _isLoading = false;
   final String _orderNumber = 'ORD${DateTime.now().millisecondsSinceEpoch}';
 
-  // قائمة طرق الدفع القابلة للتوسع
   final List<PaymentMethod> _paymentMethods = [
     PaymentMethod(
       id: 'syriatel',
@@ -387,7 +385,6 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
     ),
   ];
 
-  // قائمة أنواع الاشتراكات
   final List<SubscriptionType> _subscriptionTypes = [
     SubscriptionType(
       id: 'course',
@@ -406,13 +403,33 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
     ),
   ];
 
-  double get _basePrice {
-    final priceString = widget.course['price'] ?? '199';
-    return double.parse(priceString.replaceAll('₪', '').trim());
+  bool get _isFreeCourse {
+    final priceString = widget.course['price']?.toString() ?? '199';
+    return priceString.toLowerCase().contains('مجاني') ||
+        priceString.toLowerCase().contains('free') ||
+        priceString == '0 S.P';
   }
 
-  double get _taxAmount => _basePrice * 0.1; // 10% ضريبة
+  double get _basePrice {
+    if (_isFreeCourse) return 0.0;
+
+    final priceString = widget.course['price']?.toString() ?? '199';
+    try {
+      final cleanPrice = priceString
+          .replaceAll('S.P', '')
+          .replaceAll(',', '')
+          .trim();
+      return double.parse(cleanPrice);
+    } catch (e) {
+      print('Error parsing price: $e');
+      return 0.0;
+    }
+  }
+
+  double get _taxAmount => _isFreeCourse ? 0.0 : _basePrice * 0.1;
   double get _totalPrice {
+    if (_isFreeCourse) return 0.0;
+
     final selectedType = _subscriptionTypes.firstWhere(
       (type) => type.id == _paymentData.subscriptionType,
       orElse: () => _subscriptionTypes.first,
@@ -421,11 +438,15 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
   }
 
   void _processPayment() async {
+    if (_isFreeCourse) {
+      _enrollFreeCourse();
+      return;
+    }
+
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
 
-    // محاكاة عملية الدفع
     await Future.delayed(const Duration(seconds: 2));
 
     setState(() => _isLoading = false);
@@ -433,7 +454,6 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
     if (mounted) {
       Navigator.of(context).pop();
 
-      // عرض رسالة نجاح
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -451,6 +471,33 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
     }
   }
 
+  void _enrollFreeCourse() {
+    setState(() => _isLoading = true);
+
+    Future.delayed(const Duration(seconds: 1), () {
+      setState(() => _isLoading = false);
+
+      if (mounted) {
+        Navigator.of(context).pop();
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'تم تسجيلك في الكورس المجاني بنجاح!',
+              style: GoogleFonts.tajawal(fontWeight: FontWeight.w600),
+              textAlign: TextAlign.center,
+            ),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        );
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<ThemeCubit, ThemeState>(
@@ -459,7 +506,7 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
         final screenHeight = MediaQuery.of(context).size.height;
         final screenWidth = MediaQuery.of(context).size.width;
         final isMobile = screenWidth < 600;
-        final bottomSheetHeight = screenHeight * 0.75; // ثلاثة أرباع الشاشة
+        final bottomSheetHeight = screenHeight * 0.75;
 
         return AnimatedContainer(
           duration: const Duration(milliseconds: 300),
@@ -484,7 +531,6 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
               top: false,
               child: Column(
                 children: [
-                  // Handle للسحب
                   Container(
                     width: 40,
                     height: 4,
@@ -495,7 +541,6 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
                     ),
                   ),
 
-                  // العنوان
                   Padding(
                     padding: EdgeInsets.symmetric(
                       horizontal: isMobile ? 20 : 32,
@@ -503,7 +548,9 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
                     ),
                     child: Center(
                       child: Text(
-                        'إتمام عملية الدفع',
+                        _isFreeCourse
+                            ? 'تسجيل في الكورس المجاني'
+                            : 'إتمام عملية الدفع',
                         style: GoogleFonts.tajawal(
                           fontSize: isMobile ? 20 : 24,
                           fontWeight: FontWeight.w900,
@@ -519,7 +566,6 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
                     color: isDarkMode ? Colors.grey[700] : Colors.grey[300],
                   ),
 
-                  // المحتوى الرئيسي
                   Expanded(
                     child: Padding(
                       padding: EdgeInsets.symmetric(
@@ -533,27 +579,29 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // بيانات الكورس
                               _buildCourseInfo(isMobile, isDarkMode),
                               const SizedBox(height: 24),
 
-                              // طرق الدفع
-                              _buildPaymentMethods(isMobile, isDarkMode),
-                              const SizedBox(height: 24),
+                              if (_isFreeCourse) ...[
+                                _buildFreeCourseEnrollment(
+                                  isMobile,
+                                  isDarkMode,
+                                ),
+                                const SizedBox(height: 24),
+                              ] else ...[
+                                _buildPaymentMethods(isMobile, isDarkMode),
+                                const SizedBox(height: 24),
 
-                              // نوع الاشتراك
-                              _buildSubscriptionType(isMobile, isDarkMode),
-                              const SizedBox(height: 24),
+                                _buildSubscriptionType(isMobile, isDarkMode),
+                                const SizedBox(height: 24),
 
-                              // ملخص الدفع
-                              _buildPaymentSummary(isMobile, isDarkMode),
-                              const SizedBox(height: 24),
+                                _buildPaymentSummary(isMobile, isDarkMode),
+                                const SizedBox(height: 24),
 
-                              // معلومات الدفع
-                              _buildPaymentInfo(isMobile, isDarkMode),
-                              const SizedBox(height: 32),
+                                _buildPaymentInfo(isMobile, isDarkMode),
+                                const SizedBox(height: 32),
+                              ],
 
-                              // أزرار الإجراءات
                               _buildActionButtons(isMobile, isDarkMode),
                               SizedBox(
                                 height: MediaQuery.of(context).padding.bottom,
@@ -570,6 +618,42 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildFreeCourseEnrollment(bool isMobile, bool isDarkMode) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(isMobile ? 16 : 20),
+      decoration: BoxDecoration(
+        color: const Color(0xFF10B981).withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFF10B981).withOpacity(0.3)),
+      ),
+      child: Column(
+        children: [
+          Icon(Icons.celebration, size: 40, color: const Color(0xFF10B981)),
+          const SizedBox(height: 12),
+          Text(
+            'هذا الكورس مجاني بالكامل!',
+            style: GoogleFonts.tajawal(
+              fontSize: isMobile ? 18 : 20,
+              fontWeight: FontWeight.w800,
+              color: const Color(0xFF065F46),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'يمكنك التسجيل مباشرة دون أي تكاليف',
+            style: GoogleFonts.tajawal(
+              fontSize: isMobile ? 14 : 16,
+              fontWeight: FontWeight.w500,
+              color: const Color(0xFF065F46).withOpacity(0.8),
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
     );
   }
 
@@ -595,14 +679,14 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
           const SizedBox(height: 12),
           _buildInfoRow(
             Icons.school,
-            widget.course['title'],
+            widget.course['title']?.toString() ?? 'دورة تعليمية',
             isMobile,
             isDarkMode,
           ),
           const SizedBox(height: 8),
           _buildInfoRow(
             Icons.person,
-            widget.course['teacher'],
+            widget.course['teacher']?.toString() ?? 'مدرس متخصص',
             isMobile,
             isDarkMode,
           ),
@@ -690,18 +774,16 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  // Using asset image instead of icon
                   Image.asset(
                     method.imagePath,
                     width: isMobile ? 20 : 24,
                     height: isMobile ? 20 : 24,
                     errorBuilder: (context, error, stackTrace) {
-                      // Fallback to colored container if image fails to load
                       return Container(
                         width: isMobile ? 20 : 24,
                         height: isMobile ? 20 : 24,
                         decoration: BoxDecoration(
-                          gradient: LinearGradient(
+                          gradient: const LinearGradient(
                             colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
@@ -796,6 +878,41 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
   }
 
   Widget _buildPaymentSummary(bool isMobile, bool isDarkMode) {
+    if (_isFreeCourse) {
+      return Container(
+        width: double.infinity,
+        padding: EdgeInsets.all(isMobile ? 16 : 20),
+        decoration: BoxDecoration(
+          color: const Color(0xFF10B981).withOpacity(0.1),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFF10B981).withOpacity(0.3)),
+        ),
+        child: Column(
+          children: [
+            Text(
+              'ملخص التسجيل',
+              style: GoogleFonts.tajawal(
+                fontSize: isMobile ? 16 : 18,
+                fontWeight: FontWeight.w800,
+                color: const Color(0xFF065F46),
+              ),
+            ),
+            const SizedBox(height: 16),
+            _buildSummaryRow('سعر الكورس', 'مجاني', isMobile, isDarkMode),
+            _buildSummaryRow('الضرائب', '₪0.00', isMobile, isDarkMode),
+            Divider(color: isDarkMode ? Colors.grey[600] : Colors.grey[300]),
+            _buildSummaryRow(
+              'الإجمالي',
+              'مجاني',
+              isMobile,
+              isDarkMode,
+              isTotal: true,
+            ),
+          ],
+        ),
+      );
+    }
+
     return Container(
       width: double.infinity,
       padding: EdgeInsets.all(isMobile ? 16 : 20),
@@ -1013,11 +1130,14 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
           child: Container(
             height: 48,
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
+              gradient: _isFreeCourse
+                  ? null
+                  : const LinearGradient(
+                      colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+              color: _isFreeCourse ? const Color(0xFF10B981) : null,
               borderRadius: BorderRadius.circular(12),
             ),
             child: InkWell(
@@ -1034,7 +1154,7 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
                         ),
                       )
                     : Text(
-                        'تأكيد الدفع',
+                        _isFreeCourse ? 'سجل مجاناً' : 'تأكيد الدفع',
                         style: GoogleFonts.tajawal(
                           fontSize: isMobile ? 16 : 18,
                           fontWeight: FontWeight.w700,
@@ -1174,35 +1294,35 @@ class _CourseTabsState extends State<CourseTabs> {
     );
   }
 
- Widget _buildTabContent(bool isDarkMode) {
-  try {
-    switch (_selectedTab) {
-      case 0:
-        return _buildDescription(isDarkMode);
-      case 1:
-        return _buildCurriculum(isDarkMode);
-      case 2:
-        return _buildReviews(isDarkMode);
-      case 3:
-        return _buildInstructor(isDarkMode);
-      default:
-        return _buildDescription(isDarkMode);
-    }
-  } catch (e, stackTrace) {
-    print('Error in _buildTabContent for tab $_selectedTab: $e');
-    print('Stack trace: $stackTrace');
-    return Container(
-      padding: EdgeInsets.all(16),
-      child: Text(
-        'حدث خطأ في تحميل المحتوى. الرجاء المحاولة مرة أخرى.',
-        style: GoogleFonts.tajawal(
-          color: Colors.red,
-          fontWeight: FontWeight.bold,
+  Widget _buildTabContent(bool isDarkMode) {
+    try {
+      switch (_selectedTab) {
+        case 0:
+          return _buildDescription(isDarkMode);
+        case 1:
+          return _buildCurriculum(isDarkMode);
+        case 2:
+          return _buildReviews(isDarkMode);
+        case 3:
+          return _buildInstructor(isDarkMode);
+        default:
+          return _buildDescription(isDarkMode);
+      }
+    } catch (e, stackTrace) {
+      print('Error in _buildTabContent for tab $_selectedTab: $e');
+      print('Stack trace: $stackTrace');
+      return Container(
+        padding: const EdgeInsets.all(16),
+        child: Text(
+          'حدث خطأ في تحميل المحتوى. الرجاء المحاولة مرة أخرى.',
+          style: GoogleFonts.tajawal(
+            color: Colors.red,
+            fontWeight: FontWeight.bold,
+          ),
         ),
-      ),
-    );
+      );
+    }
   }
-}
 
   Widget _buildDescription(bool isDarkMode) {
     return Column(
@@ -1234,10 +1354,11 @@ class _CourseTabsState extends State<CourseTabs> {
           runSpacing: 8,
           children: List.generate(widget.course['tags']?.length ?? 3, (index) {
             final tags = widget.course['tags'] ?? ['تعليم', 'تدريب', 'مهارات'];
+            final tag = index < tags.length ? tags[index] : 'تعليم';
             return Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                gradient: LinearGradient(
+                gradient: const LinearGradient(
                   colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
@@ -1245,7 +1366,7 @@ class _CourseTabsState extends State<CourseTabs> {
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
-                tags[index],
+                tag,
                 style: GoogleFonts.tajawal(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
@@ -1281,7 +1402,6 @@ class _CourseTabsState extends State<CourseTabs> {
                   ? const Color(0xFF2D2D2D)
                   : const Color(0xFFF8FAFC),
               borderRadius: BorderRadius.circular(8),
-              border: isDarkMode ? Border.all(color: Colors.white30) : null,
             ),
             child: Row(
               children: [
@@ -1289,7 +1409,7 @@ class _CourseTabsState extends State<CourseTabs> {
                   width: 32,
                   height: 32,
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
+                    gradient: const LinearGradient(
                       colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
@@ -1329,61 +1449,6 @@ class _CourseTabsState extends State<CourseTabs> {
             ),
           );
         }),
-        const SizedBox(height: 20),
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.white.withOpacity(0.2), width: 1),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Icon(
-                  Icons.visibility,
-                  color: Colors.white,
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'يمكنك مشاهدة باقي المحتوى عند شراء الكورس',
-                      style: GoogleFonts.tajawal(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'اشترك الآن للوصول إلى ${widget.course['lessons'] ?? 30} محاضرة كاملة',
-                      style: GoogleFonts.tajawal(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.white.withOpacity(0.8),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
       ],
     );
   }
@@ -1410,7 +1475,6 @@ class _CourseTabsState extends State<CourseTabs> {
                   ? const Color(0xFF2D2D2D)
                   : const Color(0xFFF8FAFC),
               borderRadius: BorderRadius.circular(12),
-              border: isDarkMode ? Border.all(color: Colors.white30) : null,
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1419,8 +1483,15 @@ class _CourseTabsState extends State<CourseTabs> {
                   children: [
                     CircleAvatar(
                       radius: 20,
-                      backgroundImage: NetworkImage(
-                        'https://picsum.photos/seed/user${index}/100/100',
+                      backgroundColor: isDarkMode
+                          ? Colors.grey[700]
+                          : Colors.grey[300],
+                      child: Text(
+                        'ط${index + 1}',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -1488,224 +1559,102 @@ class _CourseTabsState extends State<CourseTabs> {
             ),
           );
         }),
-        const SizedBox(height: 16),
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.white.withOpacity(0.2), width: 1),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Icon(
-                  Icons.star_rate_rounded,
-                  color: Colors.white,
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'يمكنك اضافة تقييم خاص بك عند شراء الكورس',
-                      style: GoogleFonts.tajawal(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'شارك تجربتك ومساعدة الآخرين في اتخاذ القرار',
-                      style: GoogleFonts.tajawal(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.white.withOpacity(0.8),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
       ],
     );
   }
 
   Widget _buildInstructor(bool isDarkMode) {
-    try {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'عن المدرب',
-            style: GoogleFonts.tajawal(
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
-              color: isDarkMode ? Colors.white : const Color(0xFF1F2937),
-            ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'عن المدرب',
+          style: GoogleFonts.tajawal(
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+            color: isDarkMode ? Colors.white : const Color(0xFF1F2937),
           ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              // Safe image widget with error handling
-              Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Color(0xFF667EEA).withOpacity(0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
-                padding: const EdgeInsets.all(2),
-                child: ClipOval(
-                  child: Container(
-                    width: 80,
-                    height: 80,
-                    color: Colors.grey[300],
-                    child: _buildInstructorImage(isDarkMode),
-                  ),
-                ),
+                shape: BoxShape.circle,
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      widget.course['teacher']?.toString() ?? 'مدرب',
-                      style: GoogleFonts.tajawal(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
-                        color: isDarkMode
-                            ? Colors.white
-                            : const Color(0xFF1F2937),
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'خبير في ${widget.course['category']?.toString() ?? 'التخصص'}',
-                      style: GoogleFonts.tajawal(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: isDarkMode
-                            ? Colors.white70
-                            : const Color(0xFF6B7280),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        _buildInstructorStat('5.0', 'التقييم', isDarkMode),
-                        const SizedBox(width: 16),
-                        _buildInstructorStat(
-                          widget.course['students']?.toString() ?? '1000',
-                          'طالب',
-                          isDarkMode,
-                        ),
-                        const SizedBox(width: 16),
-                        _buildInstructorStat('15', 'كورس', isDarkMode),
-                      ],
-                    ),
-                  ],
-                ),
+              child: CircleAvatar(
+                radius: 38,
+                backgroundColor: isDarkMode
+                    ? Colors.grey[700]
+                    : Colors.grey[300],
+                child: const Icon(Icons.person, size: 40, color: Colors.white),
               ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Text(
-            widget.course['description']?.toString() ??
-                'مدرب محترف بخبرة تزيد عن 5 سنوات في المجال. حاصل على شهادات متقدمة ويتمتع بأسلوب شرح مبسط وسهل الفهم.',
-            style: GoogleFonts.tajawal(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: isDarkMode ? Colors.white70 : const Color(0xFF6B7280),
-              height: 1.6,
             ),
-            textAlign: TextAlign.right,
-          ),
-        ],
-      );
-    } catch (e, stackTrace) {
-      print('Error in _buildInstructor: $e');
-      print('Stack trace: $stackTrace');
-      return Column(
-        children: [
-          Text(
-            'حدث خطأ في تحميل بيانات المدرب',
-            style: GoogleFonts.tajawal(
-              color: Colors.red,
-              fontWeight: FontWeight.bold,
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    widget.course['teacher']?.toString() ?? 'مدرب',
+                    style: GoogleFonts.tajawal(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                      color: isDarkMode
+                          ? Colors.white
+                          : const Color(0xFF1F2937),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'خبير في ${widget.course['category']?.toString() ?? 'التخصص'}',
+                    style: GoogleFonts.tajawal(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: isDarkMode
+                          ? Colors.white70
+                          : const Color(0xFF6B7280),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      _buildInstructorStat('5.0', 'التقييم', isDarkMode),
+                      const SizedBox(width: 16),
+                      _buildInstructorStat(
+                        widget.course['students']?.toString() ?? '1000',
+                        'طالب',
+                        isDarkMode,
+                      ),
+                      const SizedBox(width: 16),
+                      _buildInstructorStat('15', 'كورس', isDarkMode),
+                    ],
+                  ),
+                ],
+              ),
             ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Text(
+          'مدرب محترف بخبرة تزيد عن 5 سنوات في المجال. حاصل على شهادات متقدمة ويتمتع بأسلوب شرح مبسط وسهل الفهم.',
+          style: GoogleFonts.tajawal(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: isDarkMode ? Colors.white70 : const Color(0xFF6B7280),
+            height: 1.6,
           ),
-          Text('Error: $e'),
-        ],
-      );
-    }
-  }
-
-  Widget _buildInstructorImage(bool isDarkMode) {
-    final imageUrl =
-        widget.course['instructorImage']?.toString() ??
-        'https://picsum.photos/seed/instructor/200/200';
-
-    try {
-      return Image.network(
-        imageUrl,
-        width: 80,
-        height: 80,
-        fit: BoxFit.cover,
-        loadingBuilder: (context, child, loadingProgress) {
-          if (loadingProgress == null) return child;
-          return Center(
-            child: CircularProgressIndicator(
-              value: loadingProgress.expectedTotalBytes != null
-                  ? loadingProgress.cumulativeBytesLoaded /
-                        loadingProgress.expectedTotalBytes!
-                  : null,
-            ),
-          );
-        },
-        errorBuilder: (context, error, stackTrace) {
-          print('Image loading error: $error');
-          return Icon(
-            Icons.person,
-            size: 40,
-            color: isDarkMode ? Colors.white70 : Colors.grey[600],
-          );
-        },
-      );
-    } catch (e) {
-      print('Image widget error: $e');
-      return Icon(
-        Icons.person,
-        size: 40,
-        color: isDarkMode ? Colors.white70 : Colors.grey[600],
-      );
-    }
+          textAlign: TextAlign.right,
+        ),
+      ],
+    );
   }
 
   Widget _buildInstructorStat(String value, String label, bool isDarkMode) {

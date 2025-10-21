@@ -44,25 +44,25 @@ class _CourseDetailsPageState extends State<CourseDetailsPage> {
         'title': 'تعلم Flutter من الصفر إلى الاحتراف',
         'image': 'https://picsum.photos/seed/flutter/400/300',
         'rating': 4.8,
-        'price': '₪199',
+        'price': '200,000 S.P',
       },
       {
         'title': 'UI/UX Design للمبتدئين',
         'image': 'https://picsum.photos/seed/design/400/300',
         'rating': 4.6,
-        'price': '₪149',
+        'price': '175,000 S.P',
       },
       {
         'title': 'التسويق الرقمي الشامل',
         'image': 'https://picsum.photos/seed/marketing/400/300',
         'rating': 4.9,
-        'price': '₪299',
+        'price': '150,000 S.P',
       },
       {
         'title': 'إدارة المشاريع الاحترافية',
         'image': 'https://picsum.photos/seed/project/400/300',
         'rating': 4.7,
-        'price': '₪249',
+        'price': '750,000 S.P',
       },
     ];
   }
@@ -81,7 +81,7 @@ Map<String, dynamic> sampleCourse = {
   'lessons': 45,
   'level': 'متقدم',
   'lastUpdated': 'ديسمبر 2024',
-  'price': '₪299',
+  'price': '950,000 S.P',
   'description': 'هذه الدورة الشاملة تغطي جميع جوانب تطوير تطبيقات Flutter بشكل احترافي. ستتعلم كيفية بناء تطبيقات متقدمة باستخدام أحدث التقنيات والممارسات. تشمل الدورة مشاريع عملية وأمثلة واقعية.',
   'tags': ['Flutter', 'Dart', 'Mobile', 'Firebase', 'API'],
   'instructorImage': 'https://picsum.photos/seed/instructor/200/200',

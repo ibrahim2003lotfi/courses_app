@@ -213,26 +213,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           body: SafeArea(
             child: Column(
               children: [
-                // Progress indicator
-                Padding(
+                // Progress indicator - Fixed consistent positioning
+                Container(
+                  height: 80, // Fixed height to ensure consistent positioning
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      // Skip button (only show if not on last page)
-                      if (_currentPage < _pages.length - 1)
-                        TextButton(
-                          onPressed: _completeOnboarding,
-                          child: Text(
-                            'تخطي',
-                            style: GoogleFonts.tajawal(
-                              color: isDarkMode ? Colors.white70 : const Color(0xFF6B7280),
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        )
-                      else
-                        const SizedBox(width: 80),
+                      // Empty space where skip button used to be
+                      const SizedBox(width: 80),
                       
                       // Progress dots - Updated to purple gradient
                       Row(
@@ -415,8 +404,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
+        children: [ // Changed from MainAxisAlignment.center to regular Column
+          const SizedBox(height: 20), // Added spacing to push content down
           // Logo image with purple gradient border
           Container(
             width: 200,
@@ -750,8 +739,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
+        children: [ // Changed from MainAxisAlignment.center to regular Column
+          const SizedBox(height: 20), // Added spacing to push content down
           // Celebration icon with purple gradient
           Container(
             width: 200,

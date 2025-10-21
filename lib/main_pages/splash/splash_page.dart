@@ -141,13 +141,19 @@ class _SplashScreenState extends State<SplashScreen>
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Color(0xFF1E293B), Color(0xFF334155), Color(0xFF3B82F6)],
-            stops: [0.0, 0.6, 1.0],
+            colors: [
+              Color(0xFF1A103C),
+              Color(0xFF2D1B69),
+              Color(0xFF667EEA),
+              Color(0xFF764BA2),
+            ],
+            stops: [0.0, 0.4, 0.7, 1.0],
           ),
         ),
         child: Stack(
           children: [
             _buildFloatingElements(),
+            _buildBackgroundPattern(),
             Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -167,13 +173,31 @@ class _SplashScreenState extends State<SplashScreen>
     );
   }
 
+  Widget _buildBackgroundPattern() {
+    return IgnorePointer(
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: RadialGradient(
+            center: Alignment.center,
+            radius: 1.5,
+            colors: [
+              Colors.white.withOpacity(0.03),
+              Colors.transparent,
+            ],
+            stops: const [0.1, 0.8],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildFloatingElements() {
     return AnimatedBuilder(
       animation: _floatingAnimation,
       builder: (context, child) {
         return Stack(
           children: [
-            // Top right element
+            // Top right element - Purple orb
             Positioned(
               top: 100 + _floatingAnimation.value,
               right: 50,
@@ -181,12 +205,26 @@ class _SplashScreenState extends State<SplashScreen>
                 width: 80,
                 height: 80,
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.05),
+                  gradient: const LinearGradient(
+                    colors: [
+                      Color(0xFF667EEA),
+                      Color(0xFF764BA2),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
                   shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF667EEA).withOpacity(0.4),
+                      blurRadius: 20,
+                      spreadRadius: 5,
+                    ),
+                  ],
                 ),
               ),
             ),
-            // Top left element
+            // Top left element - Pink orb
             Positioned(
               top: 200 - _floatingAnimation.value,
               left: 30,
@@ -194,12 +232,26 @@ class _SplashScreenState extends State<SplashScreen>
                 width: 60,
                 height: 60,
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.03),
-                  borderRadius: BorderRadius.circular(20),
+                  gradient: const LinearGradient(
+                    colors: [
+                      Color(0xFFF093FB),
+                      Color(0xFFF5576C),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFF5576C).withOpacity(0.3),
+                      blurRadius: 15,
+                      spreadRadius: 3,
+                    ),
+                  ],
                 ),
               ),
             ),
-            // Bottom right element
+            // Bottom right element - Blue orb
             Positioned(
               bottom: 150 + _floatingAnimation.value * 0.5,
               right: 40,
@@ -207,12 +259,26 @@ class _SplashScreenState extends State<SplashScreen>
                 width: 50,
                 height: 50,
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.04),
+                  gradient: const LinearGradient(
+                    colors: [
+                      Color(0xFF4FACFE),
+                      Color(0xFF00F2FE),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
                   shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF4FACFE).withOpacity(0.3),
+                      blurRadius: 12,
+                      spreadRadius: 2,
+                    ),
+                  ],
                 ),
               ),
             ),
-            // Bottom left element
+            // Bottom left element - Geometric shape
             Positioned(
               bottom: 100 - _floatingAnimation.value * 0.7,
               left: 60,
@@ -222,9 +288,50 @@ class _SplashScreenState extends State<SplashScreen>
                   width: 70,
                   height: 70,
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.03),
-                    borderRadius: BorderRadius.circular(15),
+                    gradient: const LinearGradient(
+                      colors: [
+                        Color(0xFF667EEA),
+                        Color(0xFF764BA2),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF667EEA).withOpacity(0.4),
+                        blurRadius: 15,
+                        spreadRadius: 3,
+                      ),
+                    ],
                   ),
+                ),
+              ),
+            ),
+            // Center floating element
+            Positioned(
+              top: MediaQuery.of(context).size.height * 0.3,
+              left: MediaQuery.of(context).size.width * 0.2,
+              child: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [
+                      Color(0xFFA8EDEA),
+                      Color(0xFFFED6E3),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFA8EDEA).withOpacity(0.4),
+                      blurRadius: 10,
+                      spreadRadius: 2,
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -243,39 +350,60 @@ class _SplashScreenState extends State<SplashScreen>
           child: Opacity(
             opacity: _logoFadeAnimation.value,
             child: Container(
-              width: 140,
-              height: 140,
+              width: 160,
+              height: 160,
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [Color(0xFF60A5FA), Color(0xFF3B82F6)],
+                  colors: [
+                    Color(0xFF667EEA),
+                    Color(0xFF764BA2),
+                    Color(0xFF667EEA),
+                  ],
                 ),
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(
-                      0xFF3B82F6,
-                    ).withOpacity(0.3 * _glowAnimation.value),
-                    blurRadius: 30,
-                    spreadRadius: 10,
+                    color: const Color(0xFF667EEA).withOpacity(0.5 * _glowAnimation.value),
+                    blurRadius: 40,
+                    spreadRadius: 15,
                   ),
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.2),
-                    blurRadius: 20,
+                    color: const Color(0xFF764BA2).withOpacity(0.3 * _glowAnimation.value),
+                    blurRadius: 30,
+                    spreadRadius: 10,
                     offset: const Offset(0, 10),
+                  ),
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.3),
+                    blurRadius: 20,
+                    offset: const Offset(0, 15),
                   ),
                 ],
               ),
               child: Padding(
-                padding: const EdgeInsets.all(
-                  20.0,
-                ), // Add padding to control image size
-                child: Image.asset(
-                  'assets/images/logo_ed.png',
-                  fit: BoxFit.contain, // or BoxFit.cover
-                  color: Colors.white, // Optional: applies color tint
-                  // colorBlendMode: BlendMode.srcIn, // Uncomment if you want to fully tint the image
+                padding: const EdgeInsets.all(25.0),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.white.withOpacity(0.5),
+                        blurRadius: 10,
+                        spreadRadius: 2,
+                      ),
+                    ],
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(15.0),
+                    child: Image.asset(
+                      'assets/images/logo_ed.png',
+                      fit: BoxFit.contain,
+                      color: const Color(0xFF667EEA),
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -298,19 +426,37 @@ class _SplashScreenState extends State<SplashScreen>
                 Text(
                   'Courses App',
                   style: GoogleFonts.tajawal(
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
+                    fontSize: 36,
+                    fontWeight: FontWeight.w800,
                     color: Colors.white,
-                    letterSpacing: 1.2,
+                    letterSpacing: 1.5,
+                    shadows: [
+                      Shadow(
+                        color: Colors.black.withOpacity(0.3),
+                        blurRadius: 10,
+                        offset: const Offset(0, 5),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'رحلتك التعليمية تبدأ هنا',
+                  style: GoogleFonts.tajawal(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.white.withOpacity(0.9),
+                    letterSpacing: 1.1,
                   ),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'رحلتك التعليمية تبدأ هنا',
+                  'منصة التعلم الذكي',
                   style: GoogleFonts.tajawal(
-                    fontSize: 16,
+                    fontSize: 14,
                     fontWeight: FontWeight.w400,
-                    color: Colors.white70,
+                    color: Colors.white.withOpacity(0.7),
+                    fontStyle: FontStyle.italic,
                   ),
                 ),
               ],
@@ -328,11 +474,18 @@ class _SplashScreenState extends State<SplashScreen>
         return Opacity(
           opacity: _textFadeAnimation.value,
           child: Container(
-            width: 200,
-            height: 4,
+            width: 220,
+            height: 6,
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(2),
+              color: Colors.white.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(3),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.2),
+                  blurRadius: 8,
+                  offset: const Offset(0, 3),
+                ),
+              ],
             ),
             child: Stack(
               children: [
@@ -341,12 +494,22 @@ class _SplashScreenState extends State<SplashScreen>
                   child: Container(
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
-                        colors: [Color(0xFF60A5FA), Color(0xFF3B82F6)],
+                        colors: [
+                          Color(0xFF667EEA),
+                          Color(0xFF764BA2),
+                          Color(0xFF667EEA),
+                        ],
+                        stops: [0.0, 0.5, 1.0],
                       ),
-                      borderRadius: BorderRadius.circular(2),
+                      borderRadius: BorderRadius.circular(3),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFF3B82F6).withOpacity(0.5),
+                          color: const Color(0xFF667EEA).withOpacity(0.6),
+                          blurRadius: 15,
+                          spreadRadius: 3,
+                        ),
+                        BoxShadow(
+                          color: const Color(0xFF764BA2).withOpacity(0.4),
                           blurRadius: 10,
                           spreadRadius: 2,
                         ),
@@ -372,10 +535,27 @@ class _SplashScreenState extends State<SplashScreen>
         builder: (context, child) {
           return Opacity(
             opacity: _textFadeAnimation.value,
-            child: Text(
-              'الإصدار 1.0.0',
-              style: GoogleFonts.tajawal(fontSize: 12, color: Colors.white38),
-              textAlign: TextAlign.center,
+            child: Column(
+              children: [
+                Text(
+                  'منصة الكورسات الرائدة',
+                  style: GoogleFonts.tajawal(
+                    fontSize: 12,
+                    color: Colors.white.withOpacity(0.6),
+                    fontWeight: FontWeight.w300,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'الإصدار 1.0.0',
+                  style: GoogleFonts.tajawal(
+                    fontSize: 11,
+                    color: Colors.white.withOpacity(0.5),
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
             ),
           );
         },
