@@ -20,7 +20,7 @@ class _CategoryDetailPageState extends State<CategoryDetailPage> {
   bool _showAppBarTitle = false;
 
   // Sample data for different sections
-  final List<Map<String, dynamic>> beginnerCourses = [
+    List<Map<String, dynamic>> beginnerCourses = [
     {
       'id': '1',
       'title': 'مقدمة في البرمجة - الأساسيات',
@@ -28,7 +28,7 @@ class _CategoryDetailPageState extends State<CategoryDetailPage> {
       'teacher': 'أحمد محمد',
       'rating': 4.8,
       'students': 2547,
-      'price': '₪99',
+      'price': '155,000 S.P',
       'level': 'مبتدئ',
       'duration': 12,
       'lessons': 25,
@@ -40,7 +40,7 @@ class _CategoryDetailPageState extends State<CategoryDetailPage> {
       'teacher': 'فاطمة أحمد',
       'rating': 4.7,
       'students': 1834,
-      'price': '₪149',
+      'price': '250,000 S.P',
       'level': 'مبتدئ',
       'duration': 16,
       'lessons': 30,
@@ -52,14 +52,14 @@ class _CategoryDetailPageState extends State<CategoryDetailPage> {
       'teacher': 'محمد علي',
       'rating': 4.6,
       'students': 3421,
-      'price': '₪79',
+      'price': '125,000 S.P',
       'level': 'مبتدئ',
       'duration': 10,
       'lessons': 20,
     },
   ];
 
-  final List<Map<String, dynamic>> featuredCourses = [
+  List<Map<String, dynamic>> featuredCourses = [
     {
       'id': '4',
       'title': 'تطوير تطبيقات الويب الحديثة',
@@ -67,7 +67,7 @@ class _CategoryDetailPageState extends State<CategoryDetailPage> {
       'teacher': 'سارة محمود',
       'rating': 4.9,
       'students': 5632,
-      'price': '₪299',
+      'price': '285,000 S.P',
       'level': 'متقدم',
       'duration': 35,
       'lessons': 60,
@@ -80,7 +80,7 @@ class _CategoryDetailPageState extends State<CategoryDetailPage> {
       'teacher': 'خالد أحمد',
       'rating': 4.8,
       'students': 4123,
-      'price': '₪399',
+      'price': '700,000 S.P',
       'level': 'متقدم',
       'duration': 28,
       'lessons': 45,
@@ -93,7 +93,7 @@ class _CategoryDetailPageState extends State<CategoryDetailPage> {
       'teacher': 'نور الدين',
       'rating': 4.7,
       'students': 2987,
-      'price': '₪449',
+      'price': '1,500,000 S.P',
       'level': 'متقدم',
       'duration': 42,
       'lessons': 70,
@@ -101,7 +101,7 @@ class _CategoryDetailPageState extends State<CategoryDetailPage> {
     },
   ];
 
-  final List<Map<String, dynamic>> subcategories = [
+  List<Map<String, dynamic>> subcategories = [
     {
       'id': 'sub1',
       'name': 'تطوير الويب',
@@ -146,7 +146,7 @@ class _CategoryDetailPageState extends State<CategoryDetailPage> {
     },
   ];
 
-  final List<Map<String, dynamic>> allCourses = [
+  List<Map<String, dynamic>> allCourses = [
     {
       'id': '7',
       'title': 'دورة شاملة في Python للمبتدئين والمحترفين',
@@ -154,7 +154,7 @@ class _CategoryDetailPageState extends State<CategoryDetailPage> {
       'teacher': 'د. أحمد علي',
       'rating': 4.8,
       'students': 8765,
-      'price': '₪199',
+      'price': '190,000 S.P',
       'level': 'جميع المستويات',
       'duration': 25,
       'lessons': 40,
@@ -166,7 +166,7 @@ class _CategoryDetailPageState extends State<CategoryDetailPage> {
       'teacher': 'مريم محمد',
       'rating': 4.7,
       'students': 6543,
-      'price': '₪249',
+      'price': '255,000 S.P',
       'level': 'متوسط',
       'duration': 30,
       'lessons': 50,
@@ -178,7 +178,7 @@ class _CategoryDetailPageState extends State<CategoryDetailPage> {
       'teacher': 'خالد محمود',
       'rating': 4.6,
       'students': 4321,
-      'price': '₪179',
+      'price': '185,000 S.P',
       'level': 'متقدم',
       'duration': 18,
       'lessons': 35,
@@ -190,7 +190,7 @@ class _CategoryDetailPageState extends State<CategoryDetailPage> {
       'teacher': 'نادية أحمد',
       'rating': 4.9,
       'students': 5432,
-      'price': '₪299',
+      'price': '300,000 S.P',
       'level': 'متوسط',
       'duration': 22,
       'lessons': 38,
@@ -603,7 +603,7 @@ class _CategoryDetailPageState extends State<CategoryDetailPage> {
     final String title = course['title'] ?? 'عنوان غير متوفر';
     final String teacher = course['teacher'] ?? 'مدرس غير معروف';
     final dynamic rating = course['rating'] ?? 0.0;
-    final String price = course['price'] ?? '₪0';
+    final String price = course['price'] ?? '0 S.P';
     return Container(
       width: 160,
       decoration: BoxDecoration(
@@ -1229,7 +1229,7 @@ class _CategoryDetailPageState extends State<CategoryDetailPage> {
       'students': course['students'] is int
           ? course['students']
           : int.tryParse(course['students']?.toString() ?? '1000') ?? 1000,
-      'price': course['price']?.toString() ?? '₪99',
+      'price': course['price']?.toString() ?? '190,000 S.P',
       'level': course['level']?.toString() ?? 'متوسط',
       'duration': course['duration'] is int
           ? course['duration']

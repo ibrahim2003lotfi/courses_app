@@ -951,7 +951,7 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
           Divider(color: isDarkMode ? Colors.grey[600] : Colors.grey[300]),
           _buildSummaryRow(
             'الإجمالي',
-            '₪${_totalPrice.toStringAsFixed(2)}',
+            'S.P${_totalPrice.toStringAsFixed(2)}',
             isMobile,
             isDarkMode,
             isTotal: true,
@@ -1683,32 +1683,44 @@ class _CourseTabsState extends State<CourseTabs> {
 
 class RelatedCourses extends StatelessWidget {
   final List<Map<String, dynamic>> relatedCourses;
+  final Function(Map<String, dynamic>) onCourseTap;
 
-  const RelatedCourses({super.key, required this.relatedCourses});
+  const RelatedCourses({
+    super.key, 
+    required this.relatedCourses,
+    required this.onCourseTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<ThemeCubit, ThemeState>(
       builder: (context, themeState) {
         final isDarkMode = themeState.isDarkMode;
+        final screenWidth = MediaQuery.of(context).size.width;
+        final isMobile = screenWidth < 600;
+        final courseWidth = isMobile ? 280.0 : 320.0;
+        final courseHeight = isMobile ? 200.0 : 220.0;
 
         return SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+            padding: EdgeInsets.symmetric(
+              horizontal: isMobile ? 20 : 32,
+              vertical: 24,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   'كورسات ذات صلة',
                   style: GoogleFonts.tajawal(
-                    fontSize: 20,
+                    fontSize: isMobile ? 20 : 24,
                     fontWeight: FontWeight.w800,
                     color: isDarkMode ? Colors.white : const Color(0xFF1F2937),
                   ),
                 ),
                 const SizedBox(height: 16),
                 SizedBox(
-                  height: 200,
+                  height: courseHeight,
                   child: ListView.separated(
                     scrollDirection: Axis.horizontal,
                     itemCount: relatedCourses.length,
@@ -1716,45 +1728,49 @@ class RelatedCourses extends StatelessWidget {
                     itemBuilder: (context, index) {
                       final course = relatedCourses[index];
                       return SizedBox(
-                        width: 280,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: isDarkMode
-                                ? const Color(0xFF1E1E1E)
-                                : Colors.white,
-                            borderRadius: BorderRadius.circular(16),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(
-                                  isDarkMode ? 0.2 : 0.05,
-                                ),
-                                blurRadius: 8,
-                                offset: const Offset(0, 3),
+                        width: courseWidth,
+                        child: GestureDetector(
+                          onTap: () => onCourseTap(course),
+                          child: MouseRegion(
+                            cursor: SystemMouseCursors.click,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: isDarkMode
+                                    ? const Color(0xFF1E1E1E)
+                                    : Colors.white,
+                                borderRadius: BorderRadius.circular(16),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(
+                                      isDarkMode ? 0.2 : 0.05,
+                                    ),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 3),
+                                  ),
+                                ],
+                                border: isDarkMode
+                                    ? Border.all(color: Colors.white30)
+                                    : null,
                               ),
-                            ],
-                            border: isDarkMode
-                                ? Border.all(color: Colors.white30)
-                                : null,
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              ClipRRect(
-                                borderRadius: const BorderRadius.vertical(
-                                  top: Radius.circular(16),
-                                ),
-                                child: Image.network(
-                                  course['image'],
-                                  width: 280,
-                                  height: 120,
-                                  fit: BoxFit.cover,
-                                  loadingBuilder:
-                                      (context, child, loadingProgress) {
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  ClipRRect(
+                                    borderRadius: const BorderRadius.vertical(
+                                      top: Radius.circular(16),
+                                    ),
+                                    child: Image.network(
+                                      course['image'],
+                                      width: courseWidth,
+                                      height: courseHeight * 0.6,
+                                      fit: BoxFit.cover,
+                                      loadingBuilder:
+                                          (context, child, loadingProgress) {
                                         if (loadingProgress == null)
                                           return child;
                                         return Container(
-                                          width: 280,
-                                          height: 120,
+                                          width: courseWidth,
+                                          height: courseHeight * 0.6,
                                           color: isDarkMode
                                               ? const Color(0xFF2D2D2D)
                                               : const Color(0xFFF3F4F6),
@@ -1762,85 +1778,87 @@ class RelatedCourses extends StatelessWidget {
                                             child: CircularProgressIndicator(
                                               valueColor:
                                                   AlwaysStoppedAnimation<Color>(
-                                                    isDarkMode
-                                                        ? Colors.white70
-                                                        : const Color(
-                                                            0xFF2563EB,
-                                                          ),
-                                                  ),
+                                                isDarkMode
+                                                    ? Colors.white70
+                                                    : const Color(0xFF2563EB),
+                                              ),
                                             ),
                                           ),
                                         );
                                       },
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return Container(
-                                      width: 280,
-                                      height: 120,
-                                      color: isDarkMode
-                                          ? const Color(0xFF2D2D2D)
-                                          : const Color(0xFFF3F4F6),
-                                      child: Icon(
-                                        Icons.error_outline,
-                                        color: isDarkMode
-                                            ? Colors.white70
-                                            : const Color(0xFF6B7280),
-                                        size: 40,
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.all(12),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      course['title'],
-                                      style: GoogleFonts.tajawal(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w700,
-                                        color: isDarkMode
-                                            ? Colors.white
-                                            : const Color(0xFF374151),
-                                      ),
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Row(
-                                      children: [
-                                        const Icon(
-                                          Icons.star,
-                                          size: 14,
-                                          color: Colors.amber,
-                                        ),
-                                        const SizedBox(width: 4),
-                                        Text(
-                                          course['rating'].toStringAsFixed(1),
-                                          style: GoogleFonts.tajawal(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w600,
+                                      errorBuilder: (context, error, stackTrace) {
+                                        return Container(
+                                          width: courseWidth,
+                                          height: courseHeight * 0.6,
+                                          color: isDarkMode
+                                              ? const Color(0xFF2D2D2D)
+                                              : const Color(0xFFF3F4F6),
+                                          child: Icon(
+                                            Icons.error_outline,
                                             color: isDarkMode
-                                                ? Colors.white
-                                                : const Color(0xFF374151),
+                                                ? Colors.white70
+                                                : const Color(0xFF6B7280),
+                                            size: 40,
                                           ),
-                                        ),
-                                        const Spacer(),
-                                        Text(
-                                          course['price'],
-                                          style: GoogleFonts.tajawal(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w800,
-                                            color: const Color(0xFF10B981),
-                                          ),
-                                        ),
-                                      ],
+                                        );
+                                      },
                                     ),
-                                  ],
-                                ),
+                                  ),
+                                  Expanded(
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(12),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(
+                                            course['title'],
+                                            style: GoogleFonts.tajawal(
+                                              fontSize: isMobile ? 14 : 15,
+                                              fontWeight: FontWeight.w700,
+                                              color: isDarkMode
+                                                  ? Colors.white
+                                                  : const Color(0xFF374151),
+                                            ),
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                          Row(
+                                            children: [
+                                              const Icon(
+                                                Icons.star,
+                                                size: 14,
+                                                color: Colors.amber,
+                                              ),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                course['rating'].toStringAsFixed(1),
+                                                style: GoogleFonts.tajawal(
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: isDarkMode
+                                                      ? Colors.white
+                                                      : const Color(0xFF374151),
+                                                ),
+                                              ),
+                                              const Spacer(),
+                                              Text(
+                                                course['price'],
+                                                style: GoogleFonts.tajawal(
+                                                  fontSize: isMobile ? 14 : 15,
+                                                  fontWeight: FontWeight.w800,
+                                                  color: const Color(0xFF10B981),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ],
+                            ),
                           ),
                         ),
                       );

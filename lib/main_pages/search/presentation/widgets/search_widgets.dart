@@ -253,7 +253,7 @@ class SuggestedSearch extends StatelessWidget {
     );
   }
 }
-
+/*
 class PopularCategories extends StatelessWidget {
   final List<Map<String, dynamic>> categories;
 
@@ -374,7 +374,13 @@ class PopularCategories extends StatelessWidget {
       ),
     );
   }
-}class SearchPageField extends StatelessWidget {
+
+
+
+
+}
+*/
+class SearchPageField extends StatelessWidget {
   const SearchPageField({super.key});
 
   @override

@@ -442,7 +442,6 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
                               style: GoogleFonts.tajawal(
                                 fontSize: _getResponsiveFontSize(context, base: 14),
                                 color: Colors.white70,
-                               // decoration: TextDecoration.underline,
                               ),
                             ),
                           ),
@@ -1409,11 +1408,11 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
       ),
     );
 
-    // Navigate to login page
-    Navigator.pushAndRemoveUntil(
+    // FIXED: Use pushReplacement instead of pushAndRemoveUntil
+    // This replaces the current route with LoginPage but keeps the navigation stack intact
+    Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => const LoginPage()),
-      (route) => false,
     );
 
     setState(() {

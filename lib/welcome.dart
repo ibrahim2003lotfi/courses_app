@@ -13,31 +13,24 @@ class WelcomePage extends StatefulWidget {
 class _WelcomePageState extends State<WelcomePage>
     with TickerProviderStateMixin {
   late AnimationController _animationController;
-  late AnimationController _floatingController;
-  late AnimationController _glowController;
   late Animation<double> _fadeAnimation;
   late Animation<double> _slideAnimation;
-  late Animation<double> _floatingAnimation;
-  late Animation<double> _glowAnimation;
 
   final List<Map<String, dynamic>> _features = [
     {
       'icon': Icons.video_library_rounded,
       'title': 'كورسات متنوعة',
       'description': 'مجانية ومدفوعة',
-      'color': Color(0xFF667EEA),
     },
     {
       'icon': Icons.verified_rounded,
       'title': 'شهادات معتمدة',
       'description': 'معترف بها مهنيًا',
-      'color': Color(0xFF764BA2),
     },
     {
       'icon': Icons.update_rounded,
       'title': 'محتوى متجدد',
       'description': 'محدث باستمرار',
-      'color': Color(0xFFF093FB),
     },
   ];
 
@@ -49,16 +42,6 @@ class _WelcomePageState extends State<WelcomePage>
       duration: const Duration(milliseconds: 1500),
       vsync: this,
     );
-
-    _floatingController = AnimationController(
-      duration: const Duration(seconds: 3),
-      vsync: this,
-    )..repeat(reverse: true);
-
-    _glowController = AnimationController(
-      duration: const Duration(seconds: 2),
-      vsync: this,
-    )..repeat(reverse: true);
 
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
@@ -74,22 +57,12 @@ class _WelcomePageState extends State<WelcomePage>
       ),
     );
 
-    _floatingAnimation = Tween<double>(begin: -10.0, end: 10.0).animate(
-      CurvedAnimation(parent: _floatingController, curve: Curves.easeInOut),
-    );
-
-    _glowAnimation = Tween<double>(begin: 0.5, end: 1.0).animate(
-      CurvedAnimation(parent: _glowController, curve: Curves.easeInOut),
-    );
-
     _animationController.forward();
   }
 
   @override
   void dispose() {
     _animationController.dispose();
-    _floatingController.dispose();
-    _glowController.dispose();
     super.dispose();
   }
 
@@ -101,28 +74,13 @@ class _WelcomePageState extends State<WelcomePage>
     final isVerySmallScreen = screenHeight < 600;
 
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF1A103C),
-              Color(0xFF2D1B69),
-              Color(0xFF667EEA),
-              Color(0xFF764BA2),
-            ],
-            stops: [0.0, 0.4, 0.7, 1.0],
-          ),
-        ),
-        child: SafeArea(
-          child: Stack(
-            children: [
-              _buildBackgroundPattern(),
-              _buildFloatingElements(),
-              _buildContent(isSmallScreen, isVerySmallScreen, screenWidth),
-            ],
-          ),
+      backgroundColor: const Color(0xFF1E1E1E),
+      body: SafeArea(
+        child: Stack(
+          children: [
+            _buildBackgroundPattern(),
+            _buildContent(isSmallScreen, isVerySmallScreen, screenWidth),
+          ],
         ),
       ),
     );
@@ -136,75 +94,13 @@ class _WelcomePageState extends State<WelcomePage>
             center: Alignment.center,
             radius: 1.2,
             colors: [
-              Colors.white.withOpacity(0.03),
+              const Color(0xFF667EEA).withOpacity(0.03),
               Colors.transparent,
             ],
             stops: const [0.1, 0.8],
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildFloatingElements() {
-    return AnimatedBuilder(
-      animation: _floatingAnimation,
-      builder: (context, child) {
-        return Stack(
-          children: [
-            // Top right element
-            Positioned(
-              top: 60 + _floatingAnimation.value,
-              right: 30,
-              child: Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [
-                      Color(0xFF667EEA),
-                      Color(0xFF764BA2),
-                    ],
-                  ),
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF667EEA).withOpacity(0.4),
-                      blurRadius: 12,
-                      spreadRadius: 2,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            // Top left element
-            Positioned(
-              top: 100 - _floatingAnimation.value,
-              left: 20,
-              child: Container(
-                width: 30,
-                height: 30,
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [
-                      Color(0xFFF093FB),
-                      Color(0xFFF5576C),
-                    ],
-                  ),
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFFF5576C).withOpacity(0.3),
-                      blurRadius: 10,
-                      spreadRadius: 1,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        );
-      },
     );
   }
 
@@ -222,7 +118,7 @@ class _WelcomePageState extends State<WelcomePage>
     final cardWidth = (availableWidth - 24) / 3; // 12 spacing between cards
 
     return AnimatedBuilder(
-      animation: Listenable.merge([_animationController, _glowController]),
+      animation: _animationController,
       builder: (context, child) {
         return Transform.translate(
           offset: Offset(0, _slideAnimation.value),
@@ -252,7 +148,7 @@ class _WelcomePageState extends State<WelcomePage>
                             shape: BoxShape.circle,
                             boxShadow: [
                               BoxShadow(
-                                color: const Color(0xFF667EEA).withOpacity(0.5 * _glowAnimation.value),
+                                color: const Color(0xFF667EEA).withOpacity(0.5),
                                 blurRadius: 25,
                                 spreadRadius: 8,
                               ),
@@ -336,14 +232,7 @@ class _WelcomePageState extends State<WelcomePage>
                                 child: Container(
                                   padding: const EdgeInsets.all(12),
                                   decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                      colors: [
-                                        Colors.white.withOpacity(0.1),
-                                        Colors.white.withOpacity(0.05),
-                                      ],
-                                    ),
+                                    color: Colors.white.withOpacity(0.05),
                                     borderRadius: BorderRadius.circular(12),
                                     border: Border.all(
                                       color: Colors.white.withOpacity(0.15),
@@ -356,10 +245,10 @@ class _WelcomePageState extends State<WelcomePage>
                                         width: 32,
                                         height: 32,
                                         decoration: BoxDecoration(
-                                          gradient: LinearGradient(
+                                          gradient: const LinearGradient(
                                             colors: [
-                                              feature['color'].withOpacity(0.8),
-                                              feature['color'].withOpacity(0.4),
+                                              Color(0xFF667EEA),
+                                              Color(0xFF764BA2),
                                             ],
                                           ),
                                           borderRadius: BorderRadius.circular(8),
@@ -411,7 +300,7 @@ class _WelcomePageState extends State<WelcomePage>
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        // Start Learning Button - Sapphire & Amethyst Gradient
+                        // Start Learning Button - Purple Gradient
                         SizedBox(
                           width: double.infinity,
                           height: buttonHeight,
@@ -419,23 +308,16 @@ class _WelcomePageState extends State<WelcomePage>
                             decoration: BoxDecoration(
                               gradient: const LinearGradient(
                                 colors: [
-                                  Color(0xFF4F46E5), // Deep sapphire
-                                  Color(0xFF7C3AED), // Royal purple
-                                  Color(0xFF8B5CF6), // Light amethyst
+                                  Color(0xFF667EEA),
+                                  Color(0xFF764BA2),
                                 ],
-                                stops: [0.0, 0.5, 1.0],
                               ),
                               borderRadius: BorderRadius.circular(16),
                               boxShadow: [
                                 BoxShadow(
-                                  color: const Color(0xFF7C3AED).withOpacity(0.5),
+                                  color: const Color(0xFF667EEA).withOpacity(0.5),
                                   blurRadius: 20,
                                   offset: const Offset(0, 8),
-                                ),
-                                BoxShadow(
-                                  color: const Color(0xFF4F46E5).withOpacity(0.3),
-                                  blurRadius: 10,
-                                  offset: const Offset(0, 3),
                                 ),
                               ],
                             ),
@@ -443,7 +325,7 @@ class _WelcomePageState extends State<WelcomePage>
                               onPressed: () {
                                 Navigator.push(
                                   context,
-                                  MaterialPageRoute(builder: (context) => LoginPage()),
+                                  MaterialPageRoute(builder: (context) => const LoginPage()),
                                 );
                               },
                               style: ElevatedButton.styleFrom(
@@ -478,43 +360,24 @@ class _WelcomePageState extends State<WelcomePage>
                         ),
                         const SizedBox(height: 16),
 
-                        // Browse as Guest Button - Emerald & Teal Gradient
+                        // Browse as Guest Button - Secondary Style
                         SizedBox(
                           width: double.infinity,
                           height: buttonHeight,
                           child: Container(
                             decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                colors: [
-                                  Color(0xFF10B981), // Emerald
-                                  Color(0xFF059669), // Dark emerald
-                                  Color(0xFF047857), // Deep emerald
-                                ],
-                                stops: [0.0, 0.6, 1.0],
-                              ),
+                              color: Colors.white.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(16),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: const Color(0xFF10B981).withOpacity(0.4),
-                                  blurRadius: 15,
-                                  offset: const Offset(0, 6),
-                                ),
-                                BoxShadow(
-                                  color: const Color(0xFF059669).withOpacity(0.3),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
                               border: Border.all(
-                                color: const Color(0xFF6EE7B7).withOpacity(0.3),
+                                color: Colors.white.withOpacity(0.2),
                                 width: 1.5,
                               ),
                             ),
                             child: ElevatedButton(
                               onPressed: () {
-                                Navigator.push(
+                                Navigator.pushReplacement(
                                   context,
-                                  MaterialPageRoute(builder: (context) => WidgetTree()),
+                                  MaterialPageRoute(builder: (context) => const WidgetTree()),
                                 );
                               },
                               style: ElevatedButton.styleFrom(
@@ -583,7 +446,7 @@ class _WelcomePageState extends State<WelcomePage>
                                 style: GoogleFonts.tajawal(
                                   fontSize: isVerySmallScreen ? 8 : 9,
                                   fontWeight: FontWeight.w500,
-                                  color: Colors.white.withOpacity(0.8),
+                                  color: const Color(0xFF667EEA),
                                   decoration: TextDecoration.underline,
                                 ),
                               ),
@@ -608,7 +471,7 @@ class _WelcomePageState extends State<WelcomePage>
                                 style: GoogleFonts.tajawal(
                                   fontSize: isVerySmallScreen ? 8 : 9,
                                   fontWeight: FontWeight.w500,
-                                  color: Colors.white.withOpacity(0.8),
+                                  color: const Color(0xFF667EEA),
                                   decoration: TextDecoration.underline,
                                 ),
                               ),

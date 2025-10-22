@@ -1,9 +1,10 @@
 // lib/main_pages/onboarding/onboarding_screen.dart
 import 'package:courses_app/core/utils/onboarding_manager.dart';
 import 'package:courses_app/core/utils/theme_manager.dart';
-import 'package:courses_app/main_pages/splash/splash_page.dart';
+import 'package:courses_app/main_pages/auth/presentation/pages/login_page.dart';
 import 'package:courses_app/theme_cubit/theme_cubit.dart';
 import 'package:courses_app/theme_cubit/theme_state.dart';
+import 'package:courses_app/widget_tree.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -18,7 +19,7 @@ class OnboardingScreen extends StatefulWidget {
 class _OnboardingScreenState extends State<OnboardingScreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
-  
+
   // Store user selections
   String? _selectedLearningState;
   final List<String> _selectedInterests = [];
@@ -28,7 +29,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       'title': 'مرحبًا بك في منصة الكورسات',
       'subtitle': 'منصة تعليمية متكاملة تقدم أفضل المحتوى التعليمي',
       'image': 'assets/images/logo_ed.png',
-      'description': 'اكتشف آلاف الكورسات والدروس في مختلف المجالات، من أفضل المدربين والمؤسسات التعليمية',
+      'description':
+          'اكتشف آلاف الكورسات والدروس في مختلف المجالات، من أفضل المدربين والمؤسسات التعليمية',
     },
     {
       'title': 'ما هو مستواك التعليمي الحالي؟',
@@ -48,31 +50,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   ];
 
   final List<Map<String, dynamic>> _learningStates = [
-    {
-      'title': 'طالب مدرسة',
-      'icon': Icons.school,
-      'value': 'school_student',
-    },
+    {'title': 'طالب مدرسة', 'icon': Icons.school, 'value': 'school_student'},
     {
       'title': 'طالب جامعة',
       'icon': Icons.account_balance,
       'value': 'university_student',
     },
-    {
-      'title': 'خريج',
-      'icon': Icons.workspace_premium,
-      'value': 'graduated',
-    },
-    {
-      'title': 'موظف',
-      'icon': Icons.work,
-      'value': 'employed',
-    },
-    {
-      'title': 'باحث عن عمل',
-      'icon': Icons.search,
-      'value': 'job_seeker',
-    },
+    {'title': 'خريج', 'icon': Icons.workspace_premium, 'value': 'graduated'},
+    {'title': 'موظف', 'icon': Icons.work, 'value': 'employed'},
+    {'title': 'باحث عن عمل', 'icon': Icons.search, 'value': 'job_seeker'},
     {
       'title': 'مهتم بالتعلم',
       'icon': Icons.self_improvement,
@@ -157,7 +143,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   void _nextPage() {
     if (!_canContinue) return;
-    
+
     if (_currentPage < _pages.length - 1) {
       _pageController.nextPage(
         duration: const Duration(milliseconds: 500),
@@ -179,15 +165,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   Future<void> _completeOnboarding() async {
     await OnboardingManager.completeOnboarding();
-    
+
     // Here you can save the user preferences to your backend or local storage
     print('Learning State: $_selectedLearningState');
     print('Interests: $_selectedInterests');
-    
-    // Navigate to main app
+
+    // Navigate to main app - Login Page
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (context) => const SplashScreen()),
+      MaterialPageRoute(builder: (context) => const WidgetTree()),
     );
   }
 
@@ -206,7 +192,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     return BlocBuilder<ThemeCubit, ThemeState>(
       builder: (context, themeState) {
         final isDarkMode = themeState.isDarkMode;
-        final theme = isDarkMode ? ThemeManager.darkTheme : ThemeManager.lightTheme;
+        final theme = isDarkMode
+            ? ThemeManager.darkTheme
+            : ThemeManager.lightTheme;
 
         return Scaffold(
           backgroundColor: theme.scaffoldBackgroundColor,
@@ -216,13 +204,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 // Progress indicator - Fixed consistent positioning
                 Container(
                   height: 80, // Fixed height to ensure consistent positioning
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 16,
+                  ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       // Empty space where skip button used to be
                       const SizedBox(width: 80),
-                      
+
                       // Progress dots - Updated to purple gradient
                       Row(
                         children: List.generate(_pages.length, (index) {
@@ -243,22 +234,23 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                       end: Alignment.bottomRight,
                                     )
                                   : null,
-                              color: isActive ? null : (isDarkMode ? Colors.white30 : Colors.grey[300]),
+                              color: isActive
+                                  ? null
+                                  : (isDarkMode
+                                        ? Colors.white30
+                                        : Colors.grey[300]),
                               borderRadius: BorderRadius.circular(8),
                             ),
                           );
                         }),
                       ),
-                      
+
                       // Back button - Updated to purple gradient text
                       if (_currentPage > 0)
                         Container(
                           decoration: BoxDecoration(
                             gradient: const LinearGradient(
-                              colors: [
-                                Color(0xFF667EEA),
-                                Color(0xFF764BA2),
-                              ],
+                              colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
                             ),
@@ -292,7 +284,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     },
                     itemCount: _pages.length,
                     // Disable swipe when validation fails
-                    physics: _canContinue || _currentPage == 0 || _currentPage == _pages.length - 1
+                    physics:
+                        _canContinue ||
+                            _currentPage == 0 ||
+                            _currentPage == _pages.length - 1
                         ? const AlwaysScrollableScrollPhysics()
                         : const NeverScrollableScrollPhysics(),
                     itemBuilder: (context, index) {
@@ -307,22 +302,26 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   child: Column(
                     children: [
                       // Instruction message (shown initially instead of error)
-                      if (!_canContinue && _currentPage != 0 && _currentPage != _pages.length - 1)
+                      if (!_canContinue &&
+                          _currentPage != 0 &&
+                          _currentPage != _pages.length - 1)
                         Padding(
                           padding: const EdgeInsets.only(bottom: 12),
                           child: Text(
-                            _currentPage == 1 
+                            _currentPage == 1
                                 ? 'اختر حالتك التعليمية للمتابعة'
                                 : 'اختر 3 اهتمامات على الأقل للمتابعة',
                             style: GoogleFonts.tajawal(
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
-                              color: isDarkMode ? Colors.white70 : const Color(0xFF6B7280),
+                              color: isDarkMode
+                                  ? Colors.white70
+                                  : const Color(0xFF6B7280),
                             ),
                             textAlign: TextAlign.center,
                           ),
                         ),
-                      
+
                       // Continue button - Updated to purple gradient
                       SizedBox(
                         width: double.infinity,
@@ -339,12 +338,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                     end: Alignment.bottomRight,
                                   )
                                 : null,
-                            color: !_canContinue ? const Color(0xFF9CA3AF) : null,
+                            color: !_canContinue
+                                ? const Color(0xFF9CA3AF)
+                                : null,
                             borderRadius: BorderRadius.circular(16),
                             boxShadow: _canContinue
                                 ? [
                                     BoxShadow(
-                                      color: const Color(0xFF667EEA).withOpacity(0.3),
+                                      color: const Color(
+                                        0xFF667EEA,
+                                      ).withOpacity(0.3),
                                       blurRadius: 8,
                                       offset: const Offset(0, 4),
                                     ),
@@ -385,7 +388,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   Widget _buildPageContent(int index, bool isDarkMode, ThemeData theme) {
     final page = _pages[index];
-    
+
     switch (index) {
       case 0:
         return _buildWelcomePage(page, isDarkMode, theme);
@@ -400,11 +403,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     }
   }
 
-  Widget _buildWelcomePage(Map<String, dynamic> page, bool isDarkMode, ThemeData theme) {
+  Widget _buildWelcomePage(
+    Map<String, dynamic> page,
+    bool isDarkMode,
+    ThemeData theme,
+  ) {
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
-        children: [ // Changed from MainAxisAlignment.center to regular Column
+        children: [
+          // Changed from MainAxisAlignment.center to regular Column
           const SizedBox(height: 20), // Added spacing to push content down
           // Logo image with purple gradient border
           Container(
@@ -412,10 +420,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             height: 200,
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [
-                  Color(0xFF667EEA),
-                  Color(0xFF764BA2),
-                ],
+                colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -443,7 +448,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ),
           ),
           const SizedBox(height: 40),
-          
+
           Text(
             page['title'],
             style: GoogleFonts.tajawal(
@@ -455,7 +460,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 16),
-          
+
           Text(
             page['subtitle'],
             style: GoogleFonts.tajawal(
@@ -467,7 +472,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 24),
-          
+
           Text(
             page['description'],
             style: GoogleFonts.tajawal(
@@ -483,7 +488,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
-  Widget _buildLearningStatePage(Map<String, dynamic> page, bool isDarkMode, ThemeData theme) {
+  Widget _buildLearningStatePage(
+    Map<String, dynamic> page,
+    bool isDarkMode,
+    ThemeData theme,
+  ) {
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
@@ -499,7 +508,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 8),
-          
+
           Text(
             page['subtitle'],
             style: GoogleFonts.tajawal(
@@ -510,7 +519,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 40),
-          
+
           // Learning state options - Updated selection to purple gradient
           LayoutBuilder(
             builder: (context, constraints) {
@@ -528,12 +537,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 itemBuilder: (context, index) {
                   final state = _learningStates[index];
                   final isSelected = _selectedLearningState == state['value'];
-                  
+
                   return Material(
                     elevation: isSelected ? 6 : 2,
                     borderRadius: BorderRadius.circular(16),
                     color: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
-                    shadowColor: Colors.black.withOpacity(isDarkMode ? 0.3 : 0.1),
+                    shadowColor: Colors.black.withOpacity(
+                      isDarkMode ? 0.3 : 0.1,
+                    ),
                     child: InkWell(
                       onTap: () {
                         setState(() {
@@ -570,14 +581,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                     : null,
                                 color: isSelected
                                     ? null
-                                    : (isDarkMode ? Colors.white12 : Colors.grey[100]),
+                                    : (isDarkMode
+                                          ? Colors.white12
+                                          : Colors.grey[100]),
                                 shape: BoxShape.circle,
                               ),
                               child: Icon(
                                 state['icon'] as IconData,
                                 color: isSelected
                                     ? Colors.white
-                                    : (isDarkMode ? Colors.white70 : const Color(0xFF6B7280)),
+                                    : (isDarkMode
+                                          ? Colors.white70
+                                          : const Color(0xFF6B7280)),
                                 size: 24,
                               ),
                             ),
@@ -587,7 +602,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                               style: GoogleFonts.tajawal(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
-                                color: isDarkMode ? Colors.white : const Color(0xFF1F2937),
+                                color: isDarkMode
+                                    ? Colors.white
+                                    : const Color(0xFF1F2937),
                               ),
                               textAlign: TextAlign.center,
                               maxLines: 2,
@@ -606,7 +623,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
-  Widget _buildInterestsPage(Map<String, dynamic> page, bool isDarkMode, ThemeData theme) {
+  Widget _buildInterestsPage(
+    Map<String, dynamic> page,
+    bool isDarkMode,
+    ThemeData theme,
+  ) {
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
@@ -622,7 +643,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 8),
-          
+
           Text(
             page['subtitle'],
             style: GoogleFonts.tajawal(
@@ -633,20 +654,20 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 8),
-          
+
           Text(
             'اختر 3 مجالات على الأقل (${_selectedInterests.length}/3)',
             style: GoogleFonts.tajawal(
               fontSize: 14,
               fontWeight: FontWeight.w400,
-              color: _selectedInterests.length >= 3 
-                  ? const Color(0xFF10B981) 
+              color: _selectedInterests.length >= 3
+                  ? const Color(0xFF10B981)
                   : (isDarkMode ? Colors.white60 : const Color(0xFF9CA3AF)),
             ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 32),
-          
+
           // Interests grid - All use purple gradient now
           LayoutBuilder(
             builder: (context, constraints) {
@@ -663,12 +684,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 itemCount: _interests.length,
                 itemBuilder: (context, index) {
                   final interest = _interests[index];
-                  final isSelected = _selectedInterests.contains(interest['value']);
-                  
+                  final isSelected = _selectedInterests.contains(
+                    interest['value'],
+                  );
+
                   return Material(
                     elevation: isSelected ? 6 : 2,
                     borderRadius: BorderRadius.circular(16),
-                    shadowColor: Colors.black.withOpacity(isDarkMode ? 0.4 : 0.2),
+                    shadowColor: Colors.black.withOpacity(
+                      isDarkMode ? 0.4 : 0.2,
+                    ),
                     child: InkWell(
                       onTap: () => _toggleInterest(interest['value'] as String),
                       borderRadius: BorderRadius.circular(16),
@@ -684,12 +709,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                   end: Alignment.bottomRight,
                                 )
                               : null,
-                          color: isSelected ? null : (isDarkMode ? const Color(0xFF1E1E1E) : Colors.white),
+                          color: isSelected
+                              ? null
+                              : (isDarkMode
+                                    ? const Color(0xFF1E1E1E)
+                                    : Colors.white),
                           borderRadius: BorderRadius.circular(16),
                           border: isSelected
                               ? null
                               : Border.all(
-                                  color: isDarkMode ? Colors.white24 : Colors.grey[200]!,
+                                  color: isDarkMode
+                                      ? Colors.white24
+                                      : Colors.grey[200]!,
                                 ),
                         ),
                         padding: const EdgeInsets.all(16),
@@ -701,12 +732,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                               decoration: BoxDecoration(
                                 color: isSelected
                                     ? Colors.white.withOpacity(0.2)
-                                    : (isDarkMode ? Colors.white12 : Colors.grey[100]),
+                                    : (isDarkMode
+                                          ? Colors.white12
+                                          : Colors.grey[100]),
                                 shape: BoxShape.circle,
                               ),
                               child: Icon(
                                 interest['icon'] as IconData,
-                                color: isSelected ? Colors.white : (isDarkMode ? Colors.white70 : const Color(0xFF6B7280)),
+                                color: isSelected
+                                    ? Colors.white
+                                    : (isDarkMode
+                                          ? Colors.white70
+                                          : const Color(0xFF6B7280)),
                                 size: 20,
                               ),
                             ),
@@ -716,7 +753,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                               style: GoogleFonts.tajawal(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
-                                color: isSelected ? Colors.white : (isDarkMode ? Colors.white : const Color(0xFF1F2937)),
+                                color: isSelected
+                                    ? Colors.white
+                                    : (isDarkMode
+                                          ? Colors.white
+                                          : const Color(0xFF1F2937)),
                               ),
                               textAlign: TextAlign.center,
                               maxLines: 2,
@@ -735,11 +776,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
-  Widget _buildReadyPage(Map<String, dynamic> page, bool isDarkMode, ThemeData theme) {
+  Widget _buildReadyPage(
+    Map<String, dynamic> page,
+    bool isDarkMode,
+    ThemeData theme,
+  ) {
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
-        children: [ // Changed from MainAxisAlignment.center to regular Column
+        children: [
+          // Changed from MainAxisAlignment.center to regular Column
           const SizedBox(height: 20), // Added spacing to push content down
           // Celebration icon with purple gradient
           Container(
@@ -747,10 +793,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             height: 200,
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [
-                  Color(0xFF667EEA),
-                  Color(0xFF764BA2),
-                ],
+                colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -763,14 +806,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 ),
               ],
             ),
-            child: const Icon(
-              Icons.celebration,
-              size: 80,
-              color: Colors.white,
-            ),
+            child: const Icon(Icons.celebration, size: 80, color: Colors.white),
           ),
           const SizedBox(height: 40),
-          
+
           Text(
             page['title'],
             style: GoogleFonts.tajawal(
@@ -782,7 +821,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 16),
-          
+
           Text(
             page['subtitle'],
             style: GoogleFonts.tajawal(
@@ -794,12 +833,20 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 32),
-          
+
           // Features list
-          _buildFeatureItem('آلاف الكورسات المجانية والمدفوعة', Icons.video_library, isDarkMode),
+          _buildFeatureItem(
+            'آلاف الكورسات المجانية والمدفوعة',
+            Icons.video_library,
+            isDarkMode,
+          ),
           _buildFeatureItem('تعلم من أفضل المدربين', Icons.people, isDarkMode),
           _buildFeatureItem('شهادات معتمدة', Icons.verified, isDarkMode),
-          _buildFeatureItem('تعلم في أي وقت ومن أي مكان', Icons.schedule, isDarkMode),
+          _buildFeatureItem(
+            'تعلم في أي وقت ومن أي مكان',
+            Icons.schedule,
+            isDarkMode,
+          ),
         ],
       ),
     );
@@ -815,20 +862,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [
-                  Color(0xFF667EEA),
-                  Color(0xFF764BA2),
-                ],
+                colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
               shape: BoxShape.circle,
             ),
-            child: Icon(
-              icon,
-              color: Colors.white,
-              size: 16,
-            ),
+            child: Icon(icon, color: Colors.white, size: 16),
           ),
           const SizedBox(width: 12),
           Text(

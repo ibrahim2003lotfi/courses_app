@@ -130,7 +130,7 @@ class _SearchPageState extends State<SearchPage> {
                     SuggestedSearch(recentSearches: _recentSearches),
 
                     // Popular Categories
-                    PopularCategories(categories: _popularCategories),
+                    //PopularCategories(categories: _popularCategories),
 
                     // Search Suggestions Grid
                     SearchSuggestionsGrid(suggestions: _searchSuggestions),

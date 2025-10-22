@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import 'package:courses_app/onboarding/onboarding_screen.dart';
 import 'package:courses_app/widget_tree.dart';
 import 'package:courses_app/main_pages/auth/presentation/pages/login_page.dart';
 import 'package:flutter/material.dart';
@@ -17,12 +18,8 @@ class _RegisterPageState extends State<RegisterPage>
     with TickerProviderStateMixin {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   late AnimationController _animationController;
-  late AnimationController _floatingController;
-  late AnimationController _glowController;
   late Animation<double> _fadeAnimation;
   late Animation<double> _slideAnimation;
-  late Animation<double> _floatingAnimation;
-  late Animation<double> _glowAnimation;
 
   // Controllers للحقول
   final TextEditingController _firstNameController = TextEditingController();
@@ -51,16 +48,6 @@ class _RegisterPageState extends State<RegisterPage>
       vsync: this,
     );
 
-    _floatingController = AnimationController(
-      duration: const Duration(seconds: 3),
-      vsync: this,
-    )..repeat(reverse: true);
-
-    _glowController = AnimationController(
-      duration: const Duration(seconds: 2),
-      vsync: this,
-    )..repeat(reverse: true);
-
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _animationController,
@@ -75,22 +62,12 @@ class _RegisterPageState extends State<RegisterPage>
       ),
     );
 
-    _floatingAnimation = Tween<double>(begin: -10.0, end: 10.0).animate(
-      CurvedAnimation(parent: _floatingController, curve: Curves.easeInOut),
-    );
-
-    _glowAnimation = Tween<double>(begin: 0.5, end: 1.0).animate(
-      CurvedAnimation(parent: _glowController, curve: Curves.easeInOut),
-    );
-
     _animationController.forward();
   }
 
   @override
   void dispose() {
     _animationController.dispose();
-    _floatingController.dispose();
-    _glowController.dispose();
     _firstNameController.dispose();
     _lastNameController.dispose();
     _birthDateController.dispose();
@@ -101,51 +78,36 @@ class _RegisterPageState extends State<RegisterPage>
     super.dispose();
   }
 
-  double _getResponsiveFontSize(BuildContext context, {double base = 16}) {
-    final width = MediaQuery.of(context).size.width;
-    if (width > 600) return base * 1.2;
-    if (width > 400) return base;
-    return base * 0.9;
-  }
-
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
+    final screenWidth = MediaQuery.of(context).size.width;
     final isSmallScreen = screenHeight < 700;
+    final isVerySmallScreen = screenHeight < 600;
+    final isWideScreen = screenWidth > 400;
 
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF1A103C),
-              Color(0xFF2D1B69),
-              Color(0xFF667EEA),
-              Color(0xFF764BA2),
-            ],
-            stops: [0.0, 0.4, 0.7, 1.0],
-          ),
-        ),
-        child: SafeArea(
-          child: Stack(
-            children: [
-              _buildBackgroundPattern(),
-              _buildFloatingElements(),
-              SingleChildScrollView(
-                child: Column(
-                  children: [
-                    _buildHeader(isSmallScreen),
-                    _buildRegisterForm(isSmallScreen),
-                    _buildActions(isSmallScreen),
-                    _buildFooter(isSmallScreen),
-                  ],
-                ),
+      backgroundColor: const Color(0xFF1E1E1E),
+      body: SafeArea(
+        child: Stack(
+          children: [
+            _buildBackgroundPattern(),
+            SingleChildScrollView(
+              child: Column(
+                children: [
+                  _buildHeader(isSmallScreen, isVerySmallScreen),
+                  _buildRegisterForm(
+                    isSmallScreen,
+                    isVerySmallScreen,
+                    isWideScreen,
+                  ),
+                  _buildActions(isSmallScreen, isVerySmallScreen),
+                  _buildFooter(isSmallScreen, isVerySmallScreen),
+                ],
               ),
-              _buildBackButton(context),
-            ],
-          ),
+            ),
+            _buildBackButton(context),
+          ],
         ),
       ),
     );
@@ -159,7 +121,7 @@ class _RegisterPageState extends State<RegisterPage>
             center: Alignment.center,
             radius: 1.2,
             colors: [
-              Colors.white.withOpacity(0.03),
+              const Color(0xFF667EEA).withOpacity(0.03),
               Colors.transparent,
             ],
             stops: const [0.1, 0.8],
@@ -189,97 +151,17 @@ class _RegisterPageState extends State<RegisterPage>
     );
   }
 
-  Widget _buildFloatingElements() {
-    return AnimatedBuilder(
-      animation: _floatingAnimation,
-      builder: (context, child) {
-        return Stack(
-          children: [
-            Positioned(
-              top: 60 + _floatingAnimation.value,
-              right: 30,
-              child: Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [
-                      Color(0xFF667EEA),
-                      Color(0xFF764BA2),
-                    ],
-                  ),
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF667EEA).withOpacity(0.4),
-                      blurRadius: 12,
-                      spreadRadius: 2,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            Positioned(
-              top: 100 - _floatingAnimation.value,
-              left: 20,
-              child: Container(
-                width: 30,
-                height: 30,
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [
-                      Color(0xFFF093FB),
-                      Color(0xFFF5576C),
-                    ],
-                  ),
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFFF5576C).withOpacity(0.3),
-                      blurRadius: 10,
-                      spreadRadius: 1,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            Positioned(
-              bottom: 300 + _floatingAnimation.value * 0.5,
-              right: 50,
-              child: Container(
-                width: 35,
-                height: 35,
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [
-                      Color(0xFF4FACFE),
-                      Color(0xFF00F2FE),
-                    ],
-                  ),
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF4FACFE).withOpacity(0.3),
-                      blurRadius: 10,
-                      spreadRadius: 1,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Widget _buildHeader(bool isSmallScreen) {
-    final logoSize = isSmallScreen ? 80.0 : 100.0;
-    final titleFontSize = isSmallScreen ? 22.0 : 24.0;
-    final subtitleFontSize = isSmallScreen ? 13.0 : 14.0;
+  Widget _buildHeader(bool isSmallScreen, bool isVerySmallScreen) {
+    final logoSize = isVerySmallScreen ? 60.0 : (isSmallScreen ? 80.0 : 100.0);
+    final titleFontSize = isVerySmallScreen
+        ? 18.0
+        : (isSmallScreen ? 22.0 : 24.0);
+    final subtitleFontSize = isVerySmallScreen
+        ? 11.0
+        : (isSmallScreen ? 13.0 : 14.0);
 
     return AnimatedBuilder(
-      animation: Listenable.merge([_animationController, _glowController]),
+      animation: _animationController,
       builder: (context, child) {
         return Transform.translate(
           offset: Offset(0, _slideAnimation.value),
@@ -288,7 +170,7 @@ class _RegisterPageState extends State<RegisterPage>
             child: Container(
               padding: EdgeInsets.symmetric(
                 horizontal: 20,
-                vertical: isSmallScreen ? 20 : 30,
+                vertical: isVerySmallScreen ? 15 : (isSmallScreen ? 20 : 30),
               ),
               child: Column(
                 children: [
@@ -297,28 +179,24 @@ class _RegisterPageState extends State<RegisterPage>
                     height: logoSize,
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
-                        colors: [
-                          Color(0xFF667EEA),
-                          Color(0xFF764BA2),
-                        ],
+                        colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
                       ),
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFF667EEA)
-                              .withOpacity(0.5 * _glowAnimation.value),
+                          color: const Color(0xFF667EEA).withOpacity(0.5),
                           blurRadius: 25,
                           spreadRadius: 8,
                         ),
                       ],
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.person_add_rounded,
-                      size: 40,
+                      size: isVerySmallScreen ? 30 : (isSmallScreen ? 35 : 40),
                       color: Colors.white,
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: isVerySmallScreen ? 12 : 16),
                   Text(
                     'إنشاء حساب جديد',
                     style: GoogleFonts.tajawal(
@@ -328,7 +206,7 @@ class _RegisterPageState extends State<RegisterPage>
                     ),
                     textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: isVerySmallScreen ? 6 : 8),
                   Text(
                     'أدخل بياناتك لإتمام التسجيل',
                     style: GoogleFonts.tajawal(
@@ -398,7 +276,7 @@ class _RegisterPageState extends State<RegisterPage>
 
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const WidgetTree()),
+        MaterialPageRoute(builder: (context) => const OnboardingScreen()),
       );
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -422,9 +300,7 @@ class _RegisterPageState extends State<RegisterPage>
       context: context,
       builder: (context) => Dialog(
         backgroundColor: const Color(0xFF2D1B69),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Column(
@@ -453,10 +329,7 @@ class _RegisterPageState extends State<RegisterPage>
                 child: Container(
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
-                      colors: [
-                        Color(0xFF667EEA),
-                        Color(0xFF764BA2),
-                      ],
+                      colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
                     ),
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -479,92 +352,103 @@ class _RegisterPageState extends State<RegisterPage>
     );
   }
 
-  Widget _buildRegisterForm(bool isSmallScreen) {
-  final padding = isSmallScreen ? 16.0 : 24.0;
-  final spacing = isSmallScreen ? 12.0 : 20.0;
+  Widget _buildRegisterForm(
+    bool isSmallScreen,
+    bool isVerySmallScreen,
+    bool isWideScreen,
+  ) {
+    final padding = isVerySmallScreen ? 12.0 : (isSmallScreen ? 16.0 : 24.0);
+    final spacing = isVerySmallScreen ? 8.0 : (isSmallScreen ? 12.0 : 20.0);
+    final fieldFontSize = isVerySmallScreen ? 14.0 : 16.0;
 
-  return AnimatedBuilder(
-    animation: _animationController,
-    builder: (context, child) {
-      return Transform.translate(
-        offset: Offset(0, _slideAnimation.value),
-        child: Opacity(
-          opacity: _fadeAnimation.value,
-          child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: 20),
+    return AnimatedBuilder(
+      animation: _animationController,
+      builder: (context, child) {
+        return Transform.translate(
+          offset: Offset(0, _slideAnimation.value),
+          child: Opacity(
+            opacity: _fadeAnimation.value,
             child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Colors.white.withOpacity(0.18),
-                    Colors.white.withOpacity(0.10),
-                    Colors.white.withOpacity(0.08),
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(24),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.4),
-                    blurRadius: 35,
-                    offset: const Offset(0, 12),
-                  ),
-                  BoxShadow(
-                    color: Colors.white.withOpacity(0.15),
-                    blurRadius: 15,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-                border: Border.all(
-                  color: Colors.white.withOpacity(0.25),
-                  width: 1.5,
-                ),
+              margin: EdgeInsets.symmetric(
+                horizontal: isVerySmallScreen ? 16 : 20,
               ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(24),
-                child: Padding(
-                  padding: EdgeInsets.all(padding),
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      children: [
-                        Row(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(24),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.3),
+                      blurRadius: 30,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.1),
+                    width: 1,
+                  ),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(24),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                    child: Padding(
+                      padding: EdgeInsets.all(padding),
+                      child: Form(
+                        key: _formKey,
+                        child: Column(
                           children: [
-                            Expanded(child: _buildFirstNameField()),
-                            SizedBox(width: spacing),
-                            Expanded(child: _buildLastNameField()),
+                            // Name fields - stack vertically on small screens
+                            if (isWideScreen)
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: _buildFirstNameField(fieldFontSize),
+                                  ),
+                                  SizedBox(width: spacing),
+                                  Expanded(
+                                    child: _buildLastNameField(fieldFontSize),
+                                  ),
+                                ],
+                              )
+                            else
+                              Column(
+                                children: [
+                                  _buildFirstNameField(fieldFontSize),
+                                  SizedBox(height: spacing),
+                                  _buildLastNameField(fieldFontSize),
+                                ],
+                              ),
+                            SizedBox(height: spacing),
+                            _buildBirthDateField(fieldFontSize),
+                            SizedBox(height: spacing),
+                            _buildGenderField(fieldFontSize),
+                            SizedBox(height: spacing),
+                            _buildPhoneField(fieldFontSize),
+                            SizedBox(height: spacing),
+                            _buildEmailField(fieldFontSize),
+                            SizedBox(height: spacing),
+                            _buildPasswordField(fieldFontSize),
+                            SizedBox(height: spacing),
+                            _buildConfirmPasswordField(fieldFontSize),
                           ],
                         ),
-                        SizedBox(height: spacing),
-                        _buildBirthDateField(),
-                        SizedBox(height: spacing),
-                        _buildGenderField(),
-                        SizedBox(height: spacing),
-                        _buildPhoneField(),
-                        SizedBox(height: spacing),
-                        _buildEmailField(),
-                        SizedBox(height: spacing),
-                        _buildPasswordField(),
-                        SizedBox(height: spacing),
-                        _buildConfirmPasswordField(),
-                      ],
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
           ),
-        ),
-      );
-    },
-  );
-}
+        );
+      },
+    );
+  }
 
-  Widget _buildFirstNameField() {
+  Widget _buildFirstNameField(double fontSize) {
     return TextFormField(
       controller: _firstNameController,
-      style: GoogleFonts.tajawal(color: Colors.white, fontSize: 16),
+      style: GoogleFonts.tajawal(color: Colors.white, fontSize: fontSize),
       decoration: InputDecoration(
         labelText: 'الاسم الأول',
         labelStyle: GoogleFonts.tajawal(color: Colors.white70),
@@ -600,14 +484,17 @@ class _RegisterPageState extends State<RegisterPage>
     );
   }
 
-  Widget _buildLastNameField() {
+  Widget _buildLastNameField(double fontSize) {
     return TextFormField(
       controller: _lastNameController,
-      style: GoogleFonts.tajawal(color: Colors.white, fontSize: 16),
+      style: GoogleFonts.tajawal(color: Colors.white, fontSize: fontSize),
       decoration: InputDecoration(
         labelText: 'الاسم الأخير',
         labelStyle: GoogleFonts.tajawal(color: Colors.white70),
-        prefixIcon: const Icon(Icons.person_outline_rounded, color: Colors.white70),
+        prefixIcon: const Icon(
+          Icons.person_outline_rounded,
+          color: Colors.white70,
+        ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: Colors.white.withOpacity(0.3)),
@@ -639,15 +526,18 @@ class _RegisterPageState extends State<RegisterPage>
     );
   }
 
-  Widget _buildBirthDateField() {
+  Widget _buildBirthDateField(double fontSize) {
     return TextFormField(
       controller: _birthDateController,
       readOnly: true,
-      style: GoogleFonts.tajawal(color: Colors.white, fontSize: 16),
+      style: GoogleFonts.tajawal(color: Colors.white, fontSize: fontSize),
       decoration: InputDecoration(
         labelText: 'تاريخ الميلاد',
         labelStyle: GoogleFonts.tajawal(color: Colors.white70),
-        prefixIcon: const Icon(Icons.calendar_today_rounded, color: Colors.white70),
+        prefixIcon: const Icon(
+          Icons.calendar_today_rounded,
+          color: Colors.white70,
+        ),
         suffixIcon: IconButton(
           icon: const Icon(Icons.calendar_month_rounded, color: Colors.white70),
           onPressed: _selectDate,
@@ -681,10 +571,10 @@ class _RegisterPageState extends State<RegisterPage>
     );
   }
 
-  Widget _buildGenderField() {
+  Widget _buildGenderField(double fontSize) {
     return DropdownButtonFormField<String>(
       value: _selectedGender,
-      style: GoogleFonts.tajawal(color: Colors.white, fontSize: 16),
+      style: GoogleFonts.tajawal(color: Colors.white, fontSize: fontSize),
       dropdownColor: const Color(0xFF2D1B69),
       decoration: InputDecoration(
         labelText: 'الجنس',
@@ -715,7 +605,7 @@ class _RegisterPageState extends State<RegisterPage>
     );
   }
 
-  Widget _buildPhoneField() {
+  Widget _buildPhoneField(double fontSize) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -732,7 +622,7 @@ class _RegisterPageState extends State<RegisterPage>
               '+963',
               style: GoogleFonts.tajawal(
                 color: Colors.white70,
-                fontSize: 16,
+                fontSize: fontSize,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -747,11 +637,14 @@ class _RegisterPageState extends State<RegisterPage>
               FilteringTextInputFormatter.digitsOnly,
               LengthLimitingTextInputFormatter(9),
             ],
-            style: GoogleFonts.tajawal(color: Colors.white, fontSize: 16),
+            style: GoogleFonts.tajawal(color: Colors.white, fontSize: fontSize),
             decoration: InputDecoration(
               labelText: 'رقم الهاتف',
               labelStyle: GoogleFonts.tajawal(color: Colors.white70),
-              prefixIcon: const Icon(Icons.phone_rounded, color: Colors.white70),
+              prefixIcon: const Icon(
+                Icons.phone_rounded,
+                color: Colors.white70,
+              ),
               hintText: '944123456',
               hintStyle: GoogleFonts.tajawal(color: Colors.white38),
               enabledBorder: OutlineInputBorder(
@@ -794,11 +687,11 @@ class _RegisterPageState extends State<RegisterPage>
     );
   }
 
-  Widget _buildEmailField() {
+  Widget _buildEmailField(double fontSize) {
     return TextFormField(
       controller: _emailController,
       keyboardType: TextInputType.emailAddress,
-      style: GoogleFonts.tajawal(color: Colors.white, fontSize: 16),
+      style: GoogleFonts.tajawal(color: Colors.white, fontSize: fontSize),
       decoration: InputDecoration(
         labelText: 'البريد الإلكتروني',
         labelStyle: GoogleFonts.tajawal(color: Colors.white70),
@@ -834,18 +727,20 @@ class _RegisterPageState extends State<RegisterPage>
     );
   }
 
-  Widget _buildPasswordField() {
+  Widget _buildPasswordField(double fontSize) {
     return TextFormField(
       controller: _passwordController,
       obscureText: _obscurePassword,
-      style: GoogleFonts.tajawal(color: Colors.white, fontSize: 16),
+      style: GoogleFonts.tajawal(color: Colors.white, fontSize: fontSize),
       decoration: InputDecoration(
         labelText: 'كلمة المرور',
         labelStyle: GoogleFonts.tajawal(color: Colors.white70),
         prefixIcon: const Icon(Icons.lock_rounded, color: Colors.white70),
         suffixIcon: IconButton(
           icon: Icon(
-            _obscurePassword ? Icons.visibility_rounded : Icons.visibility_off_rounded,
+            _obscurePassword
+                ? Icons.visibility_rounded
+                : Icons.visibility_off_rounded,
             color: Colors.white70,
           ),
           onPressed: () {
@@ -885,18 +780,23 @@ class _RegisterPageState extends State<RegisterPage>
     );
   }
 
-  Widget _buildConfirmPasswordField() {
+  Widget _buildConfirmPasswordField(double fontSize) {
     return TextFormField(
       controller: _confirmPasswordController,
       obscureText: _obscureConfirmPassword,
-      style: GoogleFonts.tajawal(color: Colors.white, fontSize: 16),
+      style: GoogleFonts.tajawal(color: Colors.white, fontSize: fontSize),
       decoration: InputDecoration(
         labelText: 'تأكيد كلمة المرور',
         labelStyle: GoogleFonts.tajawal(color: Colors.white70),
-        prefixIcon: const Icon(Icons.lock_outline_rounded, color: Colors.white70),
+        prefixIcon: const Icon(
+          Icons.lock_outline_rounded,
+          color: Colors.white70,
+        ),
         suffixIcon: IconButton(
           icon: Icon(
-            _obscureConfirmPassword ? Icons.visibility_rounded : Icons.visibility_off_rounded,
+            _obscureConfirmPassword
+                ? Icons.visibility_rounded
+                : Icons.visibility_off_rounded,
             color: Colors.white70,
           ),
           onPressed: () {
@@ -936,40 +836,39 @@ class _RegisterPageState extends State<RegisterPage>
     );
   }
 
-  Widget _buildActions(bool isSmallScreen) {
-    final buttonHeight = isSmallScreen ? 52.0 : 56.0;
-    final buttonFontSize = isSmallScreen ? 15.0 : 16.0;
-    final smallButtonHeight = isSmallScreen ? 44.0 : 48.0;
+  Widget _buildActions(bool isSmallScreen, bool isVerySmallScreen) {
+    final buttonHeight = isVerySmallScreen
+        ? 44.0
+        : (isSmallScreen ? 52.0 : 56.0);
+    final buttonFontSize = isVerySmallScreen
+        ? 13.0
+        : (isSmallScreen ? 15.0 : 16.0);
+    final smallButtonHeight = isVerySmallScreen
+        ? 38.0
+        : (isSmallScreen ? 44.0 : 48.0);
+    final smallButtonFontSize = isVerySmallScreen
+        ? 10.0
+        : (isSmallScreen ? 11.0 : 12.0);
 
     return Container(
-      margin: const EdgeInsets.all(20),
+      margin: EdgeInsets.all(isVerySmallScreen ? 16 : 20),
       child: Column(
         children: [
-          // Register Button - Emerald & Teal Gradient
+          // Register Button - Purple Gradient
           SizedBox(
             width: double.infinity,
             height: buttonHeight,
             child: Container(
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [
-                    Color(0xFF10B981), // Emerald
-                    Color(0xFF059669), // Dark emerald
-                    Color(0xFF047857), // Deep emerald
-                  ],
-                  stops: [0.0, 0.6, 1.0],
+                  colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
                 ),
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFF10B981).withOpacity(0.5),
+                    color: const Color(0xFF667EEA).withOpacity(0.5),
                     blurRadius: 20,
                     offset: const Offset(0, 8),
-                  ),
-                  BoxShadow(
-                    color: const Color(0xFF059669).withOpacity(0.3),
-                    blurRadius: 10,
-                    offset: const Offset(0, 3),
                   ),
                 ],
               ),
@@ -992,10 +891,10 @@ class _RegisterPageState extends State<RegisterPage>
                         children: [
                           Icon(
                             Icons.person_add_rounded,
-                            size: 22,
+                            size: isVerySmallScreen ? 18 : 22,
                             color: Colors.white.withOpacity(0.95),
                           ),
-                          const SizedBox(width: 10),
+                          SizedBox(width: isVerySmallScreen ? 6 : 10),
                           Text(
                             'إنشاء حساب جديد',
                             style: GoogleFonts.tajawal(
@@ -1009,42 +908,30 @@ class _RegisterPageState extends State<RegisterPage>
               ),
             ),
           ),
-          const SizedBox(height: 20),
+          SizedBox(height: isVerySmallScreen ? 12 : 20),
 
-          // Beautiful Action Buttons
+          // Action Buttons
           Row(
             children: [
-              // Login Button - Sapphire & Amethyst
+              // Login Button
               Expanded(
                 child: Container(
                   height: smallButtonHeight,
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [
-                        Color(0xFF4F46E5), // Deep sapphire
-                        Color(0xFF7C3AED), // Royal purple
-                        Color(0xFF8B5CF6), // Light amethyst
-                      ],
-                      stops: [0.0, 0.5, 1.0],
-                    ),
+                    color: Colors.white.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(14),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF7C3AED).withOpacity(0.4),
-                        blurRadius: 12,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
                     border: Border.all(
-                      color: const Color(0xFF8B5CF6).withOpacity(0.3),
+                      color: Colors.white.withOpacity(0.2),
                       width: 1,
                     ),
                   ),
                   child: TextButton(
                     onPressed: () {
-                      Navigator.pushReplacement(
+                      Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => const LoginPage()),
+                        MaterialPageRoute(
+                          builder: (context) => const LoginPage(),
+                        ),
                       );
                     },
                     style: TextButton.styleFrom(
@@ -1058,15 +945,15 @@ class _RegisterPageState extends State<RegisterPage>
                       children: [
                         Icon(
                           Icons.login_rounded,
-                          size: 18,
+                          size: isVerySmallScreen ? 14 : 18,
                           color: Colors.white.withOpacity(0.95),
                         ),
-                        const SizedBox(width: 8),
+                        SizedBox(width: isVerySmallScreen ? 4 : 8),
                         Flexible(
                           child: Text(
                             'تسجيل الدخول',
                             style: GoogleFonts.tajawal(
-                              fontSize: isSmallScreen ? 11 : 12,
+                              fontSize: smallButtonFontSize,
                               fontWeight: FontWeight.w600,
                               color: Colors.white,
                             ),
@@ -1078,31 +965,17 @@ class _RegisterPageState extends State<RegisterPage>
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: isVerySmallScreen ? 8 : 12),
 
-              // Guest Button - Amber & Topaz
+              // Guest Button
               Expanded(
                 child: Container(
                   height: smallButtonHeight,
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [
-                        Color(0xFFF59E0B), // Amber
-                        Color(0xFFD97706), // Dark amber
-                        Color(0xFFB45309), // Deep topaz
-                      ],
-                      stops: [0.0, 0.7, 1.0],
-                    ),
+                    color: Colors.white.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(14),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFFF59E0B).withOpacity(0.4),
-                        blurRadius: 12,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
                     border: Border.all(
-                      color: const Color(0xFFFCD34D).withOpacity(0.3),
+                      color: Colors.white.withOpacity(0.2),
                       width: 1,
                     ),
                   ),
@@ -1110,7 +983,9 @@ class _RegisterPageState extends State<RegisterPage>
                     onPressed: () {
                       Navigator.pushReplacement(
                         context,
-                        MaterialPageRoute(builder: (context) => const WidgetTree()),
+                        MaterialPageRoute(
+                          builder: (context) => const WidgetTree(),
+                        ),
                       );
                     },
                     style: TextButton.styleFrom(
@@ -1124,15 +999,15 @@ class _RegisterPageState extends State<RegisterPage>
                       children: [
                         Icon(
                           Icons.explore_rounded,
-                          size: 18,
+                          size: isVerySmallScreen ? 14 : 18,
                           color: Colors.white.withOpacity(0.95),
                         ),
-                        const SizedBox(width: 8),
+                        SizedBox(width: isVerySmallScreen ? 4 : 8),
                         Flexible(
                           child: Text(
                             'تصفح كضيف',
                             style: GoogleFonts.tajawal(
-                              fontSize: isSmallScreen ? 11 : 12,
+                              fontSize: smallButtonFontSize,
                               fontWeight: FontWeight.w600,
                               color: Colors.white,
                             ),
@@ -1151,12 +1026,12 @@ class _RegisterPageState extends State<RegisterPage>
     );
   }
 
-  Widget _buildFooter(bool isSmallScreen) {
-    final fontSize = isSmallScreen ? 10.0 : 12.0;
+  Widget _buildFooter(bool isSmallScreen, bool isVerySmallScreen) {
+    final fontSize = isVerySmallScreen ? 8.0 : (isSmallScreen ? 10.0 : 12.0);
 
     return Container(
-      margin: const EdgeInsets.all(20),
-      padding: const EdgeInsets.all(16),
+      margin: EdgeInsets.all(isVerySmallScreen ? 16 : 20),
+      padding: EdgeInsets.all(isVerySmallScreen ? 12 : 16),
       decoration: BoxDecoration(
         color: Colors.black.withOpacity(0.2),
         borderRadius: BorderRadius.circular(16),
@@ -1173,7 +1048,7 @@ class _RegisterPageState extends State<RegisterPage>
             ),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: isVerySmallScreen ? 8 : 12),
           Wrap(
             alignment: WrapAlignment.center,
             children: [
@@ -1181,7 +1056,7 @@ class _RegisterPageState extends State<RegisterPage>
                 onPressed: () {
                   _showDialog(
                     'الشروط والأحكام',
-                    'هذه هي شروط وأحكام استخدام التطبيق. يرجى قراءتها بعناية قبل الموافقة عليها. تشمل الشروط حقوق المستخدم وواجباته، وكيفية استخدام الخدمة، والقيود المفروضة على الاستخدام.',
+                    'هذه هي شروط وأحكام استخدام التطبيق. يرجى قراءتها بعناية قبل الموافقة عليها.',
                   );
                 },
                 child: Text(
@@ -1189,7 +1064,7 @@ class _RegisterPageState extends State<RegisterPage>
                   style: GoogleFonts.tajawal(
                     fontSize: fontSize,
                     fontWeight: FontWeight.w500,
-                    color: Colors.white70,
+                    color: const Color(0xFF667EEA),
                     decoration: TextDecoration.underline,
                   ),
                 ),
@@ -1205,7 +1080,7 @@ class _RegisterPageState extends State<RegisterPage>
                 onPressed: () {
                   _showDialog(
                     'سياسة الخصوصية',
-                    'نحن نحترم خصوصيتك ونلتزم بحماية بياناتك الشخصية. تشرح هذه السياسة كيفية جمع واستخدام وحماية المعلومات التي تقدمها لنا عند استخدام تطبيقنا.',
+                    'نحن نحترم خصوصيتك ونلتزم بحماية بياناتك الشخصية.',
                   );
                 },
                 child: Text(
@@ -1213,7 +1088,7 @@ class _RegisterPageState extends State<RegisterPage>
                   style: GoogleFonts.tajawal(
                     fontSize: fontSize,
                     fontWeight: FontWeight.w500,
-                    color: Colors.white70,
+                    color: const Color(0xFF667EEA),
                     decoration: TextDecoration.underline,
                   ),
                 ),
