@@ -1,4 +1,5 @@
 import 'package:courses_app/onboarding/onboarding_screen.dart';
+import 'package:courses_app/widget_tree.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -24,7 +25,7 @@ void main() {
     });
 
     // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp(isOnboardingCompleted: false));
+    await tester.pumpWidget(const MyApp()); // Remove the parameter
 
     // Verify that onboarding screen is shown
     expect(find.text('مرحبًا بك في منصة الكورسات'), findsOneWidget);
@@ -41,10 +42,13 @@ void main() {
     });
 
     // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp(isOnboardingCompleted: true));
+    await tester.pumpWidget(const MyApp()); // Remove the parameter
 
-    // Verify that main app is shown (you might need to adjust this based on your SplashScreen)
-    expect(find.byType(MaterialApp), findsOneWidget);
+    // You might need to pump multiple times for async operations
+    await tester.pumpAndSettle();
+
+    // Verify that main app is shown - adjust this based on your actual WidgetTree
+    expect(find.byType(WidgetTree), findsOneWidget);
   });
 
   testWidgets('Onboarding navigation works correctly', (WidgetTester tester) async {
@@ -58,8 +62,8 @@ void main() {
     // Verify first page is shown
     expect(find.text('مرحبًا بك في منصة الكورسات'), findsOneWidget);
     
-    // Tap next button
-    await tester.tap(find.text('التالي'));
+    // Tap next button - note: your button says 'متابعة' not 'التالي'
+    await tester.tap(find.text('متابعة'));
     await tester.pumpAndSettle();
 
     // Verify second page is shown

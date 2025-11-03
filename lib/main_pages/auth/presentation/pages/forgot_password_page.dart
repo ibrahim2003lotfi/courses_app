@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:courses_app/main_pages/auth/presentation/pages/login_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -14,12 +16,8 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
     with TickerProviderStateMixin {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   late AnimationController _animationController;
-  late AnimationController _floatingController;
-  late AnimationController _glowController;
   late Animation<double> _fadeAnimation;
   late Animation<double> _slideAnimation;
-  late Animation<double> _floatingAnimation;
-  late Animation<double> _glowAnimation;
 
   // Controllers للحقول
   final TextEditingController _phoneController = TextEditingController();
@@ -45,16 +43,6 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
       vsync: this,
     );
 
-    _floatingController = AnimationController(
-      duration: const Duration(seconds: 3),
-      vsync: this,
-    )..repeat(reverse: true);
-
-    _glowController = AnimationController(
-      duration: const Duration(seconds: 2),
-      vsync: this,
-    )..repeat(reverse: true);
-
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _animationController,
@@ -69,22 +57,12 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
       ),
     );
 
-    _floatingAnimation = Tween<double>(begin: -10.0, end: 10.0).animate(
-      CurvedAnimation(parent: _floatingController, curve: Curves.easeInOut),
-    );
-
-    _glowAnimation = Tween<double>(begin: 0.5, end: 1.0).animate(
-      CurvedAnimation(parent: _glowController, curve: Curves.easeInOut),
-    );
-
     _animationController.forward();
   }
 
   @override
   void dispose() {
     _animationController.dispose();
-    _floatingController.dispose();
-    _glowController.dispose();
     _phoneController.dispose();
     _emailController.dispose();
     _codeController.dispose();
@@ -106,39 +84,24 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
     final isSmallScreen = screenHeight < 700;
 
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF1A103C),
-              Color(0xFF2D1B69),
-              Color(0xFF667EEA),
-              Color(0xFF764BA2),
-            ],
-            stops: [0.0, 0.4, 0.7, 1.0],
-          ),
-        ),
-        child: SafeArea(
-          child: Stack(
-            children: [
-              _buildBackgroundPattern(),
-              _buildFloatingElements(),
-              SingleChildScrollView(
-                child: Column(
-                  children: [
-                    _buildHeader(isSmallScreen),
-                    AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 500),
-                      child: _buildCurrentStep(isSmallScreen),
-                    ),
-                  ],
-                ),
+      backgroundColor: const Color(0xFF1E1E1E),
+      body: SafeArea(
+        child: Stack(
+          children: [
+            _buildBackgroundPattern(),
+            SingleChildScrollView(
+              child: Column(
+                children: [
+                  _buildHeader(isSmallScreen),
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 500),
+                    child: _buildCurrentStep(isSmallScreen),
+                  ),
+                ],
               ),
-              _buildBackButton(context),
-            ],
-          ),
+            ),
+            _buildBackButton(context),
+          ],
         ),
       ),
     );
@@ -152,7 +115,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
             center: Alignment.center,
             radius: 1.2,
             colors: [
-              Colors.white.withOpacity(0.03),
+              const Color(0xFF667EEA).withOpacity(0.03),
               Colors.transparent,
             ],
             stops: const [0.1, 0.8],
@@ -188,97 +151,13 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
     );
   }
 
-  Widget _buildFloatingElements() {
-    return AnimatedBuilder(
-      animation: _floatingAnimation,
-      builder: (context, child) {
-        return Stack(
-          children: [
-            Positioned(
-              top: 60 + _floatingAnimation.value,
-              right: 30,
-              child: Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [
-                      Color(0xFF667EEA),
-                      Color(0xFF764BA2),
-                    ],
-                  ),
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF667EEA).withOpacity(0.4),
-                      blurRadius: 12,
-                      spreadRadius: 2,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            Positioned(
-              top: 100 - _floatingAnimation.value,
-              left: 20,
-              child: Container(
-                width: 30,
-                height: 30,
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [
-                      Color(0xFFF093FB),
-                      Color(0xFFF5576C),
-                    ],
-                  ),
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFFF5576C).withOpacity(0.3),
-                      blurRadius: 10,
-                      spreadRadius: 1,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            Positioned(
-              bottom: 200 + _floatingAnimation.value * 0.5,
-              right: 50,
-              child: Container(
-                width: 35,
-                height: 35,
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [
-                      Color(0xFF4FACFE),
-                      Color(0xFF00F2FE),
-                    ],
-                  ),
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF4FACFE).withOpacity(0.3),
-                      blurRadius: 10,
-                      spreadRadius: 1,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   Widget _buildHeader(bool isSmallScreen) {
     final logoSize = isSmallScreen ? 80.0 : 100.0;
     final titleFontSize = isSmallScreen ? 22.0 : 24.0;
     final subtitleFontSize = isSmallScreen ? 13.0 : 14.0;
 
     return AnimatedBuilder(
-      animation: Listenable.merge([_animationController, _glowController]),
+      animation: _animationController,
       builder: (context, child) {
         return Transform.translate(
           offset: Offset(0, _slideAnimation.value),
@@ -296,16 +175,12 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
                     height: logoSize,
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
-                        colors: [
-                          Color(0xFF667EEA),
-                          Color(0xFF764BA2),
-                        ],
+                        colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
                       ),
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFF667EEA)
-                              .withOpacity(0.5 * _glowAnimation.value),
+                          color: const Color(0xFF667EEA).withOpacity(0.5),
                           blurRadius: 25,
                           spreadRadius: 8,
                         ),
@@ -392,14 +267,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
               opacity: _fadeAnimation.value,
               child: Container(
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      Colors.white.withOpacity(0.15),
-                      Colors.white.withOpacity(0.08),
-                    ],
-                  ),
+                  color: Colors.white.withOpacity(0.05),
                   borderRadius: BorderRadius.circular(24),
                   boxShadow: [
                     BoxShadow(
@@ -407,110 +275,97 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
                       blurRadius: 30,
                       offset: const Offset(0, 10),
                     ),
-                    BoxShadow(
-                      color: Colors.white.withOpacity(0.1),
-                      blurRadius: 10,
-                      offset: const Offset(0, 2),
-                    ),
                   ],
                   border: Border.all(
-                    color: Colors.white.withOpacity(0.2),
+                    color: Colors.white.withOpacity(0.1),
                     width: 1,
                   ),
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(24),
-                  child: Padding(
-                    padding: EdgeInsets.all(padding),
-                    child: Form(
-                      key: _formKey,
-                      child: Column(
-                        children: [
-                          if (!_useEmail) _buildPhoneField() else _buildEmailField(),
-                          const SizedBox(height: 16),
-                          TextButton(
-                            onPressed: () {
-                              setState(() {
-                                _useEmail = !_useEmail;
-                                _formKey.currentState?.reset();
-                              });
-                            },
-                            child: Text(
-                              _useEmail
-                                  ? 'استخدام رقم الهاتف بدلاً من ذلك؟'
-                                  : 'استخدام البريد الإلكتروني بدلاً من ذلك؟',
-                              style: GoogleFonts.tajawal(
-                                fontSize: _getResponsiveFontSize(context, base: 14),
-                                color: Colors.white70,
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                    child: Padding(
+                      padding: EdgeInsets.all(padding),
+                      child: Form(
+                        key: _formKey,
+                        child: Column(
+                          children: [
+                            if (!_useEmail) _buildPhoneField() else _buildEmailField(),
+                            const SizedBox(height: 16),
+                            TextButton(
+                              onPressed: () {
+                                setState(() {
+                                  _useEmail = !_useEmail;
+                                  _formKey.currentState?.reset();
+                                });
+                              },
+                              child: Text(
+                                _useEmail
+                                    ? 'استخدام رقم الهاتف بدلاً من ذلك؟'
+                                    : 'استخدام البريد الإلكتروني بدلاً من ذلك؟',
+                                style: GoogleFonts.tajawal(
+                                  fontSize: _getResponsiveFontSize(context, base: 14),
+                                  color: Colors.white70,
+                                ),
                               ),
                             ),
-                          ),
-                          const SizedBox(height: 24),
-                          // Search Button - Sapphire & Amethyst
-                          SizedBox(
-                            width: double.infinity,
-                            height: isSmallScreen ? 52.0 : 56.0,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                gradient: const LinearGradient(
-                                  colors: [
-                                    Color(0xFF4F46E5), // Deep sapphire
-                                    Color(0xFF7C3AED), // Royal purple
-                                    Color(0xFF8B5CF6), // Light amethyst
+                            const SizedBox(height: 24),
+                            SizedBox(
+                              width: double.infinity,
+                              height: isSmallScreen ? 52.0 : 56.0,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  gradient: const LinearGradient(
+                                    colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
+                                  ),
+                                  borderRadius: BorderRadius.circular(16),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: const Color(0xFF667EEA).withOpacity(0.5),
+                                      blurRadius: 20,
+                                      offset: const Offset(0, 8),
+                                    ),
                                   ],
-                                  stops: [0.0, 0.5, 1.0],
                                 ),
-                                borderRadius: BorderRadius.circular(16),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: const Color(0xFF7C3AED).withOpacity(0.5),
-                                    blurRadius: 20,
-                                    offset: const Offset(0, 8),
+                                child: ElevatedButton(
+                                  onPressed: _isLoading ? null : _handleSearchAccount,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.transparent,
+                                    foregroundColor: Colors.white,
+                                    shadowColor: Colors.transparent,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
                                   ),
-                                  BoxShadow(
-                                    color: const Color(0xFF4F46E5).withOpacity(0.3),
-                                    blurRadius: 10,
-                                    offset: const Offset(0, 3),
-                                  ),
-                                ],
-                              ),
-                              child: ElevatedButton(
-                                onPressed: _isLoading ? null : _handleSearchAccount,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.transparent,
-                                  foregroundColor: Colors.white,
-                                  shadowColor: Colors.transparent,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(16),
-                                  ),
-                                ),
-                                child: _isLoading
-                                    ? const CircularProgressIndicator(
-                                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                                      )
-                                    : Row(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        children: [
-                                          Icon(
-                                            Icons.search_rounded,
-                                            size: 22,
-                                            color: Colors.white.withOpacity(0.95),
-                                          ),
-                                          const SizedBox(width: 10),
-                                          Text(
-                                            'البحث عن الحساب',
-                                            style: GoogleFonts.tajawal(
-                                              fontSize: _getResponsiveFontSize(context, base: 16),
-                                              fontWeight: FontWeight.w700,
-                                              letterSpacing: 0.5,
+                                  child: _isLoading
+                                      ? const CircularProgressIndicator(
+                                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                        )
+                                      : Row(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            Icon(
+                                              Icons.search_rounded,
+                                              size: 22,
+                                              color: Colors.white.withOpacity(0.95),
                                             ),
-                                          ),
-                                        ],
-                                      ),
+                                            const SizedBox(width: 10),
+                                            Text(
+                                              'البحث عن الحساب',
+                                              style: GoogleFonts.tajawal(
+                                                fontSize: _getResponsiveFontSize(context, base: 16),
+                                                fontWeight: FontWeight.w700,
+                                                letterSpacing: 0.5,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                ),
                               ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -654,14 +509,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
               opacity: _fadeAnimation.value,
               child: Container(
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      Colors.white.withOpacity(0.15),
-                      Colors.white.withOpacity(0.08),
-                    ],
-                  ),
+                  color: Colors.white.withOpacity(0.05),
                   borderRadius: BorderRadius.circular(24),
                   boxShadow: [
                     BoxShadow(
@@ -669,177 +517,154 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
                       blurRadius: 30,
                       offset: const Offset(0, 10),
                     ),
-                    BoxShadow(
-                      color: Colors.white.withOpacity(0.1),
-                      blurRadius: 10,
-                      offset: const Offset(0, 2),
-                    ),
                   ],
                   border: Border.all(
-                    color: Colors.white.withOpacity(0.2),
+                    color: Colors.white.withOpacity(0.1),
                     width: 1,
                   ),
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(24),
-                  child: Padding(
-                    padding: EdgeInsets.all(padding),
-                    child: Column(
-                      children: [
-                        Text(
-                          'سنرسل لك رمزًا إلى بريدك الإلكتروني',
-                          style: GoogleFonts.tajawal(
-                            fontSize: _getResponsiveFontSize(context, base: 16),
-                            color: Colors.white70,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 24),
-                        Container(
-                          padding: const EdgeInsets.all(20),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [
-                                Colors.white.withOpacity(0.1),
-                                Colors.white.withOpacity(0.05),
-                              ],
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                    child: Padding(
+                      padding: EdgeInsets.all(padding),
+                      child: Column(
+                        children: [
+                          Text(
+                            'سنرسل لك رمزًا إلى بريدك الإلكتروني',
+                            style: GoogleFonts.tajawal(
+                              fontSize: _getResponsiveFontSize(context, base: 16),
+                              color: Colors.white70,
                             ),
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color: Colors.white.withOpacity(0.15),
-                            ),
+                            textAlign: TextAlign.center,
                           ),
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 60,
-                                height: 60,
-                                decoration: const BoxDecoration(
-                                  gradient: LinearGradient(
-                                    colors: [
-                                      Color(0xFF667EEA),
-                                      Color(0xFF764BA2),
+                          const SizedBox(height: 24),
+                          Container(
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.08),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: Colors.white.withOpacity(0.15),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 60,
+                                  height: 60,
+                                  decoration: const BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
+                                    ),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.person_rounded,
+                                    color: Colors.white,
+                                    size: 30,
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        _foundAccountName,
+                                        style: GoogleFonts.tajawal(
+                                          fontSize: _getResponsiveFontSize(context, base: 18),
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        _foundAccountEmail,
+                                        style: GoogleFonts.tajawal(
+                                          fontSize: _getResponsiveFontSize(context, base: 14),
+                                          color: Colors.white70,
+                                        ),
+                                      ),
                                     ],
                                   ),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(
-                                  Icons.person_rounded,
-                                  color: Colors.white,
-                                  size: 30,
-                                ),
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      _foundAccountName,
-                                      style: GoogleFonts.tajawal(
-                                        fontSize: _getResponsiveFontSize(context, base: 18),
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      _foundAccountEmail,
-                                      style: GoogleFonts.tajawal(
-                                        fontSize: _getResponsiveFontSize(context, base: 14),
-                                        color: Colors.white70,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-                        // Continue Button - Emerald & Teal
-                        SizedBox(
-                          width: double.infinity,
-                          height: isSmallScreen ? 52.0 : 56.0,
-                          child: Container(
-                            decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                colors: [
-                                  Color(0xFF10B981), // Emerald
-                                  Color(0xFF059669), // Dark emerald
-                                  Color(0xFF047857), // Deep emerald
-                                ],
-                                stops: [0.0, 0.6, 1.0],
-                              ),
-                              borderRadius: BorderRadius.circular(16),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: const Color(0xFF10B981).withOpacity(0.5),
-                                  blurRadius: 20,
-                                  offset: const Offset(0, 8),
-                                ),
-                                BoxShadow(
-                                  color: const Color(0xFF059669).withOpacity(0.3),
-                                  blurRadius: 10,
-                                  offset: const Offset(0, 3),
                                 ),
                               ],
                             ),
-                            child: ElevatedButton(
-                              onPressed: _isLoading ? null : _handleContinueToCode,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.transparent,
-                                foregroundColor: Colors.white,
-                                shadowColor: Colors.transparent,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
+                          ),
+                          const SizedBox(height: 24),
+                          SizedBox(
+                            width: double.infinity,
+                            height: isSmallScreen ? 52.0 : 56.0,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(
+                                  colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
                                 ),
+                                borderRadius: BorderRadius.circular(16),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(0xFF667EEA).withOpacity(0.5),
+                                    blurRadius: 20,
+                                    offset: const Offset(0, 8),
+                                  ),
+                                ],
                               ),
-                              child: _isLoading
-                                  ? const CircularProgressIndicator(
-                                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                                    )
-                                  : Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Icon(
-                                          Icons.arrow_forward_rounded,
-                                          size: 22,
-                                          color: Colors.white.withOpacity(0.95),
-                                        ),
-                                        const SizedBox(width: 10),
-                                        Text(
-                                          'متابعة',
-                                          style: GoogleFonts.tajawal(
-                                            fontSize: _getResponsiveFontSize(context, base: 16),
-                                            fontWeight: FontWeight.w700,
-                                            letterSpacing: 0.5,
+                              child: ElevatedButton(
+                                onPressed: _isLoading ? null : _handleContinueToCode,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.transparent,
+                                  foregroundColor: Colors.white,
+                                  shadowColor: Colors.transparent,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                ),
+                                child: _isLoading
+                                    ? const CircularProgressIndicator(
+                                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                      )
+                                    : Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Icon(
+                                            Icons.arrow_forward_rounded,
+                                            size: 22,
+                                            color: Colors.white.withOpacity(0.95),
                                           ),
-                                        ),
-                                      ],
-                                    ),
+                                          const SizedBox(width: 10),
+                                          Text(
+                                            'متابعة',
+                                            style: GoogleFonts.tajawal(
+                                              fontSize: _getResponsiveFontSize(context, base: 16),
+                                              fontWeight: FontWeight.w700,
+                                              letterSpacing: 0.5,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                              ),
                             ),
                           ),
-                        ),
-                        const SizedBox(height: 16),
-                        TextButton(
-                          onPressed: () {
-                            setState(() {
-                              _currentStep = 1;
-                            });
-                          },
-                          child: Text(
-                            'تجربة طريقة أخرى',
-                            style: GoogleFonts.tajawal(
-                              fontSize: _getResponsiveFontSize(context, base: 14),
-                              color: Colors.white70,
-                              decoration: TextDecoration.underline,
+                          const SizedBox(height: 16),
+                          TextButton(
+                            onPressed: () {
+                              setState(() {
+                                _currentStep = 1;
+                              });
+                            },
+                            child: Text(
+                              'تجربة طريقة أخرى',
+                              style: GoogleFonts.tajawal(
+                                fontSize: _getResponsiveFontSize(context, base: 14),
+                                color: Colors.white70,
+                                decoration: TextDecoration.underline,
+                              ),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -866,14 +691,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
               opacity: _fadeAnimation.value,
               child: Container(
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      Colors.white.withOpacity(0.15),
-                      Colors.white.withOpacity(0.08),
-                    ],
-                  ),
+                  color: Colors.white.withOpacity(0.05),
                   borderRadius: BorderRadius.circular(24),
                   boxShadow: [
                     BoxShadow(
@@ -881,169 +699,156 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
                       blurRadius: 30,
                       offset: const Offset(0, 10),
                     ),
-                    BoxShadow(
-                      color: Colors.white.withOpacity(0.1),
-                      blurRadius: 10,
-                      offset: const Offset(0, 2),
-                    ),
                   ],
                   border: Border.all(
-                    color: Colors.white.withOpacity(0.2),
+                    color: Colors.white.withOpacity(0.1),
                     width: 1,
                   ),
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(24),
-                  child: Padding(
-                    padding: EdgeInsets.all(padding),
-                    child: Form(
-                      key: _formKey,
-                      child: Column(
-                        children: [
-                          Text(
-                            'لقد أرسلنا رمزًا إلى بريدك الإلكتروني، يرجى إدخال الرمز لتأكيد حسابك.',
-                            style: GoogleFonts.tajawal(
-                              fontSize: _getResponsiveFontSize(context, base: 16),
-                              color: Colors.white70,
-                              height: 1.5,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 24),
-                          TextFormField(
-                            controller: _codeController,
-                            keyboardType: TextInputType.number,
-                            inputFormatters: [
-                              FilteringTextInputFormatter.digitsOnly,
-                              LengthLimitingTextInputFormatter(6),
-                            ],
-                            style: GoogleFonts.tajawal(
-                              color: Colors.white,
-                              fontSize: 18,
-                              letterSpacing: 2,
-                            ),
-                            textAlign: TextAlign.center,
-                            decoration: InputDecoration(
-                              labelText: 'رمز التأكيد',
-                              labelStyle: GoogleFonts.tajawal(color: Colors.white70),
-                              prefixIcon: const Icon(
-                                Icons.security_rounded,
-                                color: Colors.white70,
-                              ),
-                              hintText: '123456',
-                              hintStyle: GoogleFonts.tajawal(color: Colors.white38),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(
-                                  color: Colors.white.withOpacity(0.3),
-                                ),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: const BorderSide(
-                                  color: Color(0xFF667EEA),
-                                  width: 2,
-                                ),
-                              ),
-                              errorBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: const BorderSide(color: Colors.red, width: 2),
-                              ),
-                              focusedErrorBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: const BorderSide(color: Colors.red, width: 2),
-                              ),
-                              filled: true,
-                              fillColor: Colors.white.withOpacity(0.08),
-                            ),
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'يرجى إدخال الرمز';
-                              }
-                              if (value.length != 6) {
-                                return 'الرمز يجب أن يكون 6 أرقام';
-                              }
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 24),
-                          // Verify Button - Amber & Topaz
-                          SizedBox(
-                            width: double.infinity,
-                            height: isSmallScreen ? 52.0 : 56.0,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                gradient: const LinearGradient(
-                                  colors: [
-                                    Color(0xFFF59E0B), // Amber
-                                    Color(0xFFD97706), // Dark amber
-                                    Color(0xFFB45309), // Deep topaz
-                                  ],
-                                  stops: [0.0, 0.7, 1.0],
-                                ),
-                                borderRadius: BorderRadius.circular(16),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: const Color(0xFFF59E0B).withOpacity(0.5),
-                                    blurRadius: 20,
-                                    offset: const Offset(0, 8),
-                                  ),
-                                  BoxShadow(
-                                    color: const Color(0xFFD97706).withOpacity(0.3),
-                                    blurRadius: 10,
-                                    offset: const Offset(0, 3),
-                                  ),
-                                ],
-                              ),
-                              child: ElevatedButton(
-                                onPressed: _isLoading ? null : _handleVerifyCode,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.transparent,
-                                  foregroundColor: Colors.white,
-                                  shadowColor: Colors.transparent,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(16),
-                                  ),
-                                ),
-                                child: _isLoading
-                                    ? const CircularProgressIndicator(
-                                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                                      )
-                                    : Row(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        children: [
-                                          Icon(
-                                            Icons.verified_rounded,
-                                            size: 22,
-                                            color: Colors.white.withOpacity(0.95),
-                                          ),
-                                          const SizedBox(width: 10),
-                                          Text(
-                                            'تحقق من الرمز',
-                                            style: GoogleFonts.tajawal(
-                                              fontSize: _getResponsiveFontSize(context, base: 16),
-                                              fontWeight: FontWeight.w700,
-                                              letterSpacing: 0.5,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          TextButton(
-                            onPressed: _handleResendCode,
-                            child: Text(
-                              'إعادة إرسال الرمز',
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                    child: Padding(
+                      padding: EdgeInsets.all(padding),
+                      child: Form(
+                        key: _formKey,
+                        child: Column(
+                          children: [
+                            Text(
+                              'لقد أرسلنا رمزًا إلى بريدك الإلكتروني، يرجى إدخال الرمز لتأكيد حسابك.',
                               style: GoogleFonts.tajawal(
-                                fontSize: _getResponsiveFontSize(context, base: 14),
+                                fontSize: _getResponsiveFontSize(context, base: 16),
                                 color: Colors.white70,
-                                decoration: TextDecoration.underline,
+                                height: 1.5,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 24),
+                            TextFormField(
+                              controller: _codeController,
+                              keyboardType: TextInputType.number,
+                              inputFormatters: [
+                                FilteringTextInputFormatter.digitsOnly,
+                                LengthLimitingTextInputFormatter(6),
+                              ],
+                              style: GoogleFonts.tajawal(
+                                color: Colors.white,
+                                fontSize: 18,
+                                letterSpacing: 2,
+                              ),
+                              textAlign: TextAlign.center,
+                              decoration: InputDecoration(
+                                labelText: 'رمز التأكيد',
+                                labelStyle: GoogleFonts.tajawal(color: Colors.white70),
+                                prefixIcon: const Icon(
+                                  Icons.security_rounded,
+                                  color: Colors.white70,
+                                ),
+                                hintText: '123456',
+                                hintStyle: GoogleFonts.tajawal(color: Colors.white38),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(
+                                    color: Colors.white.withOpacity(0.3),
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: const BorderSide(
+                                    color: Color(0xFF667EEA),
+                                    width: 2,
+                                  ),
+                                ),
+                                errorBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: const BorderSide(color: Colors.red, width: 2),
+                                ),
+                                focusedErrorBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: const BorderSide(color: Colors.red, width: 2),
+                                ),
+                                filled: true,
+                                fillColor: Colors.white.withOpacity(0.08),
+                              ),
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'يرجى إدخال الرمز';
+                                }
+                                if (value.length != 6) {
+                                  return 'الرمز يجب أن يكون 6 أرقام';
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 24),
+                            SizedBox(
+                              width: double.infinity,
+                              height: isSmallScreen ? 52.0 : 56.0,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  gradient: const LinearGradient(
+                                    colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
+                                  ),
+                                  borderRadius: BorderRadius.circular(16),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: const Color(0xFF667EEA).withOpacity(0.5),
+                                      blurRadius: 20,
+                                      offset: const Offset(0, 8),
+                                    ),
+                                  ],
+                                ),
+                                child: ElevatedButton(
+                                  onPressed: _isLoading ? null : _handleVerifyCode,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.transparent,
+                                    foregroundColor: Colors.white,
+                                    shadowColor: Colors.transparent,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                  ),
+                                  child: _isLoading
+                                      ? const CircularProgressIndicator(
+                                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                        )
+                                      : Row(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            Icon(
+                                              Icons.verified_rounded,
+                                              size: 22,
+                                              color: Colors.white.withOpacity(0.95),
+                                            ),
+                                            const SizedBox(width: 10),
+                                            Text(
+                                              'تحقق من الرمز',
+                                              style: GoogleFonts.tajawal(
+                                                fontSize: _getResponsiveFontSize(context, base: 16),
+                                                fontWeight: FontWeight.w700,
+                                                letterSpacing: 0.5,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                ),
                               ),
                             ),
-                          ),
-                        ],
+                            const SizedBox(height: 16),
+                            TextButton(
+                              onPressed: _handleResendCode,
+                              child: Text(
+                                'إعادة إرسال الرمز',
+                                style: GoogleFonts.tajawal(
+                                  fontSize: _getResponsiveFontSize(context, base: 14),
+                                  color: Colors.white70,
+                                  decoration: TextDecoration.underline,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -1072,14 +877,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
               opacity: _fadeAnimation.value,
               child: Container(
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      Colors.white.withOpacity(0.15),
-                      Colors.white.withOpacity(0.08),
-                    ],
-                  ),
+                  color: Colors.white.withOpacity(0.05),
                   borderRadius: BorderRadius.circular(24),
                   boxShadow: [
                     BoxShadow(
@@ -1087,214 +885,201 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
                       blurRadius: 30,
                       offset: const Offset(0, 10),
                     ),
-                    BoxShadow(
-                      color: Colors.white.withOpacity(0.1),
-                      blurRadius: 10,
-                      offset: const Offset(0, 2),
-                    ),
                   ],
                   border: Border.all(
-                    color: Colors.white.withOpacity(0.2),
+                    color: Colors.white.withOpacity(0.1),
                     width: 1,
                   ),
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(24),
-                  child: Padding(
-                    padding: EdgeInsets.all(padding),
-                    child: Form(
-                      key: _formKey,
-                      child: Column(
-                        children: [
-                          Text(
-                            'أدخل كلمة مرور جديدة لحسابك',
-                            style: GoogleFonts.tajawal(
-                              fontSize: _getResponsiveFontSize(context, base: 16),
-                              color: Colors.white70,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 24),
-                          TextFormField(
-                            controller: _passwordController,
-                            obscureText: _obscurePassword,
-                            style: GoogleFonts.tajawal(color: Colors.white, fontSize: 16),
-                            decoration: InputDecoration(
-                              labelText: 'كلمة المرور الجديدة',
-                              labelStyle: GoogleFonts.tajawal(color: Colors.white70),
-                              prefixIcon: const Icon(Icons.lock_rounded, color: Colors.white70),
-                              suffixIcon: IconButton(
-                                icon: Icon(
-                                  _obscurePassword
-                                      ? Icons.visibility_rounded
-                                      : Icons.visibility_off_rounded,
-                                  color: Colors.white70,
-                                ),
-                                onPressed: () {
-                                  setState(() {
-                                    _obscurePassword = !_obscurePassword;
-                                  });
-                                },
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(
-                                  color: Colors.white.withOpacity(0.3),
-                                ),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: const BorderSide(
-                                  color: Color(0xFF667EEA),
-                                  width: 2,
-                                ),
-                              ),
-                              errorBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: const BorderSide(color: Colors.red, width: 2),
-                              ),
-                              focusedErrorBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: const BorderSide(color: Colors.red, width: 2),
-                              ),
-                              filled: true,
-                              fillColor: Colors.white.withOpacity(0.08),
-                            ),
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'يرجى إدخال كلمة المرور';
-                              }
-                              if (value.length < 6) {
-                                return 'كلمة المرور يجب أن تكون 6 أحرف على الأقل';
-                              }
-                              return null;
-                            },
-                          ),
-                          SizedBox(height: spacing),
-                          TextFormField(
-                            controller: _confirmPasswordController,
-                            obscureText: _obscureConfirmPassword,
-                            style: GoogleFonts.tajawal(color: Colors.white, fontSize: 16),
-                            decoration: InputDecoration(
-                              labelText: 'تأكيد كلمة المرور',
-                              labelStyle: GoogleFonts.tajawal(color: Colors.white70),
-                              prefixIcon: const Icon(
-                                Icons.lock_outline_rounded,
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                    child: Padding(
+                      padding: EdgeInsets.all(padding),
+                      child: Form(
+                        key: _formKey,
+                        child: Column(
+                          children: [
+                            Text(
+                              'أدخل كلمة مرور جديدة لحسابك',
+                              style: GoogleFonts.tajawal(
+                                fontSize: _getResponsiveFontSize(context, base: 16),
                                 color: Colors.white70,
                               ),
-                              suffixIcon: IconButton(
-                                icon: Icon(
-                                  _obscureConfirmPassword
-                                      ? Icons.visibility_rounded
-                                      : Icons.visibility_off_rounded,
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 24),
+                            TextFormField(
+                              controller: _passwordController,
+                              obscureText: _obscurePassword,
+                              style: GoogleFonts.tajawal(color: Colors.white, fontSize: 16),
+                              decoration: InputDecoration(
+                                labelText: 'كلمة المرور الجديدة',
+                                labelStyle: GoogleFonts.tajawal(color: Colors.white70),
+                                prefixIcon: const Icon(Icons.lock_rounded, color: Colors.white70),
+                                suffixIcon: IconButton(
+                                  icon: Icon(
+                                    _obscurePassword
+                                        ? Icons.visibility_rounded
+                                        : Icons.visibility_off_rounded,
+                                    color: Colors.white70,
+                                  ),
+                                  onPressed: () {
+                                    setState(() {
+                                      _obscurePassword = !_obscurePassword;
+                                    });
+                                  },
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(
+                                    color: Colors.white.withOpacity(0.3),
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: const BorderSide(
+                                    color: Color(0xFF667EEA),
+                                    width: 2,
+                                  ),
+                                ),
+                                errorBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: const BorderSide(color: Colors.red, width: 2),
+                                ),
+                                focusedErrorBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: const BorderSide(color: Colors.red, width: 2),
+                                ),
+                                filled: true,
+                                fillColor: Colors.white.withOpacity(0.08),
+                              ),
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'يرجى إدخال كلمة المرور';
+                                }
+                                if (value.length < 6) {
+                                  return 'كلمة المرور يجب أن تكون 6 أحرف على الأقل';
+                                }
+                                return null;
+                              },
+                            ),
+                            SizedBox(height: spacing),
+                            TextFormField(
+                              controller: _confirmPasswordController,
+                              obscureText: _obscureConfirmPassword,
+                              style: GoogleFonts.tajawal(color: Colors.white, fontSize: 16),
+                              decoration: InputDecoration(
+                                labelText: 'تأكيد كلمة المرور',
+                                labelStyle: GoogleFonts.tajawal(color: Colors.white70),
+                                prefixIcon: const Icon(
+                                  Icons.lock_outline_rounded,
                                   color: Colors.white70,
                                 ),
-                                onPressed: () {
-                                  setState(() {
-                                    _obscureConfirmPassword = !_obscureConfirmPassword;
-                                  });
-                                },
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(
-                                  color: Colors.white.withOpacity(0.3),
+                                suffixIcon: IconButton(
+                                  icon: Icon(
+                                    _obscureConfirmPassword
+                                        ? Icons.visibility_rounded
+                                        : Icons.visibility_off_rounded,
+                                    color: Colors.white70,
+                                  ),
+                                  onPressed: () {
+                                    setState(() {
+                                      _obscureConfirmPassword = !_obscureConfirmPassword;
+                                    });
+                                  },
                                 ),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: const BorderSide(
-                                  color: Color(0xFF667EEA),
-                                  width: 2,
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(
+                                    color: Colors.white.withOpacity(0.3),
+                                  ),
                                 ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: const BorderSide(
+                                    color: Color(0xFF667EEA),
+                                    width: 2,
+                                  ),
+                                ),
+                                errorBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: const BorderSide(color: Colors.red, width: 2),
+                                ),
+                                focusedErrorBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: const BorderSide(color: Colors.red, width: 2),
+                                ),
+                                filled: true,
+                                fillColor: Colors.white.withOpacity(0.08),
                               ),
-                              errorBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: const BorderSide(color: Colors.red, width: 2),
-                              ),
-                              focusedErrorBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: const BorderSide(color: Colors.red, width: 2),
-                              ),
-                              filled: true,
-                              fillColor: Colors.white.withOpacity(0.08),
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'يرجى تأكيد كلمة المرور';
+                                }
+                                if (value != _passwordController.text) {
+                                  return 'كلمتا المرور غير متطابقتين';
+                                }
+                                return null;
+                              },
                             ),
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'يرجى تأكيد كلمة المرور';
-                              }
-                              if (value != _passwordController.text) {
-                                return 'كلمتا المرور غير متطابقتين';
-                              }
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 24),
-                          // Reset Password Button - Rose Quartz & Ruby
-                          SizedBox(
-                            width: double.infinity,
-                            height: isSmallScreen ? 52.0 : 56.0,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                gradient: const LinearGradient(
-                                  colors: [
-                                    Color(0xFFEC4899), // Rose quartz
-                                    Color(0xFFDB2777), // Medium rose
-                                    Color(0xFFBE185D), // Deep ruby
+                            const SizedBox(height: 24),
+                            SizedBox(
+                              width: double.infinity,
+                              height: isSmallScreen ? 52.0 : 56.0,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  gradient: const LinearGradient(
+                                    colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
+                                  ),
+                                  borderRadius: BorderRadius.circular(16),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: const Color(0xFF667EEA).withOpacity(0.5),
+                                      blurRadius: 20,
+                                      offset: const Offset(0, 8),
+                                    ),
                                   ],
-                                  stops: [0.0, 0.6, 1.0],
                                 ),
-                                borderRadius: BorderRadius.circular(16),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: const Color(0xFFEC4899).withOpacity(0.5),
-                                    blurRadius: 20,
-                                    offset: const Offset(0, 8),
+                                child: ElevatedButton(
+                                  onPressed: _isLoading ? null : _handleResetPassword,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.transparent,
+                                    foregroundColor: Colors.white,
+                                    shadowColor: Colors.transparent,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
                                   ),
-                                  BoxShadow(
-                                    color: const Color(0xFFDB2777).withOpacity(0.3),
-                                    blurRadius: 10,
-                                    offset: const Offset(0, 3),
-                                  ),
-                                ],
-                              ),
-                              child: ElevatedButton(
-                                onPressed: _isLoading ? null : _handleResetPassword,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.transparent,
-                                  foregroundColor: Colors.white,
-                                  shadowColor: Colors.transparent,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(16),
-                                  ),
-                                ),
-                                child: _isLoading
-                                    ? const CircularProgressIndicator(
-                                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                                      )
-                                    : Row(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        children: [
-                                          Icon(
-                                            Icons.lock_reset_rounded,
-                                            size: 22,
-                                            color: Colors.white.withOpacity(0.95),
-                                          ),
-                                          const SizedBox(width: 10),
-                                          Text(
-                                            'إعادة تعيين كلمة المرور',
-                                            style: GoogleFonts.tajawal(
-                                              fontSize: _getResponsiveFontSize(context, base: 16),
-                                              fontWeight: FontWeight.w700,
-                                              letterSpacing: 0.5,
+                                  child: _isLoading
+                                      ? const CircularProgressIndicator(
+                                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                        )
+                                      : Row(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            Icon(
+                                              Icons.lock_reset_rounded,
+                                              size: 22,
+                                              color: Colors.white.withOpacity(0.95),
                                             ),
-                                          ),
-                                        ],
-                                      ),
+                                            const SizedBox(width: 10),
+                                            Text(
+                                              'إعادة تعيين كلمة المرور',
+                                              style: GoogleFonts.tajawal(
+                                                fontSize: _getResponsiveFontSize(context, base: 16),
+                                                fontWeight: FontWeight.w700,
+                                                letterSpacing: 0.5,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                ),
                               ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -1408,15 +1193,13 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
       ),
     );
 
-    // FIXED: Use pushReplacement instead of pushAndRemoveUntil
-    // This replaces the current route with LoginPage but keeps the navigation stack intact
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => const LoginPage()),
-    );
-
-    setState(() {
-      _isLoading = false;
+    // Navigate to login page after success
+    Future.delayed(const Duration(seconds: 2), () {
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => const LoginPage()),
+        (route) => false,
+      );
     });
   }
 }

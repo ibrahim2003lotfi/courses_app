@@ -1,4 +1,5 @@
 // Update your main.dart
+import 'package:courses_app/bloc/course_management_bloc.dart';
 import 'package:courses_app/bloc/user_role_bloc.dart';
 import 'package:courses_app/core/utils/theme_manager.dart';
 import 'package:courses_app/main_pages/splash/splash_page.dart';
@@ -15,6 +16,9 @@ void main() async {
       providers: [
         BlocProvider(create: (_) => ThemeCubit()),
         BlocProvider(create: (_) => UserRoleBloc()),
+        BlocProvider<CourseManagementBloc>(
+          create: (context) => CourseManagementBloc(),
+        ),
       ],
       child: const MyApp(),
     ),

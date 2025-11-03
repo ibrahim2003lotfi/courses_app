@@ -80,7 +80,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                 ],
               ),
             ),
-            _buildBackButton(context),
+           // _buildBackButton(context),
           ],
         ),
       ),
@@ -104,7 +104,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
       ),
     );
   }
-
+/*
   Widget _buildBackButton(BuildContext context) {
     return Positioned(
       top: 20,
@@ -123,7 +123,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
         ),
       ),
     );
-  }
+  } */
 
   Widget _buildHeader(bool isSmallScreen) {
     final logoSize = isSmallScreen ? 80.0 : 100.0;

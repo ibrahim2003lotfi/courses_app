@@ -1,3 +1,4 @@
+import 'package:courses_app/bloc/course_management_bloc.dart';
 import 'package:courses_app/theme_cubit/theme_cubit.dart';
 import 'package:courses_app/theme_cubit/theme_state.dart';
 import 'package:flutter/material.dart';
@@ -23,103 +24,110 @@ class CourseHeader extends StatelessWidget {
       builder: (context, themeState) {
         final isDarkMode = themeState.isDarkMode;
 
-        return SliverAppBar(
-          expandedHeight: 300,
-          floating: false,
-          pinned: true,
-          backgroundColor: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
-          flexibleSpace: FlexibleSpaceBar(
-            background: Stack(
-              fit: StackFit.expand,
-              children: [
-                Image.network(
-                  course['image'],
-                  fit: BoxFit.cover,
-                  loadingBuilder: (context, child, loadingProgress) {
-                    if (loadingProgress == null) return child;
-                    return Container(
-                      color: isDarkMode
-                          ? const Color(0xFF2D2D2D)
-                          : const Color(0xFFF3F4F6),
-                      child: Center(
-                        child: CircularProgressIndicator(
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            isDarkMode
-                                ? Colors.white70
-                                : const Color(0xFF2563EB),
+        return Directionality(
+          textDirection: TextDirection.rtl,
+          child: SliverAppBar(
+            expandedHeight: 300,
+            floating: false,
+            pinned: true,
+            backgroundColor: isDarkMode
+                ? const Color(0xFF1E1E1E)
+                : Colors.white,
+            flexibleSpace: FlexibleSpaceBar(
+              background: Stack(
+                fit: StackFit.expand,
+                children: [
+                  Image.network(
+                    course['image'],
+                    fit: BoxFit.cover,
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return Container(
+                        color: isDarkMode
+                            ? const Color(0xFF2D2D2D)
+                            : const Color(0xFFF3F4F6),
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              isDarkMode
+                                  ? Colors.white70
+                                  : const Color(0xFF2563EB),
+                            ),
                           ),
                         ),
+                      );
+                    },
+                  ),
+                  Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          Colors.black.withOpacity(0.6),
+                          Colors.black.withOpacity(0.2),
+                          Colors.transparent,
+                        ],
+                        begin: Alignment.bottomCenter,
+                        end: Alignment.topCenter,
                       ),
-                    );
-                  },
-                ),
-                Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        Colors.black.withOpacity(0.6),
-                        Colors.black.withOpacity(0.2),
-                        Colors.transparent,
-                      ],
-                      begin: Alignment.bottomCenter,
-                      end: Alignment.topCenter,
                     ),
                   ),
-                ),
-                Positioned(
-                  bottom: 24,
-                  right: 24,
-                  left: 24,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
+                  Positioned(
+                    bottom: 24,
+                    right: 24,
+                    left: 24,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
                           ),
-                          borderRadius: BorderRadius.circular(8),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            course['category'] ?? 'برمجة',
+                            style: GoogleFonts.tajawal(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
                         ),
-                        child: Text(
-                          course['category'] ?? 'برمجة',
+                        const SizedBox(height: 12),
+                        Text(
+                          course['title'],
                           style: GoogleFonts.tajawal(
                             color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
+                            fontSize: 24,
+                            fontWeight: FontWeight.w900,
+                            height: 1.3,
                           ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.right,
                         ),
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        course['title'],
-                        style: GoogleFonts.tajawal(
-                          color: Colors.white,
-                          fontSize: 24,
-                          fontWeight: FontWeight.w900,
-                          height: 1.3,
+                        const SizedBox(height: 8),
+                        Text(
+                          course['teacher'],
+                          style: GoogleFonts.tajawal(
+                            color: Colors.white.withOpacity(0.9),
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          textAlign: TextAlign.right,
                         ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        course['teacher'],
-                        style: GoogleFonts.tajawal(
-                          color: Colors.white.withOpacity(0.9),
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         );
@@ -138,42 +146,164 @@ class CourseInfoCard extends StatelessWidget {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => PaymentBottomSheet(course: course),
+      builder: (context) => PaymentBottomSheet(
+        course: course,
+        onEnrollmentSuccess: () {
+          // This will trigger the BLoC to enroll the user
+          context.read<CourseManagementBloc>().add(
+            EnrollCourseEvent(course),
+          );
+        },
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    return BlocBuilder<CourseManagementBloc, CourseManagementState>(
+      builder: (context, courseState) {
+        final isEnrolled = courseState.enrolledCourses
+            .any((c) => c['id'] == course['id']);
+        
+        if (isEnrolled) {
+          return _buildEnrolledInfo(context);
+        } else {
+          return _buildPurchaseInfo(context);
+        }
+      },
+    );
+  }
+
+  Widget _buildEnrolledInfo(BuildContext context) {
     return BlocBuilder<ThemeCubit, ThemeState>(
       builder: (context, themeState) {
         final isDarkMode = themeState.isDarkMode;
 
-        return SliverToBoxAdapter(
-          child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-            decoration: BoxDecoration(
-              color: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(isDarkMode ? 0.2 : 0.05),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
+        return Directionality(
+          textDirection: TextDirection.rtl,
+          child: SliverToBoxAdapter(
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              decoration: BoxDecoration(
+                color: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(isDarkMode ? 0.2 : 0.05),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  children: [
+                    Icon(
+                      Icons.check_circle,
+                      color: const Color(0xFF10B981),
+                      size: 60,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'أنت مسجل في هذه الدورة',
+                      style: GoogleFonts.tajawal(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                        color: isDarkMode ? Colors.white : const Color(0xFF1F2937),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'يمكنك الآن البدء في مشاهدة المحاضرات',
+                      style: GoogleFonts.tajawal(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                        color: isDarkMode ? Colors.white70 : const Color(0xFF6B7280),
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 20),
+                    Container(
+                      height: 48,
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(12),
+                        onTap: () {
+                          // Scroll to lessons or show message
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                'انتقل إلى قائمة المحاضرات للبدء في التعلم',
+                                style: GoogleFonts.tajawal(fontWeight: FontWeight.w600),
+                              ),
+                              backgroundColor: Colors.blue,
+                            ),
+                          );
+                        },
+                        child: Center(
+                          child: Text(
+                            'ابدأ التعلم',
+                            style: GoogleFonts.tajawal(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 16,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final isMobile = constraints.maxWidth < 600;
+          ),
+        );
+      },
+    );
+  }
 
-                  if (isMobile) {
-                    return _buildMobileLayout(context, isDarkMode);
-                  } else {
-                    return _buildDesktopLayout(context, isDarkMode);
-                  }
-                },
+  Widget _buildPurchaseInfo(BuildContext context) {
+    return BlocBuilder<ThemeCubit, ThemeState>(
+      builder: (context, themeState) {
+        final isDarkMode = themeState.isDarkMode;
+
+        return Directionality(
+          textDirection: TextDirection.rtl,
+          child: SliverToBoxAdapter(
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              decoration: BoxDecoration(
+                color: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(isDarkMode ? 0.2 : 0.05),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final isMobile = constraints.maxWidth < 600;
+
+                    if (isMobile) {
+                      return _buildMobileLayout(context, isDarkMode);
+                    } else {
+                      return _buildDesktopLayout(context, isDarkMode);
+                    }
+                  },
+                ),
               ),
             ),
           ),
@@ -184,6 +314,7 @@ class CourseInfoCard extends StatelessWidget {
 
   Widget _buildMobileLayout(BuildContext context, bool isDarkMode) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _buildRatingRow(isDarkMode),
         const SizedBox(height: 16),
@@ -196,12 +327,13 @@ class CourseInfoCard extends StatelessWidget {
 
   Widget _buildDesktopLayout(BuildContext context, bool isDarkMode) {
     return Row(
+      textDirection: TextDirection.rtl,
       children: [
-        Expanded(child: _buildInfoGrid(isDarkMode)),
+        _buildPriceSection(context),
         const SizedBox(width: 24),
         _buildRatingRow(isDarkMode),
         const SizedBox(width: 24),
-        _buildPriceSection(context),
+        Expanded(child: _buildInfoGrid(isDarkMode)),
       ],
     );
   }
@@ -211,9 +343,15 @@ class CourseInfoCard extends StatelessWidget {
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
+          textDirection: TextDirection.rtl,
           children: [
-            const Icon(Icons.star, color: Colors.amber, size: 20),
-            const SizedBox(width: 4),
+            Text(
+              '(${course['reviews'] ?? 0} تقييم) ',
+              style: GoogleFonts.tajawal(
+                color: isDarkMode ? Colors.white70 : const Color(0xFF6B7280),
+                fontWeight: FontWeight.w500,
+              ),
+            ),
             Text(
               course['rating'].toStringAsFixed(1),
               style: GoogleFonts.tajawal(
@@ -222,13 +360,8 @@ class CourseInfoCard extends StatelessWidget {
                 color: isDarkMode ? Colors.white : const Color(0xFF1F2937),
               ),
             ),
-            Text(
-              ' (${course['reviews'] ?? 0} تقييم)',
-              style: GoogleFonts.tajawal(
-                color: isDarkMode ? Colors.white70 : const Color(0xFF6B7280),
-                fontWeight: FontWeight.w500,
-              ),
-            ),
+            const SizedBox(width: 4),
+            const Icon(Icons.star, color: Colors.amber, size: 20),
           ],
         ),
         const SizedBox(height: 4),
@@ -238,6 +371,7 @@ class CourseInfoCard extends StatelessWidget {
             color: isDarkMode ? Colors.white70 : const Color(0xFF6B7280),
             fontWeight: FontWeight.w500,
           ),
+          textAlign: TextAlign.center,
         ),
       ],
     );
@@ -279,14 +413,9 @@ class CourseInfoCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.end,
+        textDirection: TextDirection.rtl,
         children: [
-          Icon(
-            icon,
-            size: 16,
-            color: isDarkMode ? Colors.white70 : const Color(0xFF6B7280),
-          ),
-          const SizedBox(width: 8),
           Text(
             text,
             style: GoogleFonts.tajawal(
@@ -295,64 +424,150 @@ class CourseInfoCard extends StatelessWidget {
               color: isDarkMode ? Colors.white : const Color(0xFF374151),
             ),
           ),
+          const SizedBox(width: 8),
+          Icon(
+            icon,
+            size: 16,
+            color: isDarkMode ? Colors.white70 : const Color(0xFF6B7280),
+          ),
         ],
       ),
     );
   }
 
   Widget _buildPriceSection(BuildContext context) {
-    return Column(
-      children: [
-        Text(
-          course['price'] ?? '200,000 S.P',
-          style: GoogleFonts.tajawal(
-            fontSize: 28,
-            fontWeight: FontWeight.w900,
-            color: const Color(0xFF10B981),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Container(
-          height: 48,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: Color(0xFF667EEA).withOpacity(0.3),
-                blurRadius: 8,
-                offset: const Offset(0, 4),
+    return BlocBuilder<CourseManagementBloc, CourseManagementState>(
+      builder: (context, courseState) {
+        final isInWatchLater = courseState.watchLaterCourses
+            .any((c) => c['id'] == course['id']);
+
+        return Column(
+          children: [
+            Text(
+              course['price'] ?? '200,000 S.P',
+              style: GoogleFonts.tajawal(
+                fontSize: 28,
+                fontWeight: FontWeight.w900,
+                color: const Color(0xFF10B981),
               ),
-            ],
-          ),
-          child: InkWell(
-            borderRadius: BorderRadius.circular(12),
-            onTap: () => _showPaymentBottomSheet(context),
-            child: Center(
-              child: Text(
-                'اشترك الآن',
-                style: GoogleFonts.tajawal(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 16,
-                  color: Colors.white,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            
+            // Watch Later Button
+            Container(
+              height: 48,
+              margin: const EdgeInsets.only(bottom: 12),
+              decoration: BoxDecoration(
+                color: Colors.transparent,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: isInWatchLater ? 
+                        const Color(0xFF10B981) : 
+                        const Color(0xFFD1D5DB),
+                ),
+              ),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(12),
+                onTap: () {
+                  context.read<CourseManagementBloc>().add(
+                    ToggleWatchLaterEvent(course),
+                  );
+                  
+                  // Show feedback
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        isInWatchLater ? 
+                        'تمت إزالة الدورة من قائمة المشاهدة لاحقاً' : 
+                        'تمت إضافة الدورة إلى قائمة المشاهدة لاحقاً',
+                        style: GoogleFonts.tajawal(fontWeight: FontWeight.w600),
+                      ),
+                      backgroundColor: isInWatchLater ? Colors.orange : Colors.green,
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  );
+                },
+                child: Center(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        isInWatchLater ? Icons.bookmark : Icons.bookmark_border,
+                        color: isInWatchLater ? 
+                              const Color(0xFF10B981) : 
+                              const Color(0xFF6B7280),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        isInWatchLater ? 'محفوظة' : 'حفظ للمشاهدة لاحقاً',
+                        style: GoogleFonts.tajawal(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 16,
+                          color: isInWatchLater ? 
+                                const Color(0xFF10B981) : 
+                                const Color(0xFF6B7280),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
-        ),
-      ],
+            
+            // Enroll Button
+            Container(
+              height: 48,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Color(0xFF667EEA).withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(12),
+                onTap: () => _showPaymentBottomSheet(context),
+                child: Center(
+                  child: Text(
+                    'اشترك الآن',
+                    style: GoogleFonts.tajawal(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 16,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }
 
+
 class PaymentBottomSheet extends StatefulWidget {
   final Map<String, dynamic> course;
+  final VoidCallback onEnrollmentSuccess;
 
-  const PaymentBottomSheet({super.key, required this.course});
+  const PaymentBottomSheet({
+    super.key, 
+    required this.course,
+    required this.onEnrollmentSuccess,
+  });
 
   @override
   State<PaymentBottomSheet> createState() => _PaymentBottomSheetState();
@@ -453,7 +668,8 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
 
     if (mounted) {
       Navigator.of(context).pop();
-
+      widget.onEnrollmentSuccess(); // Call the success callback
+      
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -479,6 +695,7 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
 
       if (mounted) {
         Navigator.of(context).pop();
+        widget.onEnrollmentSuccess(); // Call the success callback for free courses too
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -508,111 +725,120 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
         final isMobile = screenWidth < 600;
         final bottomSheetHeight = screenHeight * 0.75;
 
-        return AnimatedContainer(
-          duration: const Duration(milliseconds: 300),
-          height: bottomSheetHeight,
-          decoration: BoxDecoration(
-            color: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(24),
-              topRight: Radius.circular(24),
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(isDarkMode ? 0.4 : 0.25),
-                blurRadius: 20,
-                offset: const Offset(0, -5),
+        return Directionality(
+          textDirection: TextDirection.rtl,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            height: bottomSheetHeight,
+            decoration: BoxDecoration(
+              color: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(24),
+                topRight: Radius.circular(24),
               ),
-            ],
-          ),
-          child: Scaffold(
-            backgroundColor: Colors.transparent,
-            body: SafeArea(
-              top: false,
-              child: Column(
-                children: [
-                  Container(
-                    width: 40,
-                    height: 4,
-                    margin: const EdgeInsets.symmetric(vertical: 12),
-                    decoration: BoxDecoration(
-                      color: isDarkMode ? Colors.grey[600] : Colors.grey[300],
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-
-                  Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: isMobile ? 20 : 32,
-                      vertical: 8,
-                    ),
-                    child: Center(
-                      child: Text(
-                        _isFreeCourse
-                            ? 'تسجيل في الكورس المجاني'
-                            : 'إتمام عملية الدفع',
-                        style: GoogleFonts.tajawal(
-                          fontSize: isMobile ? 20 : 24,
-                          fontWeight: FontWeight.w900,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(isDarkMode ? 0.4 : 0.25),
+                  blurRadius: 20,
+                  offset: const Offset(0, -5),
+                ),
+              ],
+            ),
+            child: Scaffold(
+              backgroundColor: Colors.transparent,
+              body: SafeArea(
+                top: false,
+                child: Column(
+                  children: [
+                    // Handle at the top - positioned to the left in RTL
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Container(
+                        width: 40,
+                        height: 4,
+                        margin: const EdgeInsets.symmetric(
+                          vertical: 12,
+                          horizontal: 20,
+                        ),
+                        decoration: BoxDecoration(
                           color: isDarkMode
-                              ? Colors.white
-                              : const Color(0xFF1F2937),
+                              ? Colors.grey[600]
+                              : Colors.grey[300],
+                          borderRadius: BorderRadius.circular(2),
                         ),
                       ),
                     ),
-                  ),
-                  Divider(
-                    thickness: 1,
-                    color: isDarkMode ? Colors.grey[700] : Colors.grey[300],
-                  ),
 
-                  Expanded(
-                    child: Padding(
+                    Padding(
                       padding: EdgeInsets.symmetric(
                         horizontal: isMobile ? 20 : 32,
                         vertical: 8,
                       ),
-                      child: Form(
-                        key: _formKey,
-                        child: SingleChildScrollView(
-                          physics: const BouncingScrollPhysics(),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _buildCourseInfo(isMobile, isDarkMode),
-                              const SizedBox(height: 24),
-
-                              if (_isFreeCourse) ...[
-                                _buildFreeCourseEnrollment(
-                                  isMobile,
-                                  isDarkMode,
-                                ),
-                                const SizedBox(height: 24),
-                              ] else ...[
-                                _buildPaymentMethods(isMobile, isDarkMode),
-                                const SizedBox(height: 24),
-
-                                _buildSubscriptionType(isMobile, isDarkMode),
-                                const SizedBox(height: 24),
-
-                                _buildPaymentSummary(isMobile, isDarkMode),
-                                const SizedBox(height: 24),
-
-                                _buildPaymentInfo(isMobile, isDarkMode),
-                                const SizedBox(height: 32),
-                              ],
-
-                              _buildActionButtons(isMobile, isDarkMode),
-                              SizedBox(
-                                height: MediaQuery.of(context).padding.bottom,
-                              ),
-                            ],
+                      child: Center(
+                        child: Text(
+                          _isFreeCourse
+                              ? 'تسجيل في الكورس المجاني'
+                              : 'إتمام عملية الدفع',
+                          style: GoogleFonts.tajawal(
+                            fontSize: isMobile ? 20 : 24,
+                            fontWeight: FontWeight.w900,
+                            color: isDarkMode
+                                ? Colors.white
+                                : const Color(0xFF1F2937),
                           ),
                         ),
                       ),
                     ),
-                  ),
-                ],
+                    Divider(
+                      thickness: 1,
+                      color: isDarkMode ? Colors.grey[700] : Colors.grey[300],
+                    ),
+
+                    Expanded(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: isMobile ? 20 : 32,
+                          vertical: 8,
+                        ),
+                        child: Form(
+                          key: _formKey,
+                          child: SingleChildScrollView(
+                            physics: const BouncingScrollPhysics(),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                _buildCourseInfo(isMobile, isDarkMode),
+                                const SizedBox(height: 24),
+
+                                if (_isFreeCourse) ...[
+                                  _buildFreeCourseEnrollment(
+                                    isMobile,
+                                    isDarkMode,
+                                  ),
+                                  const SizedBox(height: 24),
+                                ] else ...[
+                                  _buildPaymentMethods(isMobile, isDarkMode),
+                                  const SizedBox(height: 24),
+
+                                  _buildPaymentSummary(isMobile, isDarkMode),
+                                  const SizedBox(height: 24),
+
+                                  _buildPaymentInfo(isMobile, isDarkMode),
+                                  const SizedBox(height: 32),
+                                ],
+
+                                _buildActionButtons(isMobile, isDarkMode),
+                                SizedBox(
+                                  height: MediaQuery.of(context).padding.bottom,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -712,7 +938,14 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
   }) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.end,
+      textDirection: TextDirection.rtl,
       children: [
+        Icon(
+          icon,
+          size: isSmall ? 14 : (isMobile ? 16 : 18),
+          color: isDarkMode ? Colors.white70 : const Color(0xFF6B7280),
+        ),
+        const SizedBox(width: 12),
         Expanded(
           child: Text(
             text,
@@ -725,12 +958,6 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
                   : (isDarkMode ? Colors.white : const Color(0xFF374151)),
             ),
           ),
-        ),
-        const SizedBox(width: 12),
-        Icon(
-          icon,
-          size: isSmall ? 14 : (isMobile ? 16 : 18),
-          color: isDarkMode ? Colors.white70 : const Color(0xFF6B7280),
         ),
       ],
     );
@@ -762,6 +989,7 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
               },
               title: Row(
                 mainAxisAlignment: MainAxisAlignment.end,
+                textDirection: TextDirection.rtl,
                 children: [
                   Text(
                     method.name,
@@ -805,73 +1033,10 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
               tileColor: isDarkMode
                   ? const Color(0xFF2D2D2D)
                   : Colors.transparent,
+              controlAffinity:
+                  ListTileControlAffinity.leading, // Radio on the left
             ),
           ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSubscriptionType(bool isMobile, bool isDarkMode) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        Text(
-          'نوع الاشتراك',
-          style: GoogleFonts.tajawal(
-            fontSize: isMobile ? 16 : 18,
-            fontWeight: FontWeight.w800,
-            color: isDarkMode ? Colors.white : const Color(0xFF1F2937),
-          ),
-        ),
-        const SizedBox(height: 8),
-        DropdownButtonFormField<String>(
-          value: _paymentData.subscriptionType,
-          onChanged: (value) {
-            setState(() {
-              _paymentData.subscriptionType = value!;
-            });
-          },
-          items: _subscriptionTypes.map((type) {
-            return DropdownMenuItem(
-              value: type.id,
-              child: Text(
-                type.name,
-                style: GoogleFonts.tajawal(
-                  fontSize: isMobile ? 14 : 16,
-                  color: isDarkMode ? Colors.white : const Color(0xFF1F2937),
-                ),
-                textAlign: TextAlign.right,
-              ),
-            );
-          }).toList(),
-          decoration: InputDecoration(
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(
-                color: isDarkMode ? Colors.grey[700]! : const Color(0xFFD1D5DB),
-              ),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(
-                color: isDarkMode ? Colors.grey[700]! : const Color(0xFFD1D5DB),
-              ),
-            ),
-            filled: true,
-            fillColor: isDarkMode ? const Color(0xFF2D2D2D) : Colors.white,
-            contentPadding: EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: isMobile ? 12 : 16,
-            ),
-            isDense: true,
-            alignLabelWithHint: true,
-          ),
-          dropdownColor: isDarkMode ? const Color(0xFF2D2D2D) : Colors.white,
-          style: GoogleFonts.tajawal(
-            color: isDarkMode ? Colors.white : const Color(0xFF1F2937),
-          ),
-          isExpanded: true,
         ),
       ],
     );
@@ -899,7 +1064,7 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
             ),
             const SizedBox(height: 16),
             _buildSummaryRow('سعر الكورس', 'مجاني', isMobile, isDarkMode),
-            _buildSummaryRow('الضرائب', '₪0.00', isMobile, isDarkMode),
+            _buildSummaryRow('الضرائب', ' 0.00 S.P ', isMobile, isDarkMode),
             Divider(color: isDarkMode ? Colors.grey[600] : Colors.grey[300]),
             _buildSummaryRow(
               'الإجمالي',
@@ -938,20 +1103,20 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
           const SizedBox(height: 16),
           _buildSummaryRow(
             'السعر الأساسي',
-            '₪${_basePrice.toStringAsFixed(2)}',
+            '${_basePrice.toStringAsFixed(2)} S.P ',
             isMobile,
             isDarkMode,
           ),
           _buildSummaryRow(
             'الضرائب',
-            '₪${_taxAmount.toStringAsFixed(2)}',
+            '${_taxAmount.toStringAsFixed(2)} S.P ',
             isMobile,
             isDarkMode,
           ),
           Divider(color: isDarkMode ? Colors.grey[600] : Colors.grey[300]),
           _buildSummaryRow(
             'الإجمالي',
-            'S.P${_totalPrice.toStringAsFixed(2)}',
+            '${_totalPrice.toStringAsFixed(2)} S.P ',
             isMobile,
             isDarkMode,
             isTotal: true,
@@ -972,12 +1137,13 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        textDirection: TextDirection.rtl,
         children: [
           Text(
-            label,
+            value,
             style: GoogleFonts.tajawal(
               fontSize: isMobile ? 14 : 16,
-              fontWeight: isTotal ? FontWeight.w800 : FontWeight.w500,
+              fontWeight: isTotal ? FontWeight.w900 : FontWeight.w600,
               color: isTotal
                   ? (isDarkMode
                         ? const Color(0xFF34D399)
@@ -986,10 +1152,10 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
             ),
           ),
           Text(
-            value,
+            label,
             style: GoogleFonts.tajawal(
               fontSize: isMobile ? 14 : 16,
-              fontWeight: isTotal ? FontWeight.w900 : FontWeight.w600,
+              fontWeight: isTotal ? FontWeight.w800 : FontWeight.w500,
               color: isTotal
                   ? (isDarkMode
                         ? const Color(0xFF34D399)
@@ -1004,7 +1170,7 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
 
   Widget _buildPaymentInfo(bool isMobile, bool isDarkMode) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.end,
       children: [
         Text(
           'معلومات الدفع',
@@ -1016,12 +1182,13 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
         ),
         const SizedBox(height: 12),
         TextFormField(
+          textDirection: TextDirection.rtl,
           decoration: InputDecoration(
             labelText: 'رقم الهاتف',
             labelStyle: GoogleFonts.tajawal(
               color: isDarkMode ? Colors.white70 : const Color(0xFF6B7280),
             ),
-            prefixIcon: Icon(
+            suffixIcon: Icon(
               Icons.phone,
               color: isDarkMode ? Colors.white70 : const Color(0xFF6B7280),
             ),
@@ -1056,12 +1223,13 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
         ),
         const SizedBox(height: 12),
         TextFormField(
+          textDirection: TextDirection.rtl,
           decoration: InputDecoration(
             labelText: 'تأكيد رقم الهاتف',
             labelStyle: GoogleFonts.tajawal(
               color: isDarkMode ? Colors.white70 : const Color(0xFF6B7280),
             ),
-            prefixIcon: Icon(
+            suffixIcon: Icon(
               Icons.phone_android,
               color: isDarkMode ? Colors.white70 : const Color(0xFF6B7280),
             ),
@@ -1097,6 +1265,7 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
 
   Widget _buildActionButtons(bool isMobile, bool isDarkMode) {
     return Row(
+      textDirection: TextDirection.rtl,
       children: [
         Expanded(
           child: Container(
@@ -1174,13 +1343,13 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
 class PaymentMethod {
   final String id;
   final String name;
-  final String imagePath; // Changed from icon to imagePath
+  final String imagePath;
   final Color color;
 
   PaymentMethod({
     required this.id,
     required this.name,
-    required this.imagePath, // Changed from icon to imagePath
+    required this.imagePath,
     required this.color,
   });
 }
@@ -1197,6 +1366,10 @@ class SubscriptionType {
     required this.priceMultiplier,
   });
 }
+
+
+
+
 
 class CourseTabs extends StatefulWidget {
   final Map<String, dynamic> course;
@@ -1215,45 +1388,81 @@ class _CourseTabsState extends State<CourseTabs> {
     return BlocBuilder<ThemeCubit, ThemeState>(
       builder: (context, themeState) {
         final isDarkMode = themeState.isDarkMode;
+        final screenWidth = MediaQuery.of(context).size.width;
+        final isMobile = screenWidth < 600;
 
-        return SliverToBoxAdapter(
-          child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-            decoration: BoxDecoration(
-              color: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(isDarkMode ? 0.2 : 0.05),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Row(
-                    children: [
-                      _buildTab('الوصف', 0, isDarkMode),
-                      _buildTab('المحتويات', 1, isDarkMode),
-                      _buildTab('التقييمات', 2, isDarkMode),
-                      _buildTab('المدرب', 3, isDarkMode),
-                    ],
+        return Directionality(
+          textDirection: TextDirection.rtl,
+          child: SliverToBoxAdapter(
+            child: Container(
+              margin: EdgeInsets.symmetric(
+                horizontal: isMobile ? 16 : 20,
+                vertical: 8,
+              ),
+              decoration: BoxDecoration(
+                color: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(isDarkMode ? 0.2 : 0.05),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
                   ),
-                ),
-                const SizedBox(height: 16),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: _buildTabContent(isDarkMode),
-                ),
-                const SizedBox(height: 20),
-              ],
+                ],
+              ),
+              child: Column(
+                children: [
+                  // Responsive tabs - horizontal on desktop, scrollable on mobile
+                  if (isMobile)
+                    _buildMobileTabs(isDarkMode)
+                  else
+                    _buildDesktopTabs(isDarkMode),
+
+                  const SizedBox(height: 16),
+                  Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isMobile ? 16 : 20,
+                    ),
+                    child: _buildTabContent(isDarkMode, isMobile),
+                  ),
+                  const SizedBox(height: 20),
+                ],
+              ),
             ),
           ),
         );
       },
+    );
+  }
+
+  Widget _buildDesktopTabs(bool isDarkMode) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Row(
+        textDirection: TextDirection.rtl,
+        children: [
+          _buildTab('الوصف', 0, isDarkMode),
+          _buildTab('المحتويات', 1, isDarkMode),
+          _buildTab('التقييمات', 2, isDarkMode),
+          _buildTab('المدرب', 3, isDarkMode),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMobileTabs(bool isDarkMode) {
+    return SizedBox(
+      height: 50,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        reverse: true, // RTL scrolling
+        children: [
+          _buildMobileTab('المدرب', 3, isDarkMode),
+          _buildMobileTab('التقييمات', 2, isDarkMode),
+          _buildMobileTab('المحتويات', 1, isDarkMode),
+          _buildMobileTab('الوصف', 0, isDarkMode),
+        ],
+      ),
     );
   }
 
@@ -1294,19 +1503,51 @@ class _CourseTabsState extends State<CourseTabs> {
     );
   }
 
-  Widget _buildTabContent(bool isDarkMode) {
+  Widget _buildMobileTab(String title, int index, bool isDarkMode) {
+    final isSelected = _selectedTab == index;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(
+            color: isSelected ? const Color(0xFF2563EB) : Colors.transparent,
+            width: 2,
+          ),
+        ),
+      ),
+      child: InkWell(
+        onTap: () {
+          setState(() {
+            _selectedTab = index;
+          });
+        },
+        child: Text(
+          title,
+          style: GoogleFonts.tajawal(
+            fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
+            color: isSelected
+                ? const Color(0xFF2563EB)
+                : (isDarkMode ? Colors.white70 : const Color(0xFF6B7280)),
+            fontSize: 14,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTabContent(bool isDarkMode, bool isMobile) {
     try {
       switch (_selectedTab) {
         case 0:
-          return _buildDescription(isDarkMode);
+          return _buildDescription(isDarkMode, isMobile);
         case 1:
-          return _buildCurriculum(isDarkMode);
+          return _buildCurriculum(isDarkMode, isMobile);
         case 2:
-          return _buildReviews(isDarkMode);
+          return _buildReviews(isDarkMode, isMobile);
         case 3:
-          return _buildInstructor(isDarkMode);
+          return _buildInstructor(isDarkMode, isMobile);
         default:
-          return _buildDescription(isDarkMode);
+          return _buildDescription(isDarkMode, isMobile);
       }
     } catch (e, stackTrace) {
       print('Error in _buildTabContent for tab $_selectedTab: $e');
@@ -1319,39 +1560,51 @@ class _CourseTabsState extends State<CourseTabs> {
             color: Colors.red,
             fontWeight: FontWeight.bold,
           ),
+          textAlign: TextAlign.right,
         ),
       );
     }
   }
 
-  Widget _buildDescription(bool isDarkMode) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
+  Widget _buildDescription(bool isDarkMode, bool isMobile) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.end,
+    children: [
+      Align(
+        alignment: Alignment.centerRight,
+        child: Text(
           'عن هذا الكورس',
           style: GoogleFonts.tajawal(
-            fontSize: 18,
+            fontSize: isMobile ? 18 : 20,
             fontWeight: FontWeight.w800,
             color: isDarkMode ? Colors.white : const Color(0xFF1F2937),
           ),
+          textAlign: TextAlign.right,
         ),
-        const SizedBox(height: 12),
-        Text(
+      ),
+      const SizedBox(height: 12),
+      Align(
+        alignment: Alignment.centerRight,
+        child: Text(
           widget.course['description'] ??
               'دورة تعليمية شاملة تغطي أهم المفاهيم والمهارات في هذا المجال. تم تصميم المحتوى بعناية لضمان أفضل تجربة تعلم.',
           style: GoogleFonts.tajawal(
-            fontSize: 14,
+            fontSize: isMobile ? 14 : 16,
             fontWeight: FontWeight.w500,
             color: isDarkMode ? Colors.white70 : const Color(0xFF6B7280),
             height: 1.6,
           ),
           textAlign: TextAlign.right,
         ),
-        const SizedBox(height: 16),
-        Wrap(
+      ),
+      const SizedBox(height: 16),
+      Align(
+        alignment: Alignment.centerRight,
+        child: Wrap(
           spacing: 8,
           runSpacing: 8,
+          alignment: WrapAlignment.end,
+          textDirection: TextDirection.rtl,
           children: List.generate(widget.course['tags']?.length ?? 3, (index) {
             final tags = widget.course['tags'] ?? ['تعليم', 'تدريب', 'مهارات'];
             final tag = index < tags.length ? tags[index] : 'تعليم';
@@ -1368,7 +1621,7 @@ class _CourseTabsState extends State<CourseTabs> {
               child: Text(
                 tag,
                 style: GoogleFonts.tajawal(
-                  fontSize: 12,
+                  fontSize: isMobile ? 11 : 12,
                   fontWeight: FontWeight.w600,
                   color: Colors.white,
                 ),
@@ -1376,27 +1629,34 @@ class _CourseTabsState extends State<CourseTabs> {
             );
           }),
         ),
-      ],
-    );
-  }
+      ),
+    ],
+  );
+}
 
-  Widget _buildCurriculum(bool isDarkMode) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
+Widget _buildCurriculum(bool isDarkMode, bool isMobile) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.end,
+    children: [
+      Align(
+        alignment: Alignment.centerRight,
+        child: Text(
           'محتويات الكورس',
           style: GoogleFonts.tajawal(
-            fontSize: 18,
+            fontSize: isMobile ? 18 : 20,
             fontWeight: FontWeight.w800,
             color: isDarkMode ? Colors.white : const Color(0xFF1F2937),
           ),
+          textAlign: TextAlign.right,
         ),
-        const SizedBox(height: 12),
-        ...List.generate(5, (index) {
-          return Container(
+      ),
+      const SizedBox(height: 12),
+      ...List.generate(5, (index) {
+        return Align(
+          alignment: Alignment.centerRight,
+          child: Container(
             margin: const EdgeInsets.only(bottom: 8),
-            padding: const EdgeInsets.all(12),
+            padding: EdgeInsets.all(isMobile ? 10 : 12),
             decoration: BoxDecoration(
               color: isDarkMode
                   ? const Color(0xFF2D2D2D)
@@ -1404,10 +1664,45 @@ class _CourseTabsState extends State<CourseTabs> {
               borderRadius: BorderRadius.circular(8),
             ),
             child: Row(
+              textDirection: TextDirection.rtl,
+              mainAxisAlignment: MainAxisAlignment.end,
               children: [
+                // Duration on the far right
+                Text(
+                  '${(index + 1) * 15} دقيقة',
+                  style: GoogleFonts.tajawal(
+                    fontSize: isMobile ? 11 : 12,
+                    fontWeight: FontWeight.w500,
+                    color: isDarkMode
+                        ? Colors.white70
+                        : const Color(0xFF6B7280),
+                  ),
+                ),
+                SizedBox(width: isMobile ? 8 : 12),
+                
+                // Lecture title in the middle
+                Expanded(
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: Text(
+                      'المحاضرة ${index + 1}: مقدمة في ${widget.course['category'] ?? 'الموضوع'}',
+                      style: GoogleFonts.tajawal(
+                        fontSize: isMobile ? 13 : 14,
+                        fontWeight: FontWeight.w600,
+                        color: isDarkMode
+                            ? Colors.white
+                            : const Color(0xFF374151),
+                      ),
+                      textAlign: TextAlign.right,
+                    ),
+                  ),
+                ),
+                SizedBox(width: isMobile ? 8 : 12),
+                
+                // Lock icon on the left
                 Container(
-                  width: 32,
-                  height: 32,
+                  width: isMobile ? 28 : 32,
+                  height: isMobile ? 28 : 32,
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
                       colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
@@ -1416,60 +1711,44 @@ class _CourseTabsState extends State<CourseTabs> {
                     ),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.lock_outline,
                     color: Colors.white,
-                    size: 16,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    'المحاضرة ${index + 1}: مقدمة في ${widget.course['category'] ?? 'الموضوع'}',
-                    style: GoogleFonts.tajawal(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: isDarkMode
-                          ? Colors.white
-                          : const Color(0xFF374151),
-                    ),
-                  ),
-                ),
-                Text(
-                  '${(index + 1) * 15} دقيقة',
-                  style: GoogleFonts.tajawal(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: isDarkMode
-                        ? Colors.white70
-                        : const Color(0xFF6B7280),
+                    size: isMobile ? 14 : 16,
                   ),
                 ),
               ],
             ),
-          );
-        }),
-      ],
-    );
-  }
+          ),
+        );
+      }),
+    ],
+  );
+}
 
-  Widget _buildReviews(bool isDarkMode) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
+Widget _buildReviews(bool isDarkMode, bool isMobile) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.end,
+    children: [
+      Align(
+        alignment: Alignment.centerRight,
+        child: Text(
           'تقييمات الطلاب',
           style: GoogleFonts.tajawal(
-            fontSize: 18,
+            fontSize: isMobile ? 18 : 20,
             fontWeight: FontWeight.w800,
             color: isDarkMode ? Colors.white : const Color(0xFF1F2937),
           ),
+          textAlign: TextAlign.right,
         ),
-        const SizedBox(height: 12),
-        ...List.generate(3, (index) {
-          return Container(
+      ),
+      const SizedBox(height: 12),
+      ...List.generate(3, (index) {
+        return Align(
+          alignment: Alignment.centerRight,
+          child: Container(
             margin: const EdgeInsets.only(bottom: 16),
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.all(isMobile ? 12 : 16),
             decoration: BoxDecoration(
               color: isDarkMode
                   ? const Color(0xFF2D2D2D)
@@ -1477,110 +1756,205 @@ class _CourseTabsState extends State<CourseTabs> {
               borderRadius: BorderRadius.circular(12),
             ),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Row(
+                  textDirection: TextDirection.rtl,
+                  mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    CircleAvatar(
-                      radius: 20,
-                      backgroundColor: isDarkMode
-                          ? Colors.grey[700]
-                          : Colors.grey[300],
-                      child: Text(
-                        'ط${index + 1}',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'محمد ${index + 1}',
-                            style: GoogleFonts.tajawal(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                              color: isDarkMode
-                                  ? Colors.white
-                                  : const Color(0xFF1F2937),
-                            ),
-                          ),
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.star,
-                                color: Colors.amber,
-                                size: 16,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                '5.0',
-                                style: GoogleFonts.tajawal(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: isDarkMode
-                                      ? Colors.white
-                                      : const Color(0xFF1F2937),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
+                    // Date on the far right
                     Text(
                       'منذ ${index + 1} أيام',
                       style: GoogleFonts.tajawal(
-                        fontSize: 12,
+                        fontSize: isMobile ? 11 : 12,
                         color: isDarkMode
                             ? Colors.white70
                             : const Color(0xFF6B7280),
                       ),
                     ),
+                    const Spacer(),
+                    
+                    // Name and rating in the middle
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: Text(
+                              'محمد ${index + 1}',
+                              style: GoogleFonts.tajawal(
+                                fontSize: isMobile ? 13 : 14,
+                                fontWeight: FontWeight.w700,
+                                color: isDarkMode
+                                    ? Colors.white
+                                    : const Color(0xFF1F2937),
+                              ),
+                              textAlign: TextAlign.right,
+                            ),
+                          ),
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              textDirection: TextDirection.rtl,
+                              children: [
+                                Text(
+                                  '5.0',
+                                  style: GoogleFonts.tajawal(
+                                    fontSize: isMobile ? 11 : 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: isDarkMode
+                                        ? Colors.white
+                                        : const Color(0xFF1F2937),
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                Icon(
+                                  Icons.star,
+                                  color: Colors.amber,
+                                  size: isMobile ? 14 : 16,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(width: isMobile ? 8 : 12),
+                    
+                    // Avatar on the left
+                    CircleAvatar(
+                      radius: isMobile ? 18 : 20,
+                      backgroundColor: isDarkMode
+                          ? Colors.grey[700]
+                          : Colors.grey[300],
+                      child: Text(
+                        'ط${index + 1}',
+                        style: TextStyle(
+                          fontSize: isMobile ? 10 : 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 8),
-                Text(
-                  'كورس رائع ومفيد جداً، الشرح واضح والمحتوى منظم بشكل ممتاز',
-                  style: GoogleFonts.tajawal(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                    color: isDarkMode
-                        ? Colors.white70
-                        : const Color(0xFF6B7280),
-                    height: 1.5,
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Text(
+                    'كورس رائع ومفيد جداً، الشرح واضح والمحتوى منظم بشكل ممتاز',
+                    style: GoogleFonts.tajawal(
+                      fontSize: isMobile ? 12 : 13,
+                      fontWeight: FontWeight.w500,
+                      color: isDarkMode
+                          ? Colors.white70
+                          : const Color(0xFF6B7280),
+                      height: 1.5,
+                    ),
+                    textAlign: TextAlign.right,
                   ),
                 ),
               ],
             ),
-          );
-        }),
-      ],
-    );
-  }
+          ),
+        );
+      }),
+    ],
+  );
+}
 
-  Widget _buildInstructor(bool isDarkMode) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
+Widget _buildInstructor(bool isDarkMode, bool isMobile) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.end,
+    children: [
+      Align(
+        alignment: Alignment.centerRight,
+        child: Text(
           'عن المدرب',
           style: GoogleFonts.tajawal(
-            fontSize: 18,
+            fontSize: isMobile ? 18 : 20,
             fontWeight: FontWeight.w800,
             color: isDarkMode ? Colors.white : const Color(0xFF1F2937),
           ),
+          textAlign: TextAlign.right,
         ),
-        const SizedBox(height: 16),
-        Row(
+      ),
+      const SizedBox(height: 16),
+      Align(
+        alignment: Alignment.centerRight,
+        child: Row(
+          textDirection: TextDirection.rtl,
+          mainAxisAlignment: MainAxisAlignment.end,
           children: [
+            // Text content on the right
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Text(
+                      widget.course['teacher']?.toString() ?? 'مدرب',
+                      style: GoogleFonts.tajawal(
+                        fontSize: isMobile ? 18 : 20,
+                        fontWeight: FontWeight.w800,
+                        color: isDarkMode
+                            ? Colors.white
+                            : const Color(0xFF1F2937),
+                      ),
+                      textAlign: TextAlign.right,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Text(
+                      'خبير في ${widget.course['category']?.toString() ?? 'التخصص'}',
+                      style: GoogleFonts.tajawal(
+                        fontSize: isMobile ? 14 : 16,
+                        fontWeight: FontWeight.w500,
+                        color: isDarkMode
+                            ? Colors.white70
+                            : const Color(0xFF6B7280),
+                      ),
+                      textAlign: TextAlign.right,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      textDirection: TextDirection.rtl,
+                      children: [
+                        _buildInstructorStat('15', 'كورس', isDarkMode, isMobile),
+                        SizedBox(width: isMobile ? 12 : 16),
+                        _buildInstructorStat(
+                          widget.course['students']?.toString() ?? '1000',
+                          'طالب',
+                          isDarkMode,
+                          isMobile,
+                        ),
+                        SizedBox(width: isMobile ? 12 : 16),
+                        _buildInstructorStat(
+                          '5.0',
+                          'التقييم',
+                          isDarkMode,
+                          isMobile,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(width: isMobile ? 12 : 16),
+            
+            // Avatar on the left
             Container(
-              width: 80,
-              height: 80,
+              width: isMobile ? 70 : 80,
+              height: isMobile ? 70 : 80,
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
                   colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
@@ -1590,80 +1964,50 @@ class _CourseTabsState extends State<CourseTabs> {
                 shape: BoxShape.circle,
               ),
               child: CircleAvatar(
-                radius: 38,
+                radius: isMobile ? 33 : 38,
                 backgroundColor: isDarkMode
                     ? Colors.grey[700]
                     : Colors.grey[300],
-                child: const Icon(Icons.person, size: 40, color: Colors.white),
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    widget.course['teacher']?.toString() ?? 'مدرب',
-                    style: GoogleFonts.tajawal(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                      color: isDarkMode
-                          ? Colors.white
-                          : const Color(0xFF1F2937),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'خبير في ${widget.course['category']?.toString() ?? 'التخصص'}',
-                    style: GoogleFonts.tajawal(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: isDarkMode
-                          ? Colors.white70
-                          : const Color(0xFF6B7280),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      _buildInstructorStat('5.0', 'التقييم', isDarkMode),
-                      const SizedBox(width: 16),
-                      _buildInstructorStat(
-                        widget.course['students']?.toString() ?? '1000',
-                        'طالب',
-                        isDarkMode,
-                      ),
-                      const SizedBox(width: 16),
-                      _buildInstructorStat('15', 'كورس', isDarkMode),
-                    ],
-                  ),
-                ],
+                child: Icon(
+                  Icons.person,
+                  size: isMobile ? 35 : 40,
+                  color: Colors.white,
+                ),
               ),
             ),
           ],
         ),
-        const SizedBox(height: 16),
-        Text(
+      ),
+      const SizedBox(height: 16),
+      Align(
+        alignment: Alignment.centerRight,
+        child: Text(
           'مدرب محترف بخبرة تزيد عن 5 سنوات في المجال. حاصل على شهادات متقدمة ويتمتع بأسلوب شرح مبسط وسهل الفهم.',
           style: GoogleFonts.tajawal(
-            fontSize: 14,
+            fontSize: isMobile ? 14 : 16,
             fontWeight: FontWeight.w500,
             color: isDarkMode ? Colors.white70 : const Color(0xFF6B7280),
             height: 1.6,
           ),
           textAlign: TextAlign.right,
         ),
-      ],
-    );
-  }
+      ),
+    ],
+  );
+}
 
-  Widget _buildInstructorStat(String value, String label, bool isDarkMode) {
+  Widget _buildInstructorStat(
+    String value,
+    String label,
+    bool isDarkMode,
+    bool isMobile,
+  ) {
     return Column(
       children: [
         Text(
           value,
           style: GoogleFonts.tajawal(
-            fontSize: 16,
+            fontSize: isMobile ? 15 : 16,
             fontWeight: FontWeight.w800,
             color: isDarkMode ? Colors.white : const Color(0xFF1F2937),
           ),
@@ -1671,7 +2015,7 @@ class _CourseTabsState extends State<CourseTabs> {
         Text(
           label,
           style: GoogleFonts.tajawal(
-            fontSize: 12,
+            fontSize: isMobile ? 11 : 12,
             fontWeight: FontWeight.w500,
             color: isDarkMode ? Colors.white70 : const Color(0xFF6B7280),
           ),
@@ -1686,7 +2030,7 @@ class RelatedCourses extends StatelessWidget {
   final Function(Map<String, dynamic>) onCourseTap;
 
   const RelatedCourses({
-    super.key, 
+    super.key,
     required this.relatedCourses,
     required this.onCourseTap,
   });
@@ -1701,171 +2045,256 @@ class RelatedCourses extends StatelessWidget {
         final courseWidth = isMobile ? 280.0 : 320.0;
         final courseHeight = isMobile ? 200.0 : 220.0;
 
-        return SliverToBoxAdapter(
-          child: Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: isMobile ? 20 : 32,
-              vertical: 24,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'كورسات ذات صلة',
-                  style: GoogleFonts.tajawal(
-                    fontSize: isMobile ? 20 : 24,
-                    fontWeight: FontWeight.w800,
-                    color: isDarkMode ? Colors.white : const Color(0xFF1F2937),
+        // Create a reversed list for RTL display
+        final reversedCourses = List<Map<String, dynamic>>.from(
+          relatedCourses.reversed,
+        );
+
+        return Directionality(
+          textDirection: TextDirection.rtl,
+          child: SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: isMobile ? 16 : 32,
+                vertical: 24,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  // Title aligned to the right
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Padding(
+                      padding: EdgeInsets.only(
+                        right: isMobile
+                            ? 0
+                            : 0, // Remove extra padding since Align handles positioning
+                      ),
+                      child: Text(
+                        'كورسات ذات صلة',
+                        style: GoogleFonts.tajawal(
+                          fontSize: isMobile ? 20 : 24,
+                          fontWeight: FontWeight.w800,
+                          color: isDarkMode
+                              ? Colors.white
+                              : const Color(0xFF1F2937),
+                        ),
+                        textAlign: TextAlign.right,
+                      ),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 16),
-                SizedBox(
-                  height: courseHeight,
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: relatedCourses.length,
-                    separatorBuilder: (_, __) => const SizedBox(width: 16),
-                    itemBuilder: (context, index) {
-                      final course = relatedCourses[index];
-                      return SizedBox(
-                        width: courseWidth,
-                        child: GestureDetector(
-                          onTap: () => onCourseTap(course),
-                          child: MouseRegion(
-                            cursor: SystemMouseCursors.click,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: isDarkMode
-                                    ? const Color(0xFF1E1E1E)
-                                    : Colors.white,
-                                borderRadius: BorderRadius.circular(16),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(
-                                      isDarkMode ? 0.2 : 0.05,
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    height: courseHeight,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: reversedCourses.length,
+                      separatorBuilder: (_, __) => const SizedBox(width: 16),
+                      itemBuilder: (context, index) {
+                        final course = reversedCourses[index];
+                        return SizedBox(
+                          width: courseWidth,
+                          child: GestureDetector(
+                            onTap: () => onCourseTap(course),
+                            child: MouseRegion(
+                              cursor: SystemMouseCursors.click,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: isDarkMode
+                                      ? const Color(0xFF1E1E1E)
+                                      : Colors.white,
+                                  borderRadius: BorderRadius.circular(16),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(
+                                        isDarkMode ? 0.2 : 0.05,
+                                      ),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 3),
                                     ),
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 3),
-                                  ),
-                                ],
-                                border: isDarkMode
-                                    ? Border.all(color: Colors.white30)
-                                    : null,
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  ClipRRect(
-                                    borderRadius: const BorderRadius.vertical(
-                                      top: Radius.circular(16),
-                                    ),
-                                    child: Image.network(
-                                      course['image'],
-                                      width: courseWidth,
-                                      height: courseHeight * 0.6,
-                                      fit: BoxFit.cover,
-                                      loadingBuilder:
-                                          (context, child, loadingProgress) {
-                                        if (loadingProgress == null)
-                                          return child;
-                                        return Container(
-                                          width: courseWidth,
-                                          height: courseHeight * 0.6,
-                                          color: isDarkMode
-                                              ? const Color(0xFF2D2D2D)
-                                              : const Color(0xFFF3F4F6),
-                                          child: Center(
-                                            child: CircularProgressIndicator(
-                                              valueColor:
-                                                  AlwaysStoppedAnimation<Color>(
-                                                isDarkMode
-                                                    ? Colors.white70
-                                                    : const Color(0xFF2563EB),
-                                              ),
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                      errorBuilder: (context, error, stackTrace) {
-                                        return Container(
-                                          width: courseWidth,
-                                          height: courseHeight * 0.6,
-                                          color: isDarkMode
-                                              ? const Color(0xFF2D2D2D)
-                                              : const Color(0xFFF3F4F6),
-                                          child: Icon(
-                                            Icons.error_outline,
-                                            color: isDarkMode
-                                                ? Colors.white70
-                                                : const Color(0xFF6B7280),
-                                            size: 40,
-                                          ),
-                                        );
-                                      },
-                                    ),
-                                  ),
-                                  Expanded(
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(12),
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Text(
-                                            course['title'],
-                                            style: GoogleFonts.tajawal(
-                                              fontSize: isMobile ? 14 : 15,
-                                              fontWeight: FontWeight.w700,
-                                              color: isDarkMode
-                                                  ? Colors.white
-                                                  : const Color(0xFF374151),
-                                            ),
-                                            maxLines: 2,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                          Row(
-                                            children: [
-                                              const Icon(
-                                                Icons.star,
-                                                size: 14,
-                                                color: Colors.amber,
-                                              ),
-                                              const SizedBox(width: 4),
-                                              Text(
-                                                course['rating'].toStringAsFixed(1),
-                                                style: GoogleFonts.tajawal(
-                                                  fontSize: 12,
-                                                  fontWeight: FontWeight.w600,
+                                  ],
+                                  border: isDarkMode
+                                      ? Border.all(color: Colors.white30)
+                                      : null,
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: [
+                                    // Course Image
+                                    ClipRRect(
+                                      borderRadius: const BorderRadius.vertical(
+                                        top: Radius.circular(16),
+                                      ),
+                                      child: Image.network(
+                                        course['image'],
+                                        width: courseWidth,
+                                        height: courseHeight * 0.6,
+                                        fit: BoxFit.cover,
+                                        loadingBuilder:
+                                            (context, child, loadingProgress) {
+                                              if (loadingProgress == null)
+                                                return child;
+                                              return Container(
+                                                width: courseWidth,
+                                                height: courseHeight * 0.6,
+                                                color: isDarkMode
+                                                    ? const Color(0xFF2D2D2D)
+                                                    : const Color(0xFFF3F4F6),
+                                                child: Center(
+                                                  child: CircularProgressIndicator(
+                                                    valueColor:
+                                                        AlwaysStoppedAnimation<
+                                                          Color
+                                                        >(
+                                                          isDarkMode
+                                                              ? Colors.white70
+                                                              : const Color(
+                                                                  0xFF2563EB,
+                                                                ),
+                                                        ),
+                                                  ),
+                                                ),
+                                              );
+                                            },
+                                        errorBuilder:
+                                            (context, error, stackTrace) {
+                                              return Container(
+                                                width: courseWidth,
+                                                height: courseHeight * 0.6,
+                                                color: isDarkMode
+                                                    ? const Color(0xFF2D2D2D)
+                                                    : const Color(0xFFF3F4F6),
+                                                child: Icon(
+                                                  Icons.error_outline,
                                                   color: isDarkMode
-                                                      ? Colors.white
-                                                      : const Color(0xFF374151),
+                                                      ? Colors.white70
+                                                      : const Color(0xFF6B7280),
+                                                  size: isMobile ? 32 : 40,
                                                 ),
-                                              ),
-                                              const Spacer(),
-                                              Text(
-                                                course['price'],
-                                                style: GoogleFonts.tajawal(
-                                                  fontSize: isMobile ? 14 : 15,
-                                                  fontWeight: FontWeight.w800,
-                                                  color: const Color(0xFF10B981),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ],
+                                              );
+                                            },
                                       ),
                                     ),
-                                  ),
-                                ],
+
+                                    // Course Info
+                                    Expanded(
+                                      child: Padding(
+                                        padding: EdgeInsets.all(
+                                          isMobile ? 10 : 12,
+                                        ),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.end,
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            // Course Title
+                                            Text(
+                                              course['title'],
+                                              style: GoogleFonts.tajawal(
+                                                fontSize: isMobile ? 14 : 15,
+                                                fontWeight: FontWeight.w700,
+                                                color: isDarkMode
+                                                    ? Colors.white
+                                                    : const Color(0xFF374151),
+                                              ),
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
+                                              textAlign: TextAlign.right,
+                                            ),
+
+                                            // Course Rating and Price
+                                            Row(
+                                              textDirection: TextDirection.rtl,
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              children: [
+                                                // Price on the right
+                                                Flexible(
+                                                  child: Text(
+                                                    course['price'] ?? 'مجاني',
+                                                    style: GoogleFonts.tajawal(
+                                                      fontSize: isMobile
+                                                          ? 14
+                                                          : 15,
+                                                      fontWeight:
+                                                          FontWeight.w800,
+                                                      color:
+                                                          course['price']
+                                                                  ?.toString()
+                                                                  .toLowerCase()
+                                                                  .contains(
+                                                                    'مجاني',
+                                                                  ) ??
+                                                              false
+                                                          ? const Color(
+                                                              0xFF10B981,
+                                                            )
+                                                          : const Color(
+                                                              0xFF10B981,
+                                                            ),
+                                                    ),
+                                                    textAlign: TextAlign.right,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                  ),
+                                                ),
+
+                                                // Rating on the left
+                                                Row(
+                                                  textDirection:
+                                                      TextDirection.rtl,
+                                                  mainAxisSize:
+                                                      MainAxisSize.min,
+                                                  children: [
+                                                    Text(
+                                                      course['rating']
+                                                              ?.toStringAsFixed(
+                                                                1,
+                                                              ) ??
+                                                          '5.0',
+                                                      style:
+                                                          GoogleFonts.tajawal(
+                                                            fontSize: isMobile
+                                                                ? 12
+                                                                : 13,
+                                                            fontWeight:
+                                                                FontWeight.w600,
+                                                            color: isDarkMode
+                                                                ? Colors.white
+                                                                : const Color(
+                                                                    0xFF374151,
+                                                                  ),
+                                                          ),
+                                                    ),
+                                                    SizedBox(
+                                                      width: isMobile ? 2 : 4,
+                                                    ),
+                                                    Icon(
+                                                      Icons.star,
+                                                      size: isMobile ? 12 : 14,
+                                                      color: Colors.amber,
+                                                    ),
+                                                  ],
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                      );
-                    },
+                        );
+                      },
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         );
