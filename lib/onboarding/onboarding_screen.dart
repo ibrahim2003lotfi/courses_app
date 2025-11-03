@@ -1,7 +1,6 @@
 // lib/main_pages/onboarding/onboarding_screen.dart
 import 'package:courses_app/core/utils/onboarding_manager.dart';
 import 'package:courses_app/core/utils/theme_manager.dart';
-import 'package:courses_app/main_pages/auth/presentation/pages/login_page.dart';
 import 'package:courses_app/theme_cubit/theme_cubit.dart';
 import 'package:courses_app/theme_cubit/theme_state.dart';
 import 'package:courses_app/widget_tree.dart';

@@ -31,17 +31,21 @@ class _CourseDetailsPageState extends State<CourseDetailsPage> {
     return BlocBuilder<ThemeCubit, ThemeState>(
       builder: (context, themeState) {
         final isDarkMode = themeState.isDarkMode;
-        
+
         return Scaffold(
-          backgroundColor: isDarkMode ? const Color(0xFF121212) : const Color(0xFFF8FAFC),
+          backgroundColor: isDarkMode
+              ? const Color(0xFF121212)
+              : const Color(0xFFF8FAFC),
           body: BlocBuilder<CourseManagementBloc, CourseManagementState>(
             builder: (context, courseState) {
-              final isEnrolled = courseState.enrolledCourses
-                  .any((course) => course['id'] == widget.course['id']);
-              
+              final isEnrolled = courseState.enrolledCourses.any(
+                (course) => course['id'] == widget.course['id'],
+              );
+
               if (isEnrolled) {
-                final enrolledCourse = courseState.enrolledCourses
-                    .firstWhere((course) => course['id'] == widget.course['id']);
+                final enrolledCourse = courseState.enrolledCourses.firstWhere(
+                  (course) => course['id'] == widget.course['id'],
+                );
                 return _buildEnrolledCourseView(context, enrolledCourse);
               } else {
                 return _buildCoursePreviewView(context);
@@ -63,14 +67,15 @@ class _CourseDetailsPageState extends State<CourseDetailsPage> {
           relatedCourses: _getRelatedCourses(),
           onCourseTap: _navigateToCourseDetails,
         ),
-        const SliverToBoxAdapter(
-          child: SizedBox(height: 40),
-        ),
+        const SliverToBoxAdapter(child: SizedBox(height: 40)),
       ],
     );
   }
 
-  Widget _buildEnrolledCourseView(BuildContext context, Map<String, dynamic> enrolledCourse) {
+  Widget _buildEnrolledCourseView(
+    BuildContext context,
+    Map<String, dynamic> enrolledCourse,
+  ) {
     return CustomScrollView(
       slivers: [
         EnrolledCourseHeader(course: enrolledCourse),
@@ -79,16 +84,18 @@ class _CourseDetailsPageState extends State<CourseDetailsPage> {
           child: _buildContinueLearningButton(context, enrolledCourse),
         ),
         LessonsListWidget(course: enrolledCourse),
-        const SliverToBoxAdapter(
-          child: SizedBox(height: 40),
-        ),
+        const SliverToBoxAdapter(child: SizedBox(height: 40)),
       ],
     );
   }
 
-  Widget _buildContinueLearningButton(BuildContext context, Map<String, dynamic> course) {
+  Widget _buildContinueLearningButton(
+    BuildContext context,
+    Map<String, dynamic> course,
+  ) {
     return BlocBuilder<ThemeCubit, ThemeState>(
       builder: (context, themeState) {
+        // ignore: unused_local_variable
         final isDarkMode = themeState.isDarkMode;
         final currentLesson = course['currentLesson'] ?? 0;
         final totalLessons = course['lessons'] ?? 1;
@@ -153,7 +160,10 @@ class _CourseDetailsPageState extends State<CourseDetailsPage> {
                         ],
                       ),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.white.withOpacity(0.2),
                           borderRadius: BorderRadius.circular(20),
@@ -178,7 +188,11 @@ class _CourseDetailsPageState extends State<CourseDetailsPage> {
     );
   }
 
-  void _playLesson(BuildContext context, int lessonIndex, Map<String, dynamic> course) {
+  void _playLesson(
+    BuildContext context,
+    int lessonIndex,
+    Map<String, dynamic> course,
+  ) {
     // This would navigate to actual video player in real app
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -188,9 +202,7 @@ class _CourseDetailsPageState extends State<CourseDetailsPage> {
         ),
         backgroundColor: Colors.green,
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
   }
@@ -220,12 +232,13 @@ class _CourseDetailsPageState extends State<CourseDetailsPage> {
         'level': 'متقدم',
         'lastUpdated': 'ديسمبر 2024',
         'price': '200,000 S.P',
-        'description': 'دورة شاملة لتعلم Flutter من الصفر حتى الاحتراف. ستتعلم بناء تطبيقات متقدمة باستخدام أحدث التقنيات.',
+        'description':
+            'دورة شاملة لتعلم Flutter من الصفر حتى الاحتراف. ستتعلم بناء تطبيقات متقدمة باستخدام أحدث التقنيات.',
         'tags': ['Flutter', 'Dart', 'Mobile', 'Firebase'],
         'instructorImage': 'https://picsum.photos/seed/instructor2/200/200',
       },
       {
-        'id': 'related_2', 
+        'id': 'related_2',
         'title': 'UI/UX Design للمبتدئين',
         'image': 'https://picsum.photos/seed/design/400/300',
         'teacher': 'فاطمة علي',
@@ -238,7 +251,8 @@ class _CourseDetailsPageState extends State<CourseDetailsPage> {
         'level': 'مبتدئ',
         'lastUpdated': 'نوفمبر 2024',
         'price': '175,000 S.P',
-        'description': 'دورة متكاملة لتعلم أساسيات UI/UX Design مع مشاريع عملية.',
+        'description':
+            'دورة متكاملة لتعلم أساسيات UI/UX Design مع مشاريع عملية.',
         'tags': ['UI/UX', 'Design', 'Figma', 'Prototype'],
         'instructorImage': 'https://picsum.photos/seed/instructor3/200/200',
       },

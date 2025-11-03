@@ -67,6 +67,7 @@ class _SearchPageState extends State<SearchPage> {
   ];
 
   // Sample popular categories
+  // ignore: unused_field
   final List<Map<String, dynamic>> _popularCategories = [
     {
       'name': 'برمجة',
@@ -100,9 +101,9 @@ class _SearchPageState extends State<SearchPage> {
     return BlocBuilder<ThemeCubit, ThemeState>(
       builder: (context, themeState) {
         final bool isDarkMode = themeState.isDarkMode;
-        
+
         return Scaffold(
-          backgroundColor: isDarkMode 
+          backgroundColor: isDarkMode
               ? ThemeManager.darkTheme.scaffoldBackgroundColor
               : ThemeManager.lightTheme.scaffoldBackgroundColor,
           body: CustomScrollView(
@@ -110,7 +111,7 @@ class _SearchPageState extends State<SearchPage> {
               // Top Search Bar (from home page)
               SliverAppBar(
                 automaticallyImplyLeading: false,
-                backgroundColor: isDarkMode 
+                backgroundColor: isDarkMode
                     ? ThemeManager.darkTheme.appBarTheme.backgroundColor
                     : ThemeManager.lightTheme.appBarTheme.backgroundColor,
                 elevation: 2,

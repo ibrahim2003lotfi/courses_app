@@ -32,6 +32,7 @@ class _PublishedCoursesTabState extends State<PublishedCoursesTab> {
   @override
   Widget build(BuildContext context) {
     // Use widget.parentContext for dialogs and navigation
+    // ignore: unused_local_variable
     final themeData = widget.isDarkMode
         ? ThemeManager.darkTheme
         : ThemeManager.lightTheme;
@@ -42,49 +43,50 @@ class _PublishedCoursesTabState extends State<PublishedCoursesTab> {
         Padding(
           padding: const EdgeInsets.all(16.0),
           child: Container(
-  height: 56, // Matches the ElevatedButton height (16 vertical padding * 2 + content height)
-  decoration: BoxDecoration(
-    gradient: const LinearGradient(
-      colors: [
-        Color(0xFF667EEA),
-        Color(0xFF764BA2),
-      ],
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
-    ),
-    borderRadius: BorderRadius.circular(12),
-    boxShadow: [
-      BoxShadow(
-        color: Colors.black.withOpacity(0.1),
-        blurRadius: 2,
-        offset: const Offset(0, 2),
-      ),
-    ],
-  ),
-  child: InkWell(
-    onTap: () => _navigateToAddCoursePage(widget.parentContext),
-    borderRadius: BorderRadius.circular(12),
-    child: Padding(
-      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.add, color: Colors.white),
-          const SizedBox(width: 8),
-          Text(
-            'إضافة دورة جديدة',
-            style: GoogleFonts.tajawal(
-              fontSize: widget.baseFontSize * 0.8,
-              fontWeight: FontWeight.w700,
-              color: Colors.white,
+            height:
+                56, // Matches the ElevatedButton height (16 vertical padding * 2 + content height)
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 2,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: InkWell(
+              onTap: () => _navigateToAddCoursePage(widget.parentContext),
+              borderRadius: BorderRadius.circular(12),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  vertical: 16,
+                  horizontal: 24,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.add, color: Colors.white),
+                    const SizedBox(width: 8),
+                    Text(
+                      'إضافة دورة جديدة',
+                      style: GoogleFonts.tajawal(
+                        fontSize: widget.baseFontSize * 0.8,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
-        ],
-      ),
-    ),
-  ),
-)
         ),
 
         // Courses List
@@ -898,6 +900,7 @@ class CoursesListView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // ignore: unused_local_variable
     final themeData = isDarkMode
         ? ThemeManager.darkTheme
         : ThemeManager.lightTheme;

@@ -27,7 +27,8 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
   final TextEditingController _confirmPasswordController =
       TextEditingController();
 
-  int _currentStep = 1; // 1: البحث، 2: التأكيد، 3: الرمز، 4: كلمة المرور الجديدة
+  int _currentStep =
+      1; // 1: البحث، 2: التأكيد، 3: الرمز، 4: كلمة المرور الجديدة
   bool _useEmail = false;
   bool _isLoading = false;
   bool _obscurePassword = true;
@@ -253,6 +254,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
 
   Widget _buildSearchAccountForm(bool isSmallScreen) {
     final padding = isSmallScreen ? 16.0 : 24.0;
+    // ignore: unused_local_variable
     final spacing = isSmallScreen ? 12.0 : 20.0;
 
     return Container(
@@ -291,7 +293,10 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
                         key: _formKey,
                         child: Column(
                           children: [
-                            if (!_useEmail) _buildPhoneField() else _buildEmailField(),
+                            if (!_useEmail)
+                              _buildPhoneField()
+                            else
+                              _buildEmailField(),
                             const SizedBox(height: 16),
                             TextButton(
                               onPressed: () {
@@ -305,7 +310,10 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
                                     ? 'استخدام رقم الهاتف بدلاً من ذلك؟'
                                     : 'استخدام البريد الإلكتروني بدلاً من ذلك؟',
                                 style: GoogleFonts.tajawal(
-                                  fontSize: _getResponsiveFontSize(context, base: 14),
+                                  fontSize: _getResponsiveFontSize(
+                                    context,
+                                    base: 14,
+                                  ),
                                   color: Colors.white70,
                                 ),
                               ),
@@ -317,19 +325,26 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
                               child: Container(
                                 decoration: BoxDecoration(
                                   gradient: const LinearGradient(
-                                    colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
+                                    colors: [
+                                      Color(0xFF667EEA),
+                                      Color(0xFF764BA2),
+                                    ],
                                   ),
                                   borderRadius: BorderRadius.circular(16),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: const Color(0xFF667EEA).withOpacity(0.5),
+                                      color: const Color(
+                                        0xFF667EEA,
+                                      ).withOpacity(0.5),
                                       blurRadius: 20,
                                       offset: const Offset(0, 8),
                                     ),
                                   ],
                                 ),
                                 child: ElevatedButton(
-                                  onPressed: _isLoading ? null : _handleSearchAccount,
+                                  onPressed: _isLoading
+                                      ? null
+                                      : _handleSearchAccount,
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: Colors.transparent,
                                     foregroundColor: Colors.white,
@@ -340,21 +355,31 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
                                   ),
                                   child: _isLoading
                                       ? const CircularProgressIndicator(
-                                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                          valueColor:
+                                              AlwaysStoppedAnimation<Color>(
+                                                Colors.white,
+                                              ),
                                         )
                                       : Row(
-                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
                                           children: [
                                             Icon(
                                               Icons.search_rounded,
                                               size: 22,
-                                              color: Colors.white.withOpacity(0.95),
+                                              color: Colors.white.withOpacity(
+                                                0.95,
+                                              ),
                                             ),
                                             const SizedBox(width: 10),
                                             Text(
                                               'البحث عن الحساب',
                                               style: GoogleFonts.tajawal(
-                                                fontSize: _getResponsiveFontSize(context, base: 16),
+                                                fontSize:
+                                                    _getResponsiveFontSize(
+                                                      context,
+                                                      base: 16,
+                                                    ),
                                                 fontWeight: FontWeight.w700,
                                                 letterSpacing: 0.5,
                                               ),
@@ -414,7 +439,10 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
             decoration: InputDecoration(
               labelText: 'رقم الهاتف',
               labelStyle: GoogleFonts.tajawal(color: Colors.white70),
-              prefixIcon: const Icon(Icons.phone_rounded, color: Colors.white70),
+              prefixIcon: const Icon(
+                Icons.phone_rounded,
+                color: Colors.white70,
+              ),
               hintText: '944123456',
               hintStyle: GoogleFonts.tajawal(color: Colors.white38),
               enabledBorder: OutlineInputBorder(
@@ -534,7 +562,10 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
                           Text(
                             'سنرسل لك رمزًا إلى بريدك الإلكتروني',
                             style: GoogleFonts.tajawal(
-                              fontSize: _getResponsiveFontSize(context, base: 16),
+                              fontSize: _getResponsiveFontSize(
+                                context,
+                                base: 16,
+                              ),
                               color: Colors.white70,
                             ),
                             textAlign: TextAlign.center,
@@ -556,7 +587,10 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
                                   height: 60,
                                   decoration: const BoxDecoration(
                                     gradient: LinearGradient(
-                                      colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
+                                      colors: [
+                                        Color(0xFF667EEA),
+                                        Color(0xFF764BA2),
+                                      ],
                                     ),
                                     shape: BoxShape.circle,
                                   ),
@@ -569,12 +603,16 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
                                 const SizedBox(width: 16),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         _foundAccountName,
                                         style: GoogleFonts.tajawal(
-                                          fontSize: _getResponsiveFontSize(context, base: 18),
+                                          fontSize: _getResponsiveFontSize(
+                                            context,
+                                            base: 18,
+                                          ),
                                           fontWeight: FontWeight.bold,
                                           color: Colors.white,
                                         ),
@@ -583,7 +621,10 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
                                       Text(
                                         _foundAccountEmail,
                                         style: GoogleFonts.tajawal(
-                                          fontSize: _getResponsiveFontSize(context, base: 14),
+                                          fontSize: _getResponsiveFontSize(
+                                            context,
+                                            base: 14,
+                                          ),
                                           color: Colors.white70,
                                         ),
                                       ),
@@ -600,19 +641,26 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
                             child: Container(
                               decoration: BoxDecoration(
                                 gradient: const LinearGradient(
-                                  colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
+                                  colors: [
+                                    Color(0xFF667EEA),
+                                    Color(0xFF764BA2),
+                                  ],
                                 ),
                                 borderRadius: BorderRadius.circular(16),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: const Color(0xFF667EEA).withOpacity(0.5),
+                                    color: const Color(
+                                      0xFF667EEA,
+                                    ).withOpacity(0.5),
                                     blurRadius: 20,
                                     offset: const Offset(0, 8),
                                   ),
                                 ],
                               ),
                               child: ElevatedButton(
-                                onPressed: _isLoading ? null : _handleContinueToCode,
+                                onPressed: _isLoading
+                                    ? null
+                                    : _handleContinueToCode,
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.transparent,
                                   foregroundColor: Colors.white,
@@ -623,21 +671,30 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
                                 ),
                                 child: _isLoading
                                     ? const CircularProgressIndicator(
-                                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                              Colors.white,
+                                            ),
                                       )
                                     : Row(
-                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
                                         children: [
                                           Icon(
                                             Icons.arrow_forward_rounded,
                                             size: 22,
-                                            color: Colors.white.withOpacity(0.95),
+                                            color: Colors.white.withOpacity(
+                                              0.95,
+                                            ),
                                           ),
                                           const SizedBox(width: 10),
                                           Text(
                                             'متابعة',
                                             style: GoogleFonts.tajawal(
-                                              fontSize: _getResponsiveFontSize(context, base: 16),
+                                              fontSize: _getResponsiveFontSize(
+                                                context,
+                                                base: 16,
+                                              ),
                                               fontWeight: FontWeight.w700,
                                               letterSpacing: 0.5,
                                             ),
@@ -657,7 +714,10 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
                             child: Text(
                               'تجربة طريقة أخرى',
                               style: GoogleFonts.tajawal(
-                                fontSize: _getResponsiveFontSize(context, base: 14),
+                                fontSize: _getResponsiveFontSize(
+                                  context,
+                                  base: 14,
+                                ),
                                 color: Colors.white70,
                                 decoration: TextDecoration.underline,
                               ),
@@ -718,7 +778,10 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
                             Text(
                               'لقد أرسلنا رمزًا إلى بريدك الإلكتروني، يرجى إدخال الرمز لتأكيد حسابك.',
                               style: GoogleFonts.tajawal(
-                                fontSize: _getResponsiveFontSize(context, base: 16),
+                                fontSize: _getResponsiveFontSize(
+                                  context,
+                                  base: 16,
+                                ),
                                 color: Colors.white70,
                                 height: 1.5,
                               ),
@@ -740,13 +803,17 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
                               textAlign: TextAlign.center,
                               decoration: InputDecoration(
                                 labelText: 'رمز التأكيد',
-                                labelStyle: GoogleFonts.tajawal(color: Colors.white70),
+                                labelStyle: GoogleFonts.tajawal(
+                                  color: Colors.white70,
+                                ),
                                 prefixIcon: const Icon(
                                   Icons.security_rounded,
                                   color: Colors.white70,
                                 ),
                                 hintText: '123456',
-                                hintStyle: GoogleFonts.tajawal(color: Colors.white38),
+                                hintStyle: GoogleFonts.tajawal(
+                                  color: Colors.white38,
+                                ),
                                 enabledBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
                                   borderSide: BorderSide(
@@ -762,11 +829,17 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
                                 ),
                                 errorBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
-                                  borderSide: const BorderSide(color: Colors.red, width: 2),
+                                  borderSide: const BorderSide(
+                                    color: Colors.red,
+                                    width: 2,
+                                  ),
                                 ),
                                 focusedErrorBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
-                                  borderSide: const BorderSide(color: Colors.red, width: 2),
+                                  borderSide: const BorderSide(
+                                    color: Colors.red,
+                                    width: 2,
+                                  ),
                                 ),
                                 filled: true,
                                 fillColor: Colors.white.withOpacity(0.08),
@@ -788,19 +861,26 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
                               child: Container(
                                 decoration: BoxDecoration(
                                   gradient: const LinearGradient(
-                                    colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
+                                    colors: [
+                                      Color(0xFF667EEA),
+                                      Color(0xFF764BA2),
+                                    ],
                                   ),
                                   borderRadius: BorderRadius.circular(16),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: const Color(0xFF667EEA).withOpacity(0.5),
+                                      color: const Color(
+                                        0xFF667EEA,
+                                      ).withOpacity(0.5),
                                       blurRadius: 20,
                                       offset: const Offset(0, 8),
                                     ),
                                   ],
                                 ),
                                 child: ElevatedButton(
-                                  onPressed: _isLoading ? null : _handleVerifyCode,
+                                  onPressed: _isLoading
+                                      ? null
+                                      : _handleVerifyCode,
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: Colors.transparent,
                                     foregroundColor: Colors.white,
@@ -811,21 +891,31 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
                                   ),
                                   child: _isLoading
                                       ? const CircularProgressIndicator(
-                                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                          valueColor:
+                                              AlwaysStoppedAnimation<Color>(
+                                                Colors.white,
+                                              ),
                                         )
                                       : Row(
-                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
                                           children: [
                                             Icon(
                                               Icons.verified_rounded,
                                               size: 22,
-                                              color: Colors.white.withOpacity(0.95),
+                                              color: Colors.white.withOpacity(
+                                                0.95,
+                                              ),
                                             ),
                                             const SizedBox(width: 10),
                                             Text(
                                               'تحقق من الرمز',
                                               style: GoogleFonts.tajawal(
-                                                fontSize: _getResponsiveFontSize(context, base: 16),
+                                                fontSize:
+                                                    _getResponsiveFontSize(
+                                                      context,
+                                                      base: 16,
+                                                    ),
                                                 fontWeight: FontWeight.w700,
                                                 letterSpacing: 0.5,
                                               ),
@@ -841,7 +931,10 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
                               child: Text(
                                 'إعادة إرسال الرمز',
                                 style: GoogleFonts.tajawal(
-                                  fontSize: _getResponsiveFontSize(context, base: 14),
+                                  fontSize: _getResponsiveFontSize(
+                                    context,
+                                    base: 14,
+                                  ),
                                   color: Colors.white70,
                                   decoration: TextDecoration.underline,
                                 ),
@@ -904,7 +997,10 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
                             Text(
                               'أدخل كلمة مرور جديدة لحسابك',
                               style: GoogleFonts.tajawal(
-                                fontSize: _getResponsiveFontSize(context, base: 16),
+                                fontSize: _getResponsiveFontSize(
+                                  context,
+                                  base: 16,
+                                ),
                                 color: Colors.white70,
                               ),
                               textAlign: TextAlign.center,
@@ -913,11 +1009,19 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
                             TextFormField(
                               controller: _passwordController,
                               obscureText: _obscurePassword,
-                              style: GoogleFonts.tajawal(color: Colors.white, fontSize: 16),
+                              style: GoogleFonts.tajawal(
+                                color: Colors.white,
+                                fontSize: 16,
+                              ),
                               decoration: InputDecoration(
                                 labelText: 'كلمة المرور الجديدة',
-                                labelStyle: GoogleFonts.tajawal(color: Colors.white70),
-                                prefixIcon: const Icon(Icons.lock_rounded, color: Colors.white70),
+                                labelStyle: GoogleFonts.tajawal(
+                                  color: Colors.white70,
+                                ),
+                                prefixIcon: const Icon(
+                                  Icons.lock_rounded,
+                                  color: Colors.white70,
+                                ),
                                 suffixIcon: IconButton(
                                   icon: Icon(
                                     _obscurePassword
@@ -946,11 +1050,17 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
                                 ),
                                 errorBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
-                                  borderSide: const BorderSide(color: Colors.red, width: 2),
+                                  borderSide: const BorderSide(
+                                    color: Colors.red,
+                                    width: 2,
+                                  ),
                                 ),
                                 focusedErrorBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
-                                  borderSide: const BorderSide(color: Colors.red, width: 2),
+                                  borderSide: const BorderSide(
+                                    color: Colors.red,
+                                    width: 2,
+                                  ),
                                 ),
                                 filled: true,
                                 fillColor: Colors.white.withOpacity(0.08),
@@ -969,10 +1079,15 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
                             TextFormField(
                               controller: _confirmPasswordController,
                               obscureText: _obscureConfirmPassword,
-                              style: GoogleFonts.tajawal(color: Colors.white, fontSize: 16),
+                              style: GoogleFonts.tajawal(
+                                color: Colors.white,
+                                fontSize: 16,
+                              ),
                               decoration: InputDecoration(
                                 labelText: 'تأكيد كلمة المرور',
-                                labelStyle: GoogleFonts.tajawal(color: Colors.white70),
+                                labelStyle: GoogleFonts.tajawal(
+                                  color: Colors.white70,
+                                ),
                                 prefixIcon: const Icon(
                                   Icons.lock_outline_rounded,
                                   color: Colors.white70,
@@ -986,7 +1101,8 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
                                   ),
                                   onPressed: () {
                                     setState(() {
-                                      _obscureConfirmPassword = !_obscureConfirmPassword;
+                                      _obscureConfirmPassword =
+                                          !_obscureConfirmPassword;
                                     });
                                   },
                                 ),
@@ -1005,11 +1121,17 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
                                 ),
                                 errorBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
-                                  borderSide: const BorderSide(color: Colors.red, width: 2),
+                                  borderSide: const BorderSide(
+                                    color: Colors.red,
+                                    width: 2,
+                                  ),
                                 ),
                                 focusedErrorBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
-                                  borderSide: const BorderSide(color: Colors.red, width: 2),
+                                  borderSide: const BorderSide(
+                                    color: Colors.red,
+                                    width: 2,
+                                  ),
                                 ),
                                 filled: true,
                                 fillColor: Colors.white.withOpacity(0.08),
@@ -1031,19 +1153,26 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
                               child: Container(
                                 decoration: BoxDecoration(
                                   gradient: const LinearGradient(
-                                    colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
+                                    colors: [
+                                      Color(0xFF667EEA),
+                                      Color(0xFF764BA2),
+                                    ],
                                   ),
                                   borderRadius: BorderRadius.circular(16),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: const Color(0xFF667EEA).withOpacity(0.5),
+                                      color: const Color(
+                                        0xFF667EEA,
+                                      ).withOpacity(0.5),
                                       blurRadius: 20,
                                       offset: const Offset(0, 8),
                                     ),
                                   ],
                                 ),
                                 child: ElevatedButton(
-                                  onPressed: _isLoading ? null : _handleResetPassword,
+                                  onPressed: _isLoading
+                                      ? null
+                                      : _handleResetPassword,
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: Colors.transparent,
                                     foregroundColor: Colors.white,
@@ -1054,21 +1183,31 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
                                   ),
                                   child: _isLoading
                                       ? const CircularProgressIndicator(
-                                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                          valueColor:
+                                              AlwaysStoppedAnimation<Color>(
+                                                Colors.white,
+                                              ),
                                         )
                                       : Row(
-                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
                                           children: [
                                             Icon(
                                               Icons.lock_reset_rounded,
                                               size: 22,
-                                              color: Colors.white.withOpacity(0.95),
+                                              color: Colors.white.withOpacity(
+                                                0.95,
+                                              ),
                                             ),
                                             const SizedBox(width: 10),
                                             Text(
                                               'إعادة تعيين كلمة المرور',
                                               style: GoogleFonts.tajawal(
-                                                fontSize: _getResponsiveFontSize(context, base: 16),
+                                                fontSize:
+                                                    _getResponsiveFontSize(
+                                                      context,
+                                                      base: 16,
+                                                    ),
                                                 fontWeight: FontWeight.w700,
                                                 letterSpacing: 0.5,
                                               ),
@@ -1157,9 +1296,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
         ),
         backgroundColor: const Color(0xFF10B981),
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
 
@@ -1187,9 +1324,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
         ),
         backgroundColor: const Color(0xFF10B981),
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
 

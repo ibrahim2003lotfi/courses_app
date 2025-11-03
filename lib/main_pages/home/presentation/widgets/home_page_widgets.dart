@@ -186,7 +186,8 @@ class _HeroCarouselState extends State<HeroCarousel> {
     {
       'title': 'كيفية استخدام برنامجنا 📚',
       'buttonText': 'تعرف على البرنامج',
-      'description': 'اكتشف كل الميزات والأدوات المتاحة لتحقيق أقصى استفادة من منصتنا التعليمية',
+      'description':
+          'اكتشف كل الميزات والأدوات المتاحة لتحقيق أقصى استفادة من منصتنا التعليمية',
       'route': '/tutorial',
     },
     {
@@ -221,25 +222,19 @@ class _HeroCarouselState extends State<HeroCarousel> {
       case '/universities':
         Navigator.push(
           context,
-          MaterialPageRoute(
-            builder: (context) => UniversitiesPage(),
-          ),
+          MaterialPageRoute(builder: (context) => UniversitiesPage()),
         );
         break;
       case '/tutorial':
         Navigator.push(
           context,
-          MaterialPageRoute(
-            builder: (context) => SearchPage(),
-          ),
+          MaterialPageRoute(builder: (context) => SearchPage()),
         );
         break;
       case '/payment-methods':
         Navigator.push(
           context,
-          MaterialPageRoute(
-            builder: (context) => SearchPage(),
-          ),
+          MaterialPageRoute(builder: (context) => SearchPage()),
         );
         break;
       default:
@@ -281,31 +276,37 @@ class _HeroCarouselState extends State<HeroCarousel> {
                                   ? Image.asset(
                                       content['localImage']!,
                                       fit: BoxFit.cover,
-                                      errorBuilder: (context, error, stackTrace) {
-                                        return Image.network(
-                                          widget.heroImages[index],
-                                          fit: BoxFit.cover,
-                                        );
-                                      },
+                                      errorBuilder:
+                                          (context, error, stackTrace) {
+                                            return Image.network(
+                                              widget.heroImages[index],
+                                              fit: BoxFit.cover,
+                                            );
+                                          },
                                     )
                                   : Image.network(
                                       widget.heroImages[index],
                                       fit: BoxFit.cover,
-                                      loadingBuilder: (context, child, loadingProgress) {
-                                        if (loadingProgress == null) return child;
-                                        return Container(
-                                          color: isDarkMode
-                                              ? const Color(0xFF2D2D2D)
-                                              : const Color(0xFFF3F4F6),
-                                          child: Center(
-                                            child: CircularProgressIndicator(
+                                      loadingBuilder:
+                                          (context, child, loadingProgress) {
+                                            if (loadingProgress == null)
+                                              return child;
+                                            return Container(
                                               color: isDarkMode
-                                                  ? Colors.white70
-                                                  : const Color(0xFF3B82F6),
-                                            ),
-                                          ),
-                                        );
-                                      },
+                                                  ? const Color(0xFF2D2D2D)
+                                                  : const Color(0xFFF3F4F6),
+                                              child: Center(
+                                                child:
+                                                    CircularProgressIndicator(
+                                                      color: isDarkMode
+                                                          ? Colors.white70
+                                                          : const Color(
+                                                              0xFF3B82F6,
+                                                            ),
+                                                    ),
+                                              ),
+                                            );
+                                          },
                                     ),
                               Container(
                                 decoration: BoxDecoration(
@@ -484,7 +485,9 @@ class CategoriesGrid extends StatelessWidget {
                       Text(
                         'الأقسام',
                         style: GoogleFonts.tajawal(
-                          fontSize: Theme.of(context).textTheme.titleLarge!.fontSize,
+                          fontSize: Theme.of(
+                            context,
+                          ).textTheme.titleLarge!.fontSize,
                           fontWeight: FontWeight.w800,
                           color: isDarkMode ? Colors.white : null,
                         ),
@@ -664,9 +667,7 @@ class RecommendedCourses extends StatelessWidget {
                   height: _calculateCardHeight(context),
                   child: ListView.separated(
                     scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
                     itemCount: recommended.length,
                     separatorBuilder: (context, index) =>
                         const SizedBox(width: 16),
@@ -919,6 +920,7 @@ class RecommendedCourses extends StatelessWidget {
     );
   }
 
+  // ignore: unused_element
   double _calculateImageHeight(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
 
@@ -971,7 +973,10 @@ class TrendingCourses extends StatelessWidget {
 
   const TrendingCourses({super.key, required this.trending});
 
-  void _navigateToCourseDetails(BuildContext context, Map<String, dynamic> course) {
+  void _navigateToCourseDetails(
+    BuildContext context,
+    Map<String, dynamic> course,
+  ) {
     try {
       Map<String, dynamic> enhancedCourse = {
         'title': course['title'] ?? 'دورة تعليمية',
@@ -986,9 +991,12 @@ class TrendingCourses extends StatelessWidget {
         'level': course['level'] ?? 'متوسط',
         'lastUpdated': course['lastUpdated'] ?? '2024',
         'price': course['price'] ?? '200,000 S.P',
-        'description': course['description'] ?? 'دورة تعليمية شاملة تغطي أهم المفاهيم والمهارات في هذا المجال.',
+        'description':
+            course['description'] ??
+            'دورة تعليمية شاملة تغطي أهم المفاهيم والمهارات في هذا المجال.',
         'tags': course['tags'] ?? ['تعليم', 'تدريب', 'مهارات'],
-        'instructorImage': course['instructorImage'] ?? 'https://picsum.photos/200/200',
+        'instructorImage':
+            course['instructorImage'] ?? 'https://picsum.photos/200/200',
       };
 
       Navigator.push(
@@ -999,11 +1007,9 @@ class TrendingCourses extends StatelessWidget {
       );
     } catch (e) {
       print('Navigation error: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('حدث خطأ في فتح تفاصيل الدورة'),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('حدث خطأ في فتح تفاصيل الدورة')));
     }
   }
 
@@ -1016,7 +1022,7 @@ class TrendingCourses extends StatelessWidget {
             ? ThemeManager.darkTheme
             : ThemeManager.lightTheme;
 
-        final safeTrending = trending ?? [];
+        final safeTrending = trending;
         if (safeTrending.isEmpty) {
           return Container();
         }
@@ -1028,22 +1034,26 @@ class TrendingCourses extends StatelessWidget {
             children: [
               // Title row with padding
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 8,
+                ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
                       'الأكثر شيوعًا',
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w800,
-                        color: theme.colorScheme.onBackground,
-                      ) ?? TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w800,
-                        color: theme.colorScheme.onBackground,
-                      ),
+                      style:
+                          Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.w800,
+                            color: theme.colorScheme.onBackground,
+                          ) ??
+                          TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w800,
+                            color: theme.colorScheme.onBackground,
+                          ),
                     ),
-                    
                   ],
                 ),
               ),
@@ -1053,11 +1063,12 @@ class TrendingCourses extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 15),
                 child: Column(
                   children: safeTrending.map((course) {
-                    final safeCourse = course ?? {};
+                    final safeCourse = course;
                     return Container(
                       margin: const EdgeInsets.only(bottom: 12),
                       child: InkWell(
-                        onTap: () => _navigateToCourseDetails(context, safeCourse),
+                        onTap: () =>
+                            _navigateToCourseDetails(context, safeCourse),
                         borderRadius: BorderRadius.circular(16),
                         child: _buildVerticalCourseCard(
                           context,
@@ -1120,7 +1131,9 @@ class TrendingCourses extends StatelessWidget {
                         color: isDarkMode ? Colors.grey[800] : Colors.grey[200],
                         child: Icon(
                           Icons.image_not_supported,
-                          color: isDarkMode ? Colors.grey[600] : Colors.grey[400],
+                          color: isDarkMode
+                              ? Colors.grey[600]
+                              : Colors.grey[400],
                           size: 30,
                         ),
                       );
@@ -1167,7 +1180,9 @@ class TrendingCourses extends StatelessWidget {
                     style: GoogleFonts.tajawal(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
-                      color: isDarkMode ? Colors.white : const Color(0xFF1F2937),
+                      color: isDarkMode
+                          ? Colors.white
+                          : const Color(0xFF1F2937),
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
@@ -1200,14 +1215,16 @@ class TrendingCourses extends StatelessWidget {
             const SizedBox(width: 2),
             Text(
               (course['rating'] ?? 4.5).toString(),
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                fontWeight: FontWeight.w500,
-                color: isDarkMode ? Colors.white70 : null,
-              ) ?? TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: isDarkMode ? Colors.white70 : Colors.black,
-              ),
+              style:
+                  Theme.of(context).textTheme.bodySmall?.copyWith(
+                    fontWeight: FontWeight.w500,
+                    color: isDarkMode ? Colors.white70 : null,
+                  ) ??
+                  TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: isDarkMode ? Colors.white70 : Colors.black,
+                  ),
             ),
             const SizedBox(width: 8),
             Icon(
@@ -1218,14 +1235,16 @@ class TrendingCourses extends StatelessWidget {
             const SizedBox(width: 2),
             Text(
               course['students']?.toString() ?? '1000',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                fontWeight: FontWeight.w500,
-                color: isDarkMode ? Colors.white70 : null,
-              ) ?? TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: isDarkMode ? Colors.white70 : Colors.black,
-              ),
+              style:
+                  Theme.of(context).textTheme.bodySmall?.copyWith(
+                    fontWeight: FontWeight.w500,
+                    color: isDarkMode ? Colors.white70 : null,
+                  ) ??
+                  TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: isDarkMode ? Colors.white70 : Colors.black,
+                  ),
             ),
           ],
         ),
@@ -1233,12 +1252,14 @@ class TrendingCourses extends StatelessWidget {
         // Teacher name
         Text(
           course['teacher']?.toString() ?? 'مدرس متخصص',
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: isDarkMode ? Colors.white60 : const Color(0xFF6B7280),
-          ) ?? TextStyle(
-            fontSize: 12,
-            color: isDarkMode ? Colors.white60 : const Color(0xFF6B7280),
-          ),
+          style:
+              Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: isDarkMode ? Colors.white60 : const Color(0xFF6B7280),
+              ) ??
+              TextStyle(
+                fontSize: 12,
+                color: isDarkMode ? Colors.white60 : const Color(0xFF6B7280),
+              ),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
@@ -1266,7 +1287,10 @@ class ExtrasSection extends StatelessWidget {
             children: [
               // University Lectures Section
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 24,
+                ),
                 child: Container(
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
@@ -1416,9 +1440,7 @@ class ExtrasSection extends StatelessWidget {
                               style: GoogleFonts.tajawal(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w700,
-                                color: theme
-                                    .colorScheme
-                                    .onSurface,
+                                color: theme.colorScheme.onSurface,
                               ),
                               textAlign: TextAlign.center,
                               maxLines: 1,
@@ -1776,7 +1798,10 @@ class Footer extends StatelessWidget {
                               ),
                               IconButton(
                                 onPressed: () {},
-                                icon: Icon(Icons.link_rounded, color: iconColor),
+                                icon: Icon(
+                                  Icons.link_rounded,
+                                  color: iconColor,
+                                ),
                               ),
                               IconButton(
                                 onPressed: () {},

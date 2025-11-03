@@ -1,5 +1,6 @@
 import 'package:courses_app/bloc/user_role_bloc.dart';
 import 'package:courses_app/core/utils/theme_manager.dart';
+import 'package:courses_app/main_pages/instructor/presentation/pages/instructor_registration_page.dart';
 import 'package:courses_app/main_pages/profile/presentation/edit_profile.dart';
 import 'package:courses_app/main_pages/profile/presentation/pages/settings_page.dart';
 import 'package:courses_app/theme_cubit/theme_cubit.dart';
@@ -297,7 +298,12 @@ class _ProfilePageState extends State<ProfilePage> {
           GestureDetector(
             onTap: !isTeacher
                 ? () {
-                    _showBecomeTeacherDialog(isDarkMode);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => InstructorRegistrationPage(),
+                      ),
+                    );
                   }
                 : null,
             child: Container(
@@ -762,67 +768,5 @@ class _ProfilePageState extends State<ProfilePage> {
       ),
     );
     // Navigate to login page or main page
-  }
-
-  void _showBecomeTeacherDialog(bool isDarkMode) {
-    showDialog(
-      context: context,
-      builder: (context) => Theme(
-        data: isDarkMode ? ThemeManager.darkTheme : ThemeManager.lightTheme,
-        child: AlertDialog(
-          title: Text(
-            'انضم كمدرس',
-            style: GoogleFonts.tajawal(fontWeight: FontWeight.bold),
-          ),
-          content: Text(
-            'بأنضمامك كمدرس، ستتمكن من إنشاء ونشر الدورات التعليمية الخاصة بك. هل تريد المتابعة؟',
-            style: GoogleFonts.tajawal(),
-          ),
-          actions: [
-            Container(
-              height: 48,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: InkWell(
-                borderRadius: BorderRadius.circular(12),
-                onTap: () {
-                  // Use BLoC to become teacher
-                  context.read<UserRoleBloc>().add(const BecomeTeacherEvent());
-                  Navigator.pop(context);
-                  setState(() {}); // Refresh the UI
-
-                  // Show success message
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        'مرحباً بك كمدرس! يمكنك الآن نشر دوراتك التعليمية.',
-                        style: GoogleFonts.tajawal(),
-                      ),
-                      backgroundColor: Colors.green,
-                    ),
-                  );
-                },
-                child: Center(
-                  child: Text(
-                    'نعم، انضم كمدرس',
-                    style: GoogleFonts.tajawal(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }
