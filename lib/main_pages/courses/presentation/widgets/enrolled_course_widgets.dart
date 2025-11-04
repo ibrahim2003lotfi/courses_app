@@ -223,8 +223,13 @@ class CourseProgressWidget extends StatelessWidget {
 // Lessons List Widget
 class LessonsListWidget extends StatelessWidget {
   final Map<String, dynamic> course;
+  final bool isEnrolled;
 
-  const LessonsListWidget({super.key, required this.course});
+  const LessonsListWidget({
+    super.key, 
+    required this.course,
+    this.isEnrolled = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -248,7 +253,8 @@ class LessonsListWidget extends StatelessWidget {
         final isDarkMode = themeState.isDarkMode;
         final isCompleted = index < (progress * totalLessons);
         final isCurrent = index == currentLesson;
-        final isLocked = index > currentLesson && !isCompleted;
+        // For enrolled users, all videos are unlocked
+        final isLocked = !isEnrolled && index > currentLesson && !isCompleted;
 
         return Directionality(
           textDirection: TextDirection.rtl,

@@ -3,6 +3,17 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 // Events
 abstract class CourseManagementEvent {}
 
+class RateCourseEvent extends CourseManagementEvent {
+  final String courseId;
+  final double rating;
+  final String? review;
+  RateCourseEvent({
+    required this.courseId,
+    required this.rating,
+    this.review,
+  });
+}
+
 class EnrollCourseEvent extends CourseManagementEvent {
   final Map<String, dynamic> course;
   EnrollCourseEvent(this.course);
@@ -67,6 +78,23 @@ class CourseManagementBloc extends Bloc<CourseManagementEvent, CourseManagementS
     on<ToggleWatchLaterEvent>(_onToggleWatchLater);
     on<LoadUserCoursesEvent>(_onLoadUserCourses);
     on<UpdateCourseProgressEvent>(_onUpdateCourseProgress);
+    on<RateCourseEvent>(_onRateCourse);
+  }
+
+  void _onRateCourse(RateCourseEvent event, Emitter<CourseManagementState> emit) {
+    final updatedEnrolledCourses = state.enrolledCourses.map((course) {
+      if (course['id'] == event.courseId) {
+        return {
+          ...course,
+          'userRating': event.rating,
+          'userReview': event.review,
+          'ratedAt': DateTime.now().toString(),
+        };
+      }
+      return course;
+    }).toList();
+
+    emit(state.copyWith(enrolledCourses: updatedEnrolledCourses));
   }
 
   void _onEnrollCourse(EnrollCourseEvent event, Emitter<CourseManagementState> emit) async {
