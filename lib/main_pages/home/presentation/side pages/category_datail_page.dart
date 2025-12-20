@@ -20,7 +20,7 @@ class _CategoryDetailPageState extends State<CategoryDetailPage> {
   bool _showAppBarTitle = false;
 
   // Sample data for different sections
-    List<Map<String, dynamic>> beginnerCourses = [
+  List<Map<String, dynamic>> beginnerCourses = [
     {
       'id': '1',
       'title': 'مقدمة في البرمجة - الأساسيات',
@@ -555,17 +555,29 @@ class _CategoryDetailPageState extends State<CategoryDetailPage> {
         LayoutBuilder(
           builder: (context, constraints) {
             if (constraints.maxWidth > 600) {
-              // Desktop/Tablet Grid
+              // Desktop/Tablet Grid (responsive aspect ratio to avoid overflows)
+              const horizontalPadding = 40.0; // 20 left + 20 right
+              const spacing = 16.0;
+              final crossAxisCount = constraints.maxWidth > 1200 ? 3 : 2;
+              final availableWidth =
+                  constraints.maxWidth -
+                  horizontalPadding -
+                  (spacing * (crossAxisCount - 1));
+              final itemWidth = availableWidth / crossAxisCount;
+              // Give items enough vertical room so content doesn't overflow
+              final itemHeight = crossAxisCount == 3 ? 320.0 : 300.0;
+              final childAspectRatio = itemWidth / itemHeight;
+
               return Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: GridView.builder(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: constraints.maxWidth > 1200 ? 3 : 2,
-                    childAspectRatio: 1.1,
-                    crossAxisSpacing: 16,
-                    mainAxisSpacing: 16,
+                    crossAxisCount: crossAxisCount,
+                    childAspectRatio: childAspectRatio,
+                    crossAxisSpacing: spacing,
+                    mainAxisSpacing: spacing,
                   ),
                   itemCount: allCourses.length,
                   itemBuilder: (context, index) {
@@ -1056,159 +1068,210 @@ class _CategoryDetailPageState extends State<CategoryDetailPage> {
     ThemeData themeData,
     bool isDarkMode,
   ) {
-    return Container(
-      decoration: BoxDecoration(
-        color: themeData.cardColor,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(isDarkMode ? 0.2 : 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // If space is tight (phones / narrow parents), stack vertically to avoid overflow
+        final bool isNarrow = constraints.maxWidth < 500;
+
+        Widget image = ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: Image.network(
+            course['image'],
+            width: isNarrow ? double.infinity : 96,
+            height: isNarrow ? 160 : 80,
+            fit: BoxFit.cover,
           ),
-        ],
-      ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: () => _navigateToCourseDetails(course),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: Image.network(
-                  course['image'],
-                  width: 100,
-                  height: 80,
-                  fit: BoxFit.cover,
+        );
+
+        Widget metricsWrap = Wrap(
+          spacing: 12,
+          runSpacing: 6,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.star, size: 16, color: Colors.amber),
+                const SizedBox(width: 4),
+                Text(
+                  course['rating'].toString(),
+                  style: GoogleFonts.tajawal(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                ),
+              ],
+            ),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.people, size: 16, color: Colors.grey),
+                const SizedBox(width: 4),
+                SizedBox(
+                  width: 110,
+                  child: Text(
+                    '${course['students']} طالب',
+                    style: GoogleFonts.tajawal(
+                      fontSize: 14,
+                      color: Colors.grey[600],
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                    softWrap: false,
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(
+              width: 110,
+              child: Text(
+                course['price'],
+                style: GoogleFonts.tajawal(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
+                  color: const Color(0xFF2563EB),
+                ),
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+                softWrap: false,
+                textAlign: TextAlign.start,
+              ),
+            ),
+          ],
+        );
+
+        Widget bottomWrap = Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            // Level badge
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: const Color(0xFF10B981).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                course['level'],
+                style: GoogleFonts.tajawal(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFF10B981),
                 ),
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      course['title'],
-                      style: GoogleFonts.tajawal(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: themeData.colorScheme.onSurface,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      course['teacher'],
-                      style: GoogleFonts.tajawal(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        const Icon(Icons.star, size: 16, color: Colors.amber),
-                        const SizedBox(width: 4),
-                        Text(
-                          course['rating'].toString(),
-                          style: GoogleFonts.tajawal(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Icon(Icons.people, size: 16, color: Colors.grey[600]),
-                        const SizedBox(width: 4),
-                        Text(
-                          '${course['students']} طالب',
-                          style: GoogleFonts.tajawal(
-                            fontSize: 14,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                        const Spacer(),
-                        Text(
-                          course['price'],
-                          style: GoogleFonts.tajawal(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w900,
-                            color: const Color(0xFF2563EB),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    FittedBox(
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF10B981).withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              course['level'],
-                              style: GoogleFonts.tajawal(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: const Color(0xFF10B981),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.access_time,
-                                size: 14,
-                                color: Colors.grey[600],
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                '${course['duration']} ساعة',
-                                style: GoogleFonts.tajawal(
-                                  fontSize: 12,
-                                  color: Colors.grey[600],
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(width: 8),
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.play_circle_outline,
-                                size: 14,
-                                color: Colors.grey[600],
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                '${course['lessons']} درس',
-                                style: GoogleFonts.tajawal(
-                                  fontSize: 12,
-                                  color: Colors.grey[600],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+            ),
+            // Duration
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.access_time, size: 14, color: Colors.grey[600]),
+                const SizedBox(width: 4),
+                Text(
+                  '${course['duration']} ساعة',
+                  style: GoogleFonts.tajawal(
+                    fontSize: 12,
+                    color: Colors.grey[600],
+                  ),
                 ),
+              ],
+            ),
+            // Lessons
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.play_circle_outline,
+                  size: 14,
+                  color: Colors.grey[600],
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  '${course['lessons']} درس',
+                  style: GoogleFonts.tajawal(
+                    fontSize: 12,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ],
+            ),
+          ],
+        );
+
+        Widget contentColumn = Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Title
+            Text(
+              course['title'],
+              style: GoogleFonts.tajawal(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: themeData.colorScheme.onSurface,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 4),
+            // Teacher
+            Text(
+              course['teacher'],
+              style: GoogleFonts.tajawal(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 8),
+            metricsWrap,
+            const SizedBox(height: 8),
+            bottomWrap,
+          ],
+        );
+
+        return Container(
+          margin: const EdgeInsets.symmetric(vertical: 4),
+          decoration: BoxDecoration(
+            color: themeData.cardColor,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(isDarkMode ? 0.2 : 0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 2),
               ),
             ],
           ),
-        ),
-      ),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: () => _navigateToCourseDetails(course),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: isNarrow
+                  ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        image,
+                        const SizedBox(height: 12),
+                        contentColumn,
+                      ],
+                    )
+                  : Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        image,
+                        const SizedBox(width: 16),
+                        Expanded(child: contentColumn),
+                      ],
+                    ),
+            ),
+          ),
+        );
+      },
     );
   }
 
