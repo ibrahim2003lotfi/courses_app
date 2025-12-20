@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:courses_app/services/profile_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -18,6 +19,7 @@ class EditProfilePage extends StatefulWidget {
 class _EditProfilePageState extends State<EditProfilePage> {
   final _formKey = GlobalKey<FormState>();
   final ImagePicker _picker = ImagePicker();
+  final ProfileService _profileService = ProfileService();
 
   // Controllers
   late TextEditingController _nameController;
@@ -31,6 +33,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
   // Loading state
   bool _isSaving = false;
+  bool _isLoadingProfile = true;
+  String? _errorMessage;
 
   // Certificates list
   List<Map<String, String>> _certificates = [
@@ -42,13 +46,42 @@ class _EditProfilePageState extends State<EditProfilePage> {
   @override
   void initState() {
     super.initState();
-    _nameController = TextEditingController(text: 'أحمد محمد السالم');
-    _emailController = TextEditingController(text: 'ahmed.salem@example.com');
-    _usernameController = TextEditingController(text: 'ahmed_salem');
-    _bioController = TextEditingController(
-      text:
-          'مطور تطبيقات محمول ومهتم بالتعلم المستمر في مجال التكنولوجيا والبرمجة.',
-    );
+    _nameController = TextEditingController();
+    _emailController = TextEditingController();
+    _usernameController = TextEditingController();
+    _bioController = TextEditingController();
+    _loadProfile();
+  }
+
+  Future<void> _loadProfile() async {
+    setState(() {
+      _isLoadingProfile = true;
+      _errorMessage = null;
+    });
+
+    final result = await _profileService.getMe();
+    if (!mounted) return;
+
+    if (result['status'] == 200) {
+      final data = result['data'] as Map<String, dynamic>;
+      final user = data['user'] as Map<String, dynamic>?;
+      final profile = data['profile'] as Map<String, dynamic>?;
+
+      _nameController.text = user?['name'] ?? '';
+      _emailController.text = user?['email'] ?? '';
+      _usernameController.text = profile?['username'] ?? '';
+      _bioController.text = profile?['bio'] ?? '';
+
+      setState(() {
+        _isLoadingProfile = false;
+      });
+    } else {
+      setState(() {
+        _errorMessage =
+            (result['data']?['message'] as String?) ?? 'فشل تحميل البيانات';
+        _isLoadingProfile = false;
+      });
+    }
   }
 
   @override
@@ -67,6 +100,42 @@ class _EditProfilePageState extends State<EditProfilePage> {
         return BlocBuilder<ThemeCubit, ThemeState>(
           builder: (context, themeState) {
             final isDarkMode = themeState.isDarkMode;
+
+            if (_isLoadingProfile) {
+              return Scaffold(
+                backgroundColor: _getBackgroundColor(isDarkMode),
+                body: const Center(child: CircularProgressIndicator()),
+              );
+            }
+
+            if (_errorMessage != null) {
+              return Scaffold(
+                backgroundColor: _getBackgroundColor(isDarkMode),
+                body: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          _errorMessage!,
+                          style: GoogleFonts.tajawal(
+                            color: _getTextColor(isDarkMode),
+                            fontSize: 14,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: _loadProfile,
+                          child: const Text('إعادة المحاولة'),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }
 
             return Theme(
               data: isDarkMode
@@ -750,30 +819,88 @@ class _EditProfilePageState extends State<EditProfilePage> {
   }
 
   Future<void> _saveProfile(bool isDarkMode) async {
-    if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isSaving = true;
-      });
+    if (!_formKey.currentState!.validate()) return;
 
-      // Simulate saving delay
-      await Future.delayed(const Duration(seconds: 2));
+    setState(() {
+      _isSaving = true;
+    });
+
+    try {
+      // تحديث البيانات الأساسية
+      final updateResult = await _profileService.updateProfile(
+        name: _nameController.text.trim(),
+        email: _emailController.text.trim(),
+        bio: _bioController.text.trim(),
+      );
+
+      if (updateResult['status'] != 200) {
+        final message = (updateResult['data']?['message'] as String?) ??
+            'فشل تحديث البيانات';
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                message,
+                style: GoogleFonts.tajawal(),
+              ),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        setState(() {
+          _isSaving = false;
+        });
+        return;
+      }
+
+      // رفع صورة البروفايل إن وُجدت
+      if (_profileImage != null) {
+        final avatarResult = await _profileService
+            .uploadAvatar(File(_profileImage!.path));
+        if (avatarResult['status'] != 200 && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                (avatarResult['data']?['message'] as String?) ??
+                    'تم حفظ البيانات ولكن فشل رفع الصورة',
+                style: GoogleFonts.tajawal(),
+              ),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+      }
+
+      if (!mounted) return;
 
       setState(() {
         _isSaving = false;
       });
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'تم حفظ التغييرات بنجاح',
-              style: GoogleFonts.tajawal(),
-            ),
-            backgroundColor: Colors.green,
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'تم حفظ التغييرات بنجاح',
+            style: GoogleFonts.tajawal(),
           ),
-        );
-        Navigator.pop(context);
-      }
+          backgroundColor: Colors.green,
+        ),
+      );
+      Navigator.pop(context);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isSaving = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'حدث خطأ غير متوقع، حاول مرة أخرى',
+            style: GoogleFonts.tajawal(),
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 }

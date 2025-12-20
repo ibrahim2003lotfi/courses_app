@@ -1,6 +1,7 @@
 // lib/main_pages/onboarding/onboarding_screen.dart
 import 'package:courses_app/core/utils/onboarding_manager.dart';
 import 'package:courses_app/core/utils/theme_manager.dart';
+import 'package:courses_app/services/profile_service.dart';
 import 'package:courses_app/theme_cubit/theme_cubit.dart';
 import 'package:courses_app/theme_cubit/theme_state.dart';
 import 'package:courses_app/widget_tree.dart';
@@ -18,6 +19,7 @@ class OnboardingScreen extends StatefulWidget {
 class _OnboardingScreenState extends State<OnboardingScreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
+  final ProfileService _profileService = ProfileService();
 
   // Store user selections
   String? _selectedLearningState;
@@ -163,16 +165,25 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   Future<void> _completeOnboarding() async {
+    // Save onboarding preferences to backend (if user is logged in)
+    if (_selectedLearningState != null && _selectedInterests.isNotEmpty) {
+      try {
+        await _profileService.saveOnboarding(
+          learningState: _selectedLearningState!,
+          interests: _selectedInterests,
+        );
+      } catch (_) {
+        // Ignore errors in onboarding save – user can still continue
+      }
+    }
+
     await OnboardingManager.completeOnboarding();
 
-    // Here you can save the user preferences to your backend or local storage
-    print('Learning State: $_selectedLearningState');
-    print('Interests: $_selectedInterests');
-
-    // Navigate to main app - Login Page
-    Navigator.pushReplacement(
+    // Navigate to main app (home with bottom navigation)
+    Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (context) => const WidgetTree()),
+      (route) => false,
     );
   }
 

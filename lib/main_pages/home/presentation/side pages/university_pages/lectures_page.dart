@@ -4,12 +4,40 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../../../../bloc/university_bloc.dart';
+
 class LecturesPage extends StatelessWidget {
   final String facultyName;
   final String universityName;
+  final String universityId;
+  final String facultyId;
 
   const LecturesPage({
     super.key,
+    required this.facultyName,
+    required this.universityName,
+    required this.universityId,
+    required this.facultyId,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (_) => UniversityBloc()
+        ..add(LoadFacultyCoursesEvent(universityId, facultyId)),
+      child: _LecturesPageBody(
+        facultyName: facultyName,
+        universityName: universityName,
+      ),
+    );
+  }
+}
+
+class _LecturesPageBody extends StatelessWidget {
+  final String facultyName;
+  final String universityName;
+
+  const _LecturesPageBody({
     required this.facultyName,
     required this.universityName,
   });
@@ -19,109 +47,149 @@ class LecturesPage extends StatelessWidget {
     return BlocBuilder<ThemeCubit, ThemeState>(
       builder: (context, themeState) {
         final isDarkMode = themeState.isDarkMode;
-        
+
         return Scaffold(
-          backgroundColor: isDarkMode ? const Color(0xFF121212) : const Color(0xFFF9FAFB),
-          body: CustomScrollView(
-            slivers: [
-              // Page Header with Back Button
-              SliverToBoxAdapter(
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(isDarkMode ? 0.2 : 0.05),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
+          backgroundColor:
+              isDarkMode ? const Color(0xFF121212) : const Color(0xFFF9FAFB),
+          body: BlocBuilder<UniversityBloc, UniversityState>(
+            builder: (context, uniState) {
+              final courses = uniState.courses;
+
+              return CustomScrollView(
+                slivers: [
+                  // Page Header with Back Button
+                  SliverToBoxAdapter(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: isDarkMode
+                            ? const Color(0xFF1E1E1E)
+                            : Colors.white,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(
+                                isDarkMode ? 0.2 : 0.05),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                  child: SafeArea(
-                    bottom: false,
-                    child: Row(
-                      children: [
-                        // Back Button
-                        Container(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                Color(0xFF667EEA),
-                                Color(0xFF764BA2),
-                              ],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: InkWell(
-                            borderRadius: BorderRadius.circular(8),
-                            onTap: () => Navigator.pop(context),
-                            child: Padding(
-                              padding: const EdgeInsets.all(8),
-                              child: Icon(
-                                Icons.arrow_back,
-                                color: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 16),
+                      child: SafeArea(
+                        bottom: false,
+                        child: Row(
+                          children: [
+                            // Back Button
+                            Container(
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(
+                                  colors: [
+                                    Color(0xFF667EEA),
+                                    Color(0xFF764BA2),
+                                  ],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                                borderRadius: BorderRadius.circular(8),
                               ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        // Title
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'مواد $facultyName',
-                                style: GoogleFonts.tajawal(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.w900,
-                                  color: isDarkMode ? Colors.white : const Color(0xFF1F2937),
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(8),
+                                onTap: () => Navigator.pop(context),
+                                child: const Padding(
+                                  padding: EdgeInsets.all(8),
+                                  child: Icon(
+                                    Icons.arrow_back,
+                                    color: Colors.white,
+                                  ),
                                 ),
                               ),
-                              Text(
-                                universityName,
-                                style: GoogleFonts.tajawal(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                  color: isDarkMode ? Colors.white70 : const Color(0xFF6B7280),
-                                ),
+                            ),
+                            const SizedBox(width: 16),
+                            // Title
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'مواد $facultyName',
+                                    style: GoogleFonts.tajawal(
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.w900,
+                                      color: isDarkMode
+                                          ? Colors.white
+                                          : const Color(0xFF1F2937),
+                                    ),
+                                  ),
+                                  Text(
+                                    universityName,
+                                    style: GoogleFonts.tajawal(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500,
+                                      color: isDarkMode
+                                          ? Colors.white70
+                                          : const Color(0xFF6B7280),
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
-                      ],
+                      ),
                     ),
                   ),
-                ),
-              ),
 
-              // Search Bar
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                  child: LecSearchField(isDarkMode: isDarkMode),
-                ),
-              ),
-
-              // Lectures List
-              SliverList(
-                delegate: SliverChildBuilderDelegate((context, index) {
-                  return Padding(
-                    padding: EdgeInsets.fromLTRB(20, index == 0 ? 0 : 0, 20, 16),
-                    child: LectureListItem(
-                      lectureNumber: index + 1,
-                      facultyName: facultyName,
+                  // Search Bar
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 16),
+                      child: LecSearchField(isDarkMode: isDarkMode),
                     ),
-                  );
-                }, childCount: 8), // Display 8 lectures
-              ),
+                  ),
 
-              // Bottom spacing
-              const SliverToBoxAdapter(child: SizedBox(height: 40)),
-            ],
+                  if (uniState.isLoading)
+                    const SliverToBoxAdapter(
+                      child: Padding(
+                        padding: EdgeInsets.all(24),
+                        child: Center(
+                          child: CircularProgressIndicator(),
+                        ),
+                      ),
+                    )
+                  else if (courses.isEmpty)
+                    const SliverToBoxAdapter(
+                      child: Padding(
+                        padding: EdgeInsets.all(24),
+                        child: Center(
+                          child: Text('لا توجد محاضرات متاحة حالياً'),
+                        ),
+                      ),
+                    )
+                  else
+                    // Lectures List (mapped from university courses)
+                    SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) {
+                          final course = courses[index]
+                              as Map<String, dynamic>; // from backend
+                          return Padding(
+                            padding: EdgeInsets.fromLTRB(
+                                20, index == 0 ? 0 : 0, 20, 16),
+                            child: LectureListItem(
+                              course: course,
+                              facultyName: facultyName,
+                            ),
+                          );
+                        },
+                        childCount: courses.length,
+                      ),
+                    ),
+
+                  const SliverToBoxAdapter(child: SizedBox(height: 40)),
+                ],
+              );
+            },
           ),
         );
       },
@@ -130,12 +198,12 @@ class LecturesPage extends StatelessWidget {
 }
 
 class LectureListItem extends StatelessWidget {
-  final int lectureNumber;
+  final Map<String, dynamic> course;
   final String facultyName;
 
   const LectureListItem({
     super.key,
-    required this.lectureNumber,
+    required this.course,
     required this.facultyName,
   });
 
@@ -161,10 +229,10 @@ class LectureListItem extends StatelessWidget {
               ],
               border: isDarkMode ? Border.all(color: Colors.white30) : null,
             ),
-            child: InkWell(
+                child: InkWell(
               borderRadius: BorderRadius.circular(16),
               onTap: () {
-                _showLectureDetails(context, lectureNumber, isDarkMode);
+                _showLectureDetails(context, 1, isDarkMode);
               },
               child: Padding(
                 padding: const EdgeInsets.all(16),
@@ -201,7 +269,7 @@ class LectureListItem extends StatelessWidget {
                         children: [
                           // Lecture Title
                           Text(
-                            'مادة $lectureNumber',
+                            course['title'] ?? 'مادة',
                             style: GoogleFonts.tajawal(
                               fontSize: 18,
                               fontWeight: FontWeight.w800,
@@ -213,7 +281,7 @@ class LectureListItem extends StatelessWidget {
 
                           // Lecture Description
                           Text(
-                            _getLectureDescription(lectureNumber, facultyName),
+                            course['description'] ?? _getLectureDescription(1, facultyName),
                             style: GoogleFonts.tajawal(
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
@@ -239,7 +307,7 @@ class LectureListItem extends StatelessWidget {
                                   ),
                                   const SizedBox(width: 4),
                                   Text(
-                                    '${_getLectureDuration(lectureNumber)} دقيقة',
+                                    '${_getLectureDuration(1)} دقيقة',
                                     style: GoogleFonts.tajawal(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w600,
@@ -262,7 +330,7 @@ class LectureListItem extends StatelessWidget {
                                   ),
                                   const SizedBox(width: 4),
                                   Text(
-                                    _getLectureDate(lectureNumber),
+                                    _getLectureDate(1),
                                     style: GoogleFonts.tajawal(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w600,

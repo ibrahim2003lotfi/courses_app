@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:courses_app/main_pages/auth/presentation/pages/login_page.dart';
+import 'package:courses_app/services/password_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -33,8 +34,12 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
   bool _isLoading = false;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
-  String _foundAccountName = "أحمد محمد";
-  String _foundAccountEmail = "ahmed@example.com";
+  String _foundAccountName = "";
+  String _foundAccountEmail = "";
+
+  // Backend integration
+  final PasswordService _passwordService = PasswordService();
+  String? _userId; // The user ID returned by the backend
 
   @override
   void initState() {
@@ -1239,22 +1244,67 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
       _isLoading = true;
     });
 
-    // Simulate API call
-    await Future.delayed(const Duration(seconds: 2));
+    final login = _useEmail
+        ? _emailController.text.trim()
+        : '+963${_phoneController.text.trim()}';
 
-    setState(() {
-      _isLoading = false;
-      _currentStep = 2;
-    });
+    try {
+      final response = await _passwordService.requestReset(login);
+
+      setState(() {
+        _isLoading = false;
+      });
+
+      if (response['status'] == 200) {
+        final data = response['data'] as Map<String, dynamic>;
+        final user = (data['user'] ?? {}) as Map<String, dynamic>;
+
+        _userId = user['id']?.toString();
+        _foundAccountName = user['name']?.toString() ?? '';
+        _foundAccountEmail = user['email']?.toString() ?? '';
+
+        setState(() {
+          _currentStep = 2; // Move to confirm account step
+        });
+      } else {
+        final msg = (response['data']['message'] ??
+                response['data']['error'] ??
+                'فشل العثور على الحساب')
+            .toString();
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              msg,
+              style: GoogleFonts.tajawal(),
+              textAlign: TextAlign.center,
+            ),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'حدث خطأ: $e',
+            style: GoogleFonts.tajawal(),
+            textAlign: TextAlign.center,
+          ),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+    }
   }
 
   void _handleContinueToCode() async {
     setState(() {
       _isLoading = true;
     });
-
-    // Simulate sending code
-    await Future.delayed(const Duration(seconds: 1));
 
     setState(() {
       _isLoading = false;
@@ -1264,77 +1314,236 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
 
   void _handleVerifyCode() async {
     if (!_formKey.currentState!.validate()) return;
+    if (_userId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'حدث خطأ، يرجى إعادة المحاولة من البداية',
+            style: GoogleFonts.tajawal(),
+          ),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+      return;
+    }
 
     setState(() {
       _isLoading = true;
     });
 
-    // Simulate code verification
-    await Future.delayed(const Duration(seconds: 2));
+    try {
+      final response = await _passwordService.verifyCode(
+        _userId!,
+        _codeController.text.trim(),
+      );
 
-    setState(() {
-      _isLoading = false;
-      _currentStep = 4;
-    });
+      setState(() {
+        _isLoading = false;
+      });
+
+      if (response['status'] == 200) {
+        setState(() {
+          _currentStep = 4; // Move to new password step
+        });
+      } else {
+        final msg = (response['data']['message'] ??
+                response['data']['error'] ??
+                'رمز غير صالح')
+            .toString();
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              msg,
+              style: GoogleFonts.tajawal(),
+              textAlign: TextAlign.center,
+            ),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'حدث خطأ: $e',
+            style: GoogleFonts.tajawal(),
+            textAlign: TextAlign.center,
+          ),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+    }
   }
 
   void _handleResendCode() async {
+    if (_userId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'حدث خطأ، يرجى العودة والمحاولة من جديد',
+            style: GoogleFonts.tajawal(),
+            textAlign: TextAlign.center,
+          ),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+      return;
+    }
+
+    final login = _useEmail
+        ? _emailController.text.trim()
+        : '+963${_phoneController.text.trim()}';
+
     setState(() {
       _isLoading = true;
     });
 
-    // Simulate resending code
-    await Future.delayed(const Duration(seconds: 1));
+    try {
+      final response = await _passwordService.requestReset(login);
 
-    // Show success message
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'تم إعادة إرسال الرمز بنجاح',
-          style: GoogleFonts.tajawal(),
-          textAlign: TextAlign.center,
+      setState(() {
+        _isLoading = false;
+      });
+
+      if (response['status'] == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'تم إعادة إرسال الرمز بنجاح',
+              style: GoogleFonts.tajawal(),
+              textAlign: TextAlign.center,
+            ),
+            backgroundColor: const Color(0xFF10B981),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        );
+      } else {
+        final msg = (response['data']['message'] ??
+                response['data']['error'] ??
+                'فشل إعادة إرسال الرمز')
+            .toString();
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              msg,
+              style: GoogleFonts.tajawal(),
+              textAlign: TextAlign.center,
+            ),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'حدث خطأ: $e',
+            style: GoogleFonts.tajawal(),
+            textAlign: TextAlign.center,
+          ),
+          backgroundColor: Colors.redAccent,
         ),
-        backgroundColor: const Color(0xFF10B981),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      ),
-    );
-
-    setState(() {
-      _isLoading = false;
-    });
+      );
+    }
   }
 
   void _handleResetPassword() async {
     if (!_formKey.currentState!.validate()) return;
+    if (_userId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'حدث خطأ، يرجى إعادة العملية من جديد',
+            style: GoogleFonts.tajawal(fontWeight: FontWeight.w500),
+          ),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+      return;
+    }
 
     setState(() {
       _isLoading = true;
     });
 
-    // Simulate password reset API call
-    await Future.delayed(const Duration(seconds: 2));
-
-    // Show success message
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'تم إعادة تعيين كلمة المرور بنجاح!',
-          style: GoogleFonts.tajawal(fontWeight: FontWeight.w500),
-        ),
-        backgroundColor: const Color(0xFF10B981),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      ),
-    );
-
-    // Navigate to login page after success
-    Future.delayed(const Duration(seconds: 2), () {
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (context) => const LoginPage()),
-        (route) => false,
+    try {
+      final response = await _passwordService.resetPassword(
+        userId: _userId!,
+        code: _codeController.text.trim(),
+        password: _passwordController.text.trim(),
+        passwordConfirmation: _confirmPasswordController.text.trim(),
       );
-    });
+
+      setState(() {
+        _isLoading = false;
+      });
+
+      if (response['status'] == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'تم إعادة تعيين كلمة المرور بنجاح!',
+              style: GoogleFonts.tajawal(fontWeight: FontWeight.w500),
+            ),
+            backgroundColor: const Color(0xFF10B981),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        );
+
+        // Navigate to login page after success
+        Future.delayed(const Duration(seconds: 2), () {
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => const LoginPage()),
+            (route) => false,
+          );
+        });
+      } else {
+        final msg = (response['data']['message'] ??
+                response['data']['error'] ??
+                'فشل إعادة تعيين كلمة المرور')
+            .toString();
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              msg,
+              style: GoogleFonts.tajawal(fontWeight: FontWeight.w500),
+            ),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'حدث خطأ: $e',
+            style: GoogleFonts.tajawal(fontWeight: FontWeight.w500),
+          ),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+    }
   }
 }

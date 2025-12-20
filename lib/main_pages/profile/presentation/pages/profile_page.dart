@@ -1,8 +1,11 @@
 import 'package:courses_app/bloc/user_role_bloc.dart';
 import 'package:courses_app/core/utils/theme_manager.dart';
+import 'package:courses_app/main_pages/auth/presentation/pages/login_page.dart';
 import 'package:courses_app/main_pages/instructor/presentation/pages/instructor_registration_page.dart';
 import 'package:courses_app/main_pages/profile/presentation/edit_profile.dart';
 import 'package:courses_app/main_pages/profile/presentation/pages/settings_page.dart';
+import 'package:courses_app/services/auth_service.dart';
+import 'package:courses_app/services/profile_service.dart';
 import 'package:courses_app/theme_cubit/theme_cubit.dart';
 import 'package:courses_app/theme_cubit/theme_state.dart';
 import 'package:flutter/material.dart';
@@ -17,31 +20,88 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
+  final ProfileService _profileService = ProfileService();
+  final AuthService _authService = AuthService();
+
+  bool _isLoading = true;
+  String? _errorMessage;
+
+  Map<String, dynamic>? _user; // from backend user
+  Map<String, dynamic>? _profile; // extra profile fields
+  Map<String, dynamic>? _stats; // enrolled/completed/certificates
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfile();
+  }
+
+  Future<void> _loadProfile() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    final result = await _profileService.getMe();
+    if (!mounted) return;
+
+    if (result['status'] == 200) {
+      final data = result['data'] as Map<String, dynamic>;
+      setState(() {
+        _user = data['user'] as Map<String, dynamic>?;
+        _profile = data['profile'] as Map<String, dynamic>?;
+        _stats = data['stats'] as Map<String, dynamic>?;
+        _isLoading = false;
+      });
+    } else {
+      setState(() {
+        _errorMessage =
+            (result['data']?['message'] as String?) ?? 'حدث خطأ أثناء تحميل البيانات';
+        _isLoading = false;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<UserRoleBloc, UserRoleState>(
       builder: (context, roleState) {
         final bool isTeacher = roleState.isTeacher;
 
-        // بيانات المستخدم النموذجية - updated to use BLoC
+        // بيانات المستخدم من الـ API مع قيم افتراضية للحفاظ على نفس التصميم
+        final String name = _user?['name'] ?? 'المستخدم';
+        final String email = _user?['email'] ?? 'example@email.com';
+       // final String username =
+            //_profile?['username'] ?? (_user != null ? '@${_user!['id']}' : '@user');
+            final String username =
+    _profile?['username'] ?? (_user != null ? '@${_user!['id']}' : '@user');
+
+        final String bio = _profile?['bio'] ??
+            (isTeacher
+                ? 'مدرس متخصص في تطوير التطبيقات وتقنية المعلومات.'
+                : 'مطور تطبيقات محمول ومهتم بالتعلم المستمر في مجال التكنولوجيا والبرمجة.');
+        final String joinDateText = _user?['created_at'] != null
+            ? 'انضم في ${_user!['created_at'].toString().split(' ').first}'
+            : 'انضم حديثًا';
+        final String avatarUrl = _profile?['avatar_url'] ??
+            'https://picsum.photos/seed/profile/200/200';
+
         final Map<String, dynamic> userProfile = {
-          'name': 'أحمد محمد السالم',
-          'email': 'ahmed.salem@example.com',
-          'username': '@ahmed_salem',
+          'name': name,
+          'email': email,
+          'username': username,
           'type': isTeacher ? 'مدرس' : 'انضم الينا كمدرس',
-          'profileImage': 'https://picsum.photos/seed/profile/200/200',
+          'profileImage': avatarUrl,
           'coverImage': 'https://picsum.photos/seed/cover/800/300',
-          'joinDate': 'انضم في مارس 2023',
-          'bio': isTeacher
-              ? 'مدرس متخصص في تطوير التطبيقات وتقنية المعلومات.'
-              : 'مطور تطبيقات محمول ومهتم بالتعلم المستمر في مجال التكنولوجيا والبرمجة.',
+          'joinDate': joinDateText,
+          'bio': bio,
         };
 
-        // إحصائيات المستخدم
+        // إحصائيات المستخدم من الـ API مع قيم افتراضية
         final Map<String, dynamic> userStats = {
-          'enrolled': 12,
-          'completed': 8,
-          'certificates': 5,
+          'enrolled': _stats?['enrolled'] ?? 0,
+          'completed': _stats?['completed'] ?? 0,
+          'certificates': _stats?['certificates'] ?? 0,
         };
 
         // الشهادات المكتسبة
@@ -82,6 +142,44 @@ class _ProfilePageState extends State<ProfilePage> {
           builder: (context, themeState) {
             final isDarkMode = themeState.isDarkMode;
 
+            if (_isLoading) {
+              return Scaffold(
+                backgroundColor: _getBackgroundColor(isDarkMode),
+                body: const Center(
+                  child: CircularProgressIndicator(),
+                ),
+              );
+            }
+
+            if (_errorMessage != null) {
+              return Scaffold(
+                backgroundColor: _getBackgroundColor(isDarkMode),
+                body: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          _errorMessage!,
+                          style: GoogleFonts.tajawal(
+                            color: _getTextColor(isDarkMode),
+                            fontSize: 14,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: _loadProfile,
+                          child: const Text('إعادة المحاولة'),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }
+
             return Theme(
               data: isDarkMode
                   ? ThemeManager.darkTheme
@@ -93,7 +191,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     slivers: [
                       // Header with Cover and Profile Image
                       SliverToBoxAdapter(
-                        child: _buildProfileHeader(isDarkMode),
+                        child: _buildProfileHeader(isDarkMode, avatarUrl),
                       ),
 
                       // User Info Section
@@ -156,7 +254,7 @@ class _ProfilePageState extends State<ProfilePage> {
     return isDarkMode ? Colors.grey[400]! : Colors.grey[600]!;
   }
 
-  Widget _buildProfileHeader(bool isDarkMode) {
+  Widget _buildProfileHeader(bool isDarkMode, String avatarUrl) {
     return Container(
       height: 280,
       child: Stack(
@@ -234,9 +332,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
                 child: CircleAvatar(
                   radius: 57,
-                  backgroundImage: const NetworkImage(
-                    'https://picsum.photos/seed/profile/200/200',
-                  ),
+                  backgroundImage: NetworkImage(avatarUrl),
                   backgroundColor: Colors.grey[200],
                 ),
               ),
@@ -624,11 +720,17 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
             child: InkWell(
               borderRadius: BorderRadius.circular(12),
-              onTap: () {
-                Navigator.push(
+              onTap: () async {
+                await Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => EditProfilePage()),
+                  MaterialPageRoute(
+                    builder: (context) => const EditProfilePage(),
+                  ),
                 );
+                // بعد العودة من صفحة التعديل، أعد تحميل بيانات البروفايل
+                if (mounted) {
+                  _loadProfile();
+                }
               },
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -677,6 +779,34 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
 
           const SizedBox(height: 24),
+
+          // Delete Account Button
+          SizedBox(
+            width: double.infinity,
+            child: TextButton.icon(
+              onPressed: () {
+                _showDeleteAccountDialog(isDarkMode);
+              },
+              icon: const Icon(Icons.delete_forever, color: Colors.red),
+              label: Text(
+                'حذف الحساب',
+                style: GoogleFonts.tajawal(
+                  color: Colors.red,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  side: const BorderSide(color: Colors.red, width: 1),
+                ),
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 16),
 
           // Logout Button
           SizedBox(
@@ -759,14 +889,82 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  void _performLogout() {
-    // Implement logout functionality
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('تم تسجيل الخروج بنجاح'),
-        backgroundColor: Colors.green,
+  Future<void> _performLogout() async {
+    try {
+      await _authService.logout();
+    } catch (_) {
+      // حتى لو فشل الطلب، نحاول المتابعة لمسح الجلسة من الجهاز
+    }
+
+    if (!mounted) return;
+
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => const LoginPage()),
+      (route) => false,
+    );
+  }
+
+  void _showDeleteAccountDialog(bool isDarkMode) {
+    showDialog(
+      context: context,
+      builder: (context) => Theme(
+        data: isDarkMode ? ThemeManager.darkTheme : ThemeManager.lightTheme,
+        child: AlertDialog(
+          title: const Text('حذف الحساب'),
+          content: const Text(
+            'سيتم حذف حسابك وجميع بياناتك نهائيًا، ولا يمكن استعادتها. هل أنت متأكد؟',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('إلغاء'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                Navigator.pop(context);
+                await _performDeleteAccount();
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              child: const Text(
+                'حذف الحساب',
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+          ],
+        ),
       ),
     );
-    // Navigate to login page or main page
+  }
+
+  Future<void> _performDeleteAccount() async {
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    final result = await _profileService.deleteAccount();
+
+    if (!mounted) return;
+
+    if (result['status'] == 200) {
+      scaffoldMessenger.showSnackBar(
+        const SnackBar(
+          content: Text('تم حذف الحساب بنجاح'),
+          backgroundColor: Colors.green,
+        ),
+      );
+
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => const LoginPage()),
+        (route) => false,
+      );
+    } else {
+      final message =
+          (result['data']?['message'] as String?) ?? 'فشل حذف الحساب، حاول مرة أخرى';
+      scaffoldMessenger.showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 }

@@ -1,8 +1,9 @@
 import 'dart:ui';
 
-import 'package:courses_app/onboarding/onboarding_screen.dart';
 import 'package:courses_app/widget_tree.dart';
 import 'package:courses_app/main_pages/auth/presentation/pages/login_page.dart';
+import 'package:courses_app/main_pages/auth/presentation/pages/verification_page.dart';
+import 'package:courses_app/services/auth_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -32,12 +33,15 @@ class _RegisterPageState extends State<RegisterPage>
       TextEditingController();
 
   String _selectedGender = 'ذكر';
+  String _selectedVerificationMethod = 'email'; // Default to email
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   bool _isLoading = false;
   DateTime? _selectedDate;
 
   final List<String> _genderOptions = ['ذكر', 'أنثى'];
+  
+  final AuthService _authService = AuthService();
 
   @override
   void initState() {
@@ -262,34 +266,143 @@ class _RegisterPageState extends State<RegisterPage>
   }
 
   void _handleRegister() async {
-    if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isLoading = true;
-      });
+    if (!_formKey.currentState!.validate()) return;
+    
+    if (_selectedDate == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'يرجى اختيار تاريخ الميلاد',
+            style: GoogleFonts.tajawal(fontWeight: FontWeight.w500),
+          ),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+      return;
+    }
 
-      // Simulate network request
-      await Future.delayed(const Duration(seconds: 2));
+    if (!mounted) return;
+    setState(() {
+      _isLoading = true;
+    });
 
+    try {
+      // Calculate age from birth date
+      final age = DateTime.now().difference(_selectedDate!).inDays ~/ 365;
+      
+      // Map gender from Arabic to English
+      final gender = _selectedGender == 'ذكر' ? 'male' : 'female';
+      
+      // Combine first and last name
+      final fullName = '${_firstNameController.text.trim()} ${_lastNameController.text.trim()}';
+      
+      // Default role to 'student' (you can add a role selector later)
+      const role = 'student';
+
+      print('🔵 Registering user: $fullName');
+      print('🔵 Email: ${_emailController.text.trim()}');
+      print('🔵 Phone: ${_phoneController.text.trim()}');
+      print('🔵 Age: $age');
+      print('🔵 Gender: $gender');
+      print('🔵 Verification Method: $_selectedVerificationMethod');
+
+      final response = await _authService.register(
+        name: fullName,
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+        passwordConfirmation: _confirmPasswordController.text.trim(),
+        role: role,
+        age: age,
+        gender: gender,
+        phone: _phoneController.text.trim(),
+        verificationMethod: _selectedVerificationMethod,
+      );
+
+      if (!mounted) return;
       setState(() {
         _isLoading = false;
       });
 
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const OnboardingScreen()),
-      );
+      print('✅ Registration response: ${response["status"]}');
+      print('✅ Response data: ${response["data"]}');
+
+      if (response["status"] == 201) {
+        // Registration successful - needs verification
+        final userId = response["data"]["user_id"].toString();
+        final verificationMethod = response["data"]["verification_method"] ?? "email";
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'تم إنشاء الحساب بنجاح! يرجى التحقق من حسابك',
+              style: GoogleFonts.tajawal(fontWeight: FontWeight.w500),
+            ),
+            backgroundColor: const Color(0xFF10B981),
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 2),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        );
+
+        // Navigate to verification page
+        Future.delayed(const Duration(seconds: 1), () {
+          if (mounted) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => VerificationPage(
+                  userId: userId,
+                  verificationMethod: verificationMethod,
+                  email: verificationMethod == 'email' 
+                      ? _emailController.text.trim() 
+                      : null,
+                  phone: verificationMethod == 'phone' 
+                      ? _phoneController.text.trim() 
+                      : null,
+                ),
+              ),
+            );
+          }
+        });
+      } else {
+        // Registration failed
+        final message = response["data"]["message"] ?? 
+                       response["data"]["error"] ?? 
+                       "فشل إنشاء الحساب";
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              message,
+              style: GoogleFonts.tajawal(fontWeight: FontWeight.w500),
+              textAlign: TextAlign.center,
+            ),
+            backgroundColor: Colors.redAccent,
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 3),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+      });
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'تم إنشاء الحساب بنجاح!',
+            "حدث خطأ غير متوقع: ${e.toString()}",
             style: GoogleFonts.tajawal(fontWeight: FontWeight.w500),
+            textAlign: TextAlign.center,
           ),
-          backgroundColor: const Color(0xFF10B981),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
+          backgroundColor: Colors.redAccent,
+          duration: const Duration(seconds: 3),
         ),
       );
     }

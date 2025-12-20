@@ -5,95 +5,153 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../../../../bloc/university_bloc.dart';
+
 class UniversitiesPage extends StatelessWidget {
   const UniversitiesPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (_) => UniversityBloc()..add(LoadUniversitiesEvent()),
+      child: const _UniversitiesPageBody(),
+    );
+  }
+}
+
+class _UniversitiesPageBody extends StatelessWidget {
+  const _UniversitiesPageBody();
 
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<ThemeCubit, ThemeState>(
       builder: (context, themeState) {
         final isDarkMode = themeState.isDarkMode;
-        
+
         return Scaffold(
-          backgroundColor: isDarkMode ? const Color(0xFF121212) : const Color(0xFFF9FAFB),
-          body: CustomScrollView(
-            slivers: [
-              // Page Header with Back Button
-              SliverToBoxAdapter(
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(isDarkMode ? 0.2 : 0.05),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                  child: SafeArea(
-                    bottom: false,
-                    child: Row(
-                      children: [
-                        // Back Button
-                        Container(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                Color(0xFF667EEA),
-                                Color(0xFF764BA2),
-                              ],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                            borderRadius: BorderRadius.circular(8),
+          backgroundColor:
+              isDarkMode ? const Color(0xFF121212) : const Color(0xFFF9FAFB),
+          body: BlocBuilder<UniversityBloc, UniversityState>(
+            builder: (context, uniState) {
+              final universities = uniState.universities;
+
+              return CustomScrollView(
+                slivers: [
+                  // Page Header with Back Button
+                  SliverToBoxAdapter(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: isDarkMode
+                            ? const Color(0xFF1E1E1E)
+                            : Colors.white,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(
+                                isDarkMode ? 0.2 : 0.05),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
                           ),
-                          child: InkWell(
-                            borderRadius: BorderRadius.circular(8),
-                            onTap: () => Navigator.pop(context),
-                            child: Padding(
-                              padding: const EdgeInsets.all(8),
-                              child: Icon(
-                                Icons.arrow_back,
-                                color: Colors.white,
+                        ],
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 16),
+                      child: SafeArea(
+                        bottom: false,
+                        child: Row(
+                          children: [
+                            // Back Button
+                            Container(
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(
+                                  colors: [
+                                    Color(0xFF667EEA),
+                                    Color(0xFF764BA2),
+                                  ],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(8),
+                                onTap: () => Navigator.pop(context),
+                                child: const Padding(
+                                  padding: EdgeInsets.all(8),
+                                  child: Icon(
+                                    Icons.arrow_back,
+                                    color: Colors.white,
+                                  ),
+                                ),
                               ),
                             ),
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        // Title
-                        Expanded(
-                          child: Text(
-                            'الجامعات السورية',
-                            style: GoogleFonts.tajawal(
-                              fontSize: 24,
-                              fontWeight: FontWeight.w900,
-                              color: isDarkMode ? Colors.white : const Color(0xFF1F2937),
+                            const SizedBox(width: 16),
+                            // Title
+                            Expanded(
+                              child: Text(
+                                'الجامعات السورية',
+                                style: GoogleFonts.tajawal(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.w900,
+                                  color: isDarkMode
+                                      ? Colors.white
+                                      : const Color(0xFF1F2937),
+                                ),
+                              ),
                             ),
-                          ),
+                          ],
                         ),
-                      ],
+                      ),
                     ),
                   ),
-                ),
-              ),
 
-              // Universities List
-              SliverList(
-                delegate: SliverChildBuilderDelegate((context, index) {
-                  return Padding(
-                    padding: EdgeInsets.fromLTRB(20, index == 0 ? 20 : 0, 20, 16),
-                    child: UniversityListItem(
-                      university: syrianUniversities[index],
+                  if (uniState.isLoading)
+                    const SliverToBoxAdapter(
+                      child: Padding(
+                        padding: EdgeInsets.all(24),
+                        child: Center(
+                          child: CircularProgressIndicator(),
+                        ),
+                      ),
+                    )
+                  else
+                    // Universities List (fallback to old static list if backend empty)
+                    SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) {
+                          final uni = universities.isNotEmpty
+                              ? universities[index]
+                              : syrianUniversities[index];
+
+                          return Padding(
+                            padding: EdgeInsets.fromLTRB(
+                                20, index == 0 ? 20 : 0, 20, 16),
+                            child: UniversityListItem(
+                              university: universities.isNotEmpty
+                                  ? {
+                                      // Map backend fields into existing UI shape
+                                      'id': uni['id'] ?? '',
+                                      'name': uni['name'] ?? '',
+                                      'city': uni['city'] ?? '',
+                                      'type': uni['type'] ?? 'حكومية',
+                                      'faculties':
+                                          uni['faculties_count'] ?? 'غير معروف',
+                                      'image': uni['logo_url'] ??
+                                          'https://picsum.photos/seed/university${index}/200/200',
+                                    }
+                                  : syrianUniversities[index],
+                            ),
+                          );
+                        },
+                        childCount: universities.isNotEmpty
+                            ? universities.length
+                            : syrianUniversities.length,
+                      ),
                     ),
-                  );
-                }, childCount: syrianUniversities.length),
-              ),
 
-              // Bottom spacing
-              const SliverToBoxAdapter(child: SizedBox(height: 40)),
-            ],
+                  const SliverToBoxAdapter(child: SizedBox(height: 40)),
+                ],
+              );
+            },
           ),
         );
       },
@@ -281,6 +339,7 @@ class UniversityListItem extends StatelessWidget {
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) => FacultiesPage(
+                                      universityId: university['id'] ?? '',
                                       universityName: university['name'],
                                     ),
                                   ),
@@ -442,7 +501,7 @@ class UniversityDetailsSheet extends StatelessWidget {
                         context,
                         MaterialPageRoute(
                           builder: (context) =>
-                              FacultiesPage(universityName: university['name']),
+                              FacultiesPage(universityName: university['name'], universityId: university['id'],),
                         ),
                       );
                     },

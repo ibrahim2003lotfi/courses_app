@@ -1,3 +1,4 @@
+import 'package:courses_app/services/course_api.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -19,6 +20,25 @@ class CourseVideo {
   });
 }
 
+// نموذج بيانات الكورس الجامعي
+class UniversityCourse {
+  String universityName;
+  String faculty;
+  String subjectName;
+  String price;
+  String description;
+  String imageUrl;
+
+  UniversityCourse({
+    required this.universityName,
+    required this.faculty,
+    required this.subjectName,
+    required this.price,
+    required this.description,
+    required this.imageUrl,
+  });
+}
+
 class AddCoursePage extends StatefulWidget {
   const AddCoursePage({super.key});
 
@@ -26,8 +46,14 @@ class AddCoursePage extends StatefulWidget {
   State<AddCoursePage> createState() => _AddCoursePageState();
 }
 
-class _AddCoursePageState extends State<AddCoursePage> {
+class _AddCoursePageState extends State<AddCoursePage>
+    with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
+  final _universityFormKey = GlobalKey<FormState>();
+  
+  late TabController _tabController;
+
+  // Controllers for Educational Course
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _teacherController = TextEditingController();
@@ -37,6 +63,14 @@ class _AddCoursePageState extends State<AddCoursePage> {
   final _imageUrlController = TextEditingController();
   final _teacherImageController = TextEditingController();
   final _tagsController = TextEditingController();
+
+  // Controllers for University Course
+  final _universityNameController = TextEditingController();
+  final _facultyController = TextEditingController();
+  final _subjectNameController = TextEditingController();
+  final _universityPriceController = TextEditingController();
+  final _universityDescriptionController = TextEditingController();
+  final _universityImageUrlController = TextEditingController();
 
   // قائمة الفيديوهات
   final List<CourseVideo> _courseVideos = [];
@@ -61,7 +95,14 @@ class _AddCoursePageState extends State<AddCoursePage> {
   final List<String> _levels = ['مبتدئ', 'متوسط', 'متقدم'];
 
   @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+  }
+
+  @override
   void dispose() {
+    _tabController.dispose();
     _titleController.dispose();
     _descriptionController.dispose();
     _teacherController.dispose();
@@ -71,6 +112,12 @@ class _AddCoursePageState extends State<AddCoursePage> {
     _imageUrlController.dispose();
     _teacherImageController.dispose();
     _tagsController.dispose();
+    _universityNameController.dispose();
+    _facultyController.dispose();
+    _subjectNameController.dispose();
+    _universityPriceController.dispose();
+    _universityDescriptionController.dispose();
+    _universityImageUrlController.dispose();
     super.dispose();
   }
 
@@ -97,18 +144,27 @@ class _AddCoursePageState extends State<AddCoursePage> {
       _isLoading = true;
     });
 
-    // محاكاة عملية الحفظ
-    await Future.delayed(const Duration(seconds: 2));
+    try {
+      // Call backend to create regular instructor course
+      final api = CourseApi();
+      await api.createInstructorCourse(
+        title: _titleController.text.trim(),
+        description: _descriptionController.text.trim().isEmpty
+            ? null
+            : _descriptionController.text.trim(),
+        price: _isFree
+            ? 0
+            : num.tryParse(_priceController.text.trim()) ?? 0,
+        level: _mapLevelToBackend(_selectedLevel),
+        // category mapping can be improved later when categories are dynamic
+      );
 
-    setState(() {
-      _isLoading = false;
-    });
+      if (!mounted) return;
 
-    if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'تم حفظ الدورة بنجاح مع ${_courseVideos.length} فيديو!',
+            'تم حفظ الدورة بنجاح!',
             style: GoogleFonts.tajawal(fontWeight: FontWeight.w600),
           ),
           backgroundColor: Colors.green,
@@ -116,12 +172,88 @@ class _AddCoursePageState extends State<AddCoursePage> {
         ),
       );
 
-      // العودة إلى الصفحة السابقة بعد الحفظ
       Future.delayed(const Duration(seconds: 1), () {
-        if (mounted) {
-          Navigator.pop(context);
-        }
+        if (mounted) Navigator.pop(context);
       });
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'فشل حفظ الدورة: $e',
+            style: GoogleFonts.tajawal(fontWeight: FontWeight.w600),
+          ),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _saveUniversityCourse() async {
+    if (!_universityFormKey.currentState!.validate()) {
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      // NOTE: for now we don't have a picker for real university / faculty IDs.
+      // This call will need proper IDs once the UI is extended.
+      final api = CourseApi();
+      await api.createUniversityCourse(
+        title: _subjectNameController.text.trim(),
+        description: _universityDescriptionController.text.trim().isEmpty
+            ? null
+            : _universityDescriptionController.text.trim(),
+        price: num.tryParse(_universityPriceController.text.trim()) ?? 0,
+        level: 'beginner',
+        universityId: '', // TODO: connect to real selection
+        facultyId: '', // TODO: connect to real selection
+      );
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'تم حفظ الكورس الجامعي بنجاح!',
+            style: GoogleFonts.tajawal(fontWeight: FontWeight.w600),
+          ),
+          backgroundColor: Colors.green,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+
+      Future.delayed(const Duration(seconds: 1), () {
+        if (mounted) Navigator.pop(context);
+      });
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'فشل حفظ الكورس الجامعي: $e',
+            style: GoogleFonts.tajawal(fontWeight: FontWeight.w600),
+          ),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -475,120 +607,179 @@ class _AddCoursePageState extends State<AddCoursePage> {
               onPressed: () => Navigator.pop(context),
             ),
             actions: [
-              IconButton(
-                icon: Icon(
-                  _showPreview ? Icons.edit : Icons.visibility,
-                  color: isDarkMode ? Colors.white : const Color(0xFF1F2937),
-                ),
-                onPressed: () {
-                  setState(() {
-                    _showPreview = !_showPreview;
-                  });
-                },
-              ),
-            ],
-          ),
-          body: Form(
-            key: _formKey,
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (_showPreview) ...[
-                    _buildPreviewSection(isDarkMode),
-                    const SizedBox(height: 24),
-                  ] else ...[
-                    _buildFormSection(isDarkMode),
-                  ],
-
-                  // أزرار الحفظ والإلغاء
-                  const SizedBox(height: 32),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Container(
-                          decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                            borderRadius: BorderRadius.circular(12),
-                            boxShadow: [
-                              BoxShadow(
-                                color: const Color(0xFF667EEA).withOpacity(0.3),
-                                blurRadius: 8,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: ElevatedButton(
-                            onPressed: _isLoading ? null : _saveCourse,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.transparent,
-                              shadowColor: Colors.transparent,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                            ),
-                            child: _isLoading
-                                ? const SizedBox(
-                                    height: 20,
-                                    width: 20,
-                                    child: CircularProgressIndicator(
-                                      color: Colors.white,
-                                      strokeWidth: 2,
-                                    ),
-                                  )
-                                : Text(
-                                    'حفظ الدورة',
-                                    style: GoogleFonts.tajawal(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w700,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: () => Navigator.pop(context),
-                          style: OutlinedButton.styleFrom(
-                            side: BorderSide(
-                              color: isDarkMode
-                                  ? Colors.white30
-                                  : Colors.black26,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                          ),
-                          child: Text(
-                            'إلغاء',
-                            style: GoogleFonts.tajawal(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                              color: isDarkMode
-                                  ? Colors.white
-                                  : const Color(0xFF1F2937),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
+              if (_tabController.index == 0)
+                IconButton(
+                  icon: Icon(
+                    _showPreview ? Icons.edit : Icons.visibility,
+                    color: isDarkMode ? Colors.white : const Color(0xFF1F2937),
                   ),
-                  const SizedBox(height: 20),
-                ],
+                  onPressed: () {
+                    setState(() {
+                      _showPreview = !_showPreview;
+                    });
+                  },
+                ),
+            ],
+            bottom: TabBar(
+              controller: _tabController,
+              labelStyle: GoogleFonts.tajawal(
+                fontWeight: FontWeight.w700,
+                fontSize: 14,
               ),
+              unselectedLabelStyle: GoogleFonts.tajawal(
+                fontWeight: FontWeight.w500,
+                fontSize: 14,
+              ),
+              indicatorColor: const Color(0xFF667EEA),
+              labelColor: const Color(0xFF667EEA),
+              unselectedLabelColor: isDarkMode ? Colors.white60 : Colors.black54,
+              tabs: const [
+                Tab(text: 'كورس تعليمي'),
+                Tab(text: 'كورس جامعي'),
+              ],
+              onTap: (index) {
+                setState(() {
+                  _showPreview = false;
+                });
+              },
             ),
+          ),
+          body: TabBarView(
+            controller: _tabController,
+            children: [
+              // Tab 1: Educational Course
+              _buildEducationalCourseTab(isDarkMode),
+              
+              // Tab 2: University Course
+              _buildUniversityCourseTab(isDarkMode),
+            ],
           ),
         );
       },
+    );
+  }
+
+  Widget _buildEducationalCourseTab(bool isDarkMode) {
+    return Form(
+      key: _formKey,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (_showPreview) ...[
+              _buildPreviewSection(isDarkMode),
+              const SizedBox(height: 24),
+            ] else ...[
+              _buildFormSection(isDarkMode),
+            ],
+
+            // أزرار الحفظ والإلغاء
+            const SizedBox(height: 32),
+            _buildActionButtons(isDarkMode, onSave: _saveCourse),
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildUniversityCourseTab(bool isDarkMode) {
+    return Form(
+      key: _universityFormKey,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildUniversityFormSection(isDarkMode),
+            const SizedBox(height: 32),
+            _buildActionButtons(isDarkMode, onSave: _saveUniversityCourse),
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionButtons(bool isDarkMode, {required VoidCallback onSave}) {
+    return Row(
+      children: [
+        Expanded(
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF667EEA).withOpacity(0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: ElevatedButton(
+              onPressed: _isLoading ? null : onSave,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.transparent,
+                shadowColor: Colors.transparent,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 16),
+              ),
+              child: _isLoading
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : Text(
+                      'حفظ الدورة',
+                      style: GoogleFonts.tajawal(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: OutlinedButton(
+            onPressed: () => Navigator.pop(context),
+            style: OutlinedButton.styleFrom(
+              side: BorderSide(
+                color: isDarkMode
+                    ? Colors.white30
+                    : Colors.black26,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              padding: const EdgeInsets.symmetric(vertical: 16),
+            ),
+            child: Text(
+              'إلغاء',
+              style: GoogleFonts.tajawal(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: isDarkMode
+                    ? Colors.white
+                    : const Color(0xFF1F2937),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -659,28 +850,55 @@ class _AddCoursePageState extends State<AddCoursePage> {
           },
         ),
         const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(
-              child: _buildTextField(
-                controller: _durationController,
-                label: 'المدة (بالساعات)',
-                hint: '20',
-                isDarkMode: isDarkMode,
-                keyboardType: TextInputType.number,
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: _buildTextField(
-                controller: _lessonsController,
-                label: 'عدد الدروس',
-                hint: '30',
-                isDarkMode: isDarkMode,
-                keyboardType: TextInputType.number,
-              ),
-            ),
-          ],
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final isMobile = constraints.maxWidth < 600;
+            if (isMobile) {
+              return Column(
+                children: [
+                  _buildTextField(
+                    controller: _durationController,
+                    label: 'المدة (بالساعات)',
+                    hint: '20',
+                    isDarkMode: isDarkMode,
+                    keyboardType: TextInputType.number,
+                  ),
+                  const SizedBox(height: 16),
+                  _buildTextField(
+                    controller: _lessonsController,
+                    label: 'عدد الدروس',
+                    hint: '30',
+                    isDarkMode: isDarkMode,
+                    keyboardType: TextInputType.number,
+                  ),
+                ],
+              );
+            } else {
+              return Row(
+                children: [
+                  Expanded(
+                    child: _buildTextField(
+                      controller: _durationController,
+                      label: 'المدة (بالساعات)',
+                      hint: '20',
+                      isDarkMode: isDarkMode,
+                      keyboardType: TextInputType.number,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: _buildTextField(
+                      controller: _lessonsController,
+                      label: 'عدد الدروس',
+                      hint: '30',
+                      isDarkMode: isDarkMode,
+                      keyboardType: TextInputType.number,
+                    ),
+                  ),
+                ],
+              );
+            }
+          },
         ),
         const SizedBox(height: 24),
 
@@ -731,7 +949,7 @@ class _AddCoursePageState extends State<AddCoursePage> {
           _buildTextField(
             controller: _priceController,
             label: 'السعر',
-            hint: '₪199',
+            hint: 'S.P 199',
             isDarkMode: isDarkMode,
             keyboardType: TextInputType.number,
           ),
@@ -983,6 +1201,146 @@ class _AddCoursePageState extends State<AddCoursePage> {
     );
   }
 
+  Widget _buildUniversityFormSection(bool isDarkMode) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionTitle('المعلومات الأساسية', isDarkMode),
+        const SizedBox(height: 16),
+        _buildTextField(
+          controller: _universityNameController,
+          label: 'اسم الجامعة',
+          hint: 'أدخل اسم الجامعة',
+          isDarkMode: isDarkMode,
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'الرجاء إدخال اسم الجامعة';
+            }
+            return null;
+          },
+        ),
+        const SizedBox(height: 16),
+        _buildTextField(
+          controller: _facultyController,
+          label: 'اسم الكلية',
+          hint: 'أدخل اسم الكلية',
+          isDarkMode: isDarkMode,
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'الرجاء إدخال اسم الكلية';
+            }
+            return null;
+          },
+        ),
+        const SizedBox(height: 16),
+        _buildTextField(
+          controller: _subjectNameController,
+          label: 'اسم المادة',
+          hint: 'أدخل اسم المادة',
+          isDarkMode: isDarkMode,
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'الرجاء إدخال اسم المادة';
+            }
+            return null;
+          },
+        ),
+        const SizedBox(height: 24),
+
+        _buildSectionTitle('وصف الكورس', isDarkMode),
+        const SizedBox(height: 16),
+        _buildTextField(
+          controller: _universityDescriptionController,
+          label: 'وصف الكورس الجامعي',
+          hint: 'أدخل وصفاً تفصيلياً للكورس الجامعي',
+          isDarkMode: isDarkMode,
+          maxLines: 4,
+        ),
+        const SizedBox(height: 24),
+
+        _buildSectionTitle('التسعير', isDarkMode),
+        const SizedBox(height: 16),
+        _buildTextField(
+          controller: _universityPriceController,
+          label: 'سعر الكورس',
+          hint: 'S.P 299',
+          isDarkMode: isDarkMode,
+          keyboardType: TextInputType.number,
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'الرجاء إدخال سعر الكورس';
+            }
+            return null;
+          },
+        ),
+        const SizedBox(height: 24),
+
+        _buildSectionTitle('الصورة', isDarkMode),
+        const SizedBox(height: 16),
+        _buildTextField(
+          controller: _universityImageUrlController,
+          label: 'رابط صورة الكورس',
+          hint: 'https://example.com/university-course.jpg',
+          isDarkMode: isDarkMode,
+        ),
+        const SizedBox(height: 16),
+        
+        // معاينة صورة الكورس الجامعي
+        if (_universityImageUrlController.text.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          Text(
+            'معاينة الصورة',
+            style: GoogleFonts.tajawal(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: isDarkMode ? Colors.white : const Color(0xFF1F2937),
+            ),
+          ),
+          const SizedBox(height: 8),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Image.network(
+              _universityImageUrlController.text,
+              height: 200,
+              width: double.infinity,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) {
+                return Container(
+                  height: 200,
+                  decoration: BoxDecoration(
+                    color: isDarkMode
+                        ? const Color(0xFF2D2D2D)
+                        : const Color(0xFFF3F4F6),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.image_not_supported,
+                          size: 48,
+                          color: isDarkMode ? Colors.white30 : Colors.black26,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'تعذر تحميل الصورة',
+                          style: GoogleFonts.tajawal(
+                            color: isDarkMode ? Colors.white30 : Colors.black26,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
   Widget _buildPreviewSection(bool isDarkMode) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1109,8 +1467,8 @@ class _AddCoursePageState extends State<AddCoursePage> {
                     _isFree
                         ? 'مجاني'
                         : (_priceController.text.isEmpty
-                              ? '₪0'
-                              : '₪${_priceController.text}'),
+                              ? 'S.P0'
+                              : 'S.P${_priceController.text}'),
                     style: GoogleFonts.tajawal(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
@@ -1277,6 +1635,19 @@ class _AddCoursePageState extends State<AddCoursePage> {
         ),
       ],
     );
+  }
+
+  String _mapLevelToBackend(String levelArabic) {
+    switch (levelArabic) {
+      case 'مبتدئ':
+        return 'beginner';
+      case 'متوسط':
+        return 'intermediate';
+      case 'متقدم':
+        return 'advanced';
+      default:
+        return 'beginner';
+    }
   }
 
   Widget _buildDropdownField({

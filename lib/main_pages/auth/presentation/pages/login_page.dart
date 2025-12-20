@@ -2,9 +2,11 @@ import 'dart:ui';
 
 import 'package:courses_app/main_pages/auth/presentation/pages/forgot_password_page.dart';
 import 'package:courses_app/main_pages/auth/presentation/pages/register_page.dart';
-import 'package:courses_app/onboarding/onboarding_screen.dart';
+import 'package:courses_app/main_pages/auth/presentation/pages/verification_page.dart';
+import 'package:courses_app/widget_tree.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:courses_app/services/auth_service.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -21,6 +23,9 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
 
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+
+  final AuthService _authService = AuthService();
+
 
   bool _obscurePassword = true;
   bool _isLoading = false;
@@ -594,23 +599,82 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
   }
 
   void _handleLogin() async {
-    if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isLoading = true;
-      });
+    if (!_formKey.currentState!.validate()) return;
 
-      await Future.delayed(const Duration(seconds: 2));
+    if (!mounted) return;
+    setState(() => _isLoading = true);
 
-      setState(() {
-        _isLoading = false;
-      });
+    try {
+      final response = await _authService.login(
+        _emailController.text.trim(),
+        _passwordController.text.trim(),
+      );
 
-      Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => const OnboardingScreen()),
-    );
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+
+      // Handle successful login -> go directly to home (main app)
+      if (response["status"] == 200) {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const WidgetTree()),
+          (route) => false,
+        );
+      } 
+      // Handle unverified account - redirect to verification screen
+      else if (response["status"] == 403 && response["needs_verification"] == true) {
+        final userId = response["data"]["user_id"];
+        final verificationMethod = response["data"]["verification_method"] ?? "email";
+        
+        // Navigate to verification screen
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => VerificationPage(
+              userId: userId.toString(),
+              verificationMethod: verificationMethod,
+              email: _emailController.text.trim().contains('@') 
+                  ? _emailController.text.trim() 
+                  : null,
+              phone: _emailController.text.trim().contains('@') 
+                  ? null 
+                  : _emailController.text.trim(),
+            ),
+          ),
+        );
+      }
+      // Handle other errors
+      else {
+        final message = response["data"]["message"] ?? 
+                       response["data"]["error"] ?? 
+                       "خطأ غير معروف";
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(message, textAlign: TextAlign.center),
+            backgroundColor: Colors.redAccent,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (e) {
+      // Extra safety catch - should not reach here but just in case
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            "حدث خطأ غير متوقع: ${e.toString()}",
+            textAlign: TextAlign.center,
+          ),
+          backgroundColor: Colors.redAccent,
+          duration: const Duration(seconds: 3),
+        ),
+      );
     }
   }
+
 
   void _showDialog(String title, String content) {
     showDialog(

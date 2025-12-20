@@ -150,15 +150,20 @@ class CourseManagementBloc extends Bloc<CourseManagementEvent, CourseManagementS
     emit(state.copyWith(watchLaterCourses: updatedWatchLaterCourses));
   }
 
-  void _onLoadUserCourses(LoadUserCoursesEvent event, Emitter<CourseManagementState> emit) {
+  Future<void> _onLoadUserCourses(
+    LoadUserCoursesEvent event,
+    Emitter<CourseManagementState> emit,
+  ) async {
     // In a real app, you would load from shared preferences or API
     // For now, we'll simulate loading some initial data
     emit(state.copyWith(isLoading: true));
-    
-    // Simulate loading delay
-    Future.delayed(const Duration(milliseconds: 500), () {
-      emit(state.copyWith(isLoading: false));
-    });
+
+    // Simulate loading delay (and await it to avoid emit after completion)
+    await Future.delayed(const Duration(milliseconds: 500));
+
+    if (emit.isDone) return;
+
+    emit(state.copyWith(isLoading: false));
   }
 
   void _onUpdateCourseProgress(UpdateCourseProgressEvent event, Emitter<CourseManagementState> emit) {

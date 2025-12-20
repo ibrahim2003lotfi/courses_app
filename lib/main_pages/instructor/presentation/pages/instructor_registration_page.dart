@@ -294,50 +294,63 @@ class _InstructorRegistrationPageState extends State<InstructorRegistrationPage>
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => AlertDialog(
+      builder: (context) => Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
+        child: Container(
+          padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.05),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
+                  ),
+                  shape: BoxShape.circle,
                 ),
-                shape: BoxShape.circle,
+                child: Icon(Icons.check, color: Colors.white, size: 40),
               ),
-              child: Icon(Icons.check, color: Colors.white, size: 40),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              'تم إرسال طلبك بنجاح',
-              style: GoogleFonts.tajawal(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
+              const SizedBox(height: 24),
+              Text(
+                'تم إرسال طلبك بنجاح',
+                style: GoogleFonts.tajawal(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
               ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'طلبك قيد المراجعة\nسيتم الرد خلال 2-3 أيام ',
-              style: GoogleFonts.tajawal(fontSize: 14, color: Colors.grey[600]),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.pop(context);
-            },
-            child: Text(
-              'حسناً',
-              style: GoogleFonts.tajawal(fontWeight: FontWeight.bold),
-            ),
+              const SizedBox(height: 12),
+              Text(
+                'طلبك قيد المراجعة\nسيتم الرد خلال 2-3 أيام ',
+                style: GoogleFonts.tajawal(fontSize: 14, color: Colors.grey[600]),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    Navigator.pop(context);
+                  },
+                  style: TextButton.styleFrom(
+                    backgroundColor: Color(0xFF667EEA),
+                    padding: EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  child: Text(
+                    'حسناً',
+                    style: GoogleFonts.tajawal(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -346,14 +359,25 @@ class _InstructorRegistrationPageState extends State<InstructorRegistrationPage>
   void _showTermsDialog() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(
-          'الشروط والأحكام',
-          style: GoogleFonts.tajawal(fontWeight: FontWeight.bold),
-        ),
-        content: SingleChildScrollView(
-          child: Text(
-            '''شروط الانضمام كمدرس:
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: Container(
+          padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.05),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'الشروط والأحكام',
+                style: GoogleFonts.tajawal(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Text(
+                    '''شروط الانضمام كمدرس:
 
 1. يجب أن يكون لديك خبرة في المجال الذي تريد التدريس فيه
 2. الالتزام بجودة المحتوى المقدم
@@ -362,15 +386,28 @@ class _InstructorRegistrationPageState extends State<InstructorRegistrationPage>
 5. تقديم محتوى تعليمي قيّم ومفيد
 
 بالموافقة على هذه الشروط، فإنك توافق على جميع سياسات المنصة.''',
-            style: GoogleFonts.tajawal(height: 1.5),
+                    style: GoogleFonts.tajawal(height: 1.5),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: TextButton.styleFrom(
+                    backgroundColor: Color(0xFF667EEA),
+                    padding: EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  child: Text(
+                    'إغلاق',
+                    style: GoogleFonts.tajawal(color: Colors.white),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('إغلاق', style: GoogleFonts.tajawal()),
-          ),
-        ],
       ),
     );
   }
@@ -390,26 +427,43 @@ class _InstructorRegistrationPageState extends State<InstructorRegistrationPage>
               opacity: _fadeAnimation,
               child: LayoutBuilder(
                 builder: (context, constraints) {
-                  final isTablet = constraints.maxWidth > 768;
+                  final screenWidth = constraints.maxWidth;
+                  final isTablet = screenWidth > 768;
+                  final isLargeTablet = screenWidth > 1024;
+                  
                   return SingleChildScrollView(
-                    padding: EdgeInsets.all(isTablet ? 32 : 20),
-                    child: Form(
-                      key: _formKey,
-                      onChanged: _saveFormData,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildHeader(isDarkMode),
-                          const SizedBox(height: 24),
-                          _buildProgressIndicator(isDarkMode),
-                          const SizedBox(height: 32),
-                          if (isTablet)
-                            _buildTabletLayout(isDarkMode)
-                          else
-                            _buildMobileLayout(isDarkMode),
-                          const SizedBox(height: 32),
-                          _buildSubmitButton(isDarkMode),
-                        ],
+                    padding: EdgeInsets.symmetric(
+                      horizontal: screenWidth * 0.04,
+                      vertical: screenWidth * 0.03,
+                    ).clamp(
+                      EdgeInsets.zero,
+                      EdgeInsets.all(32),
+                    ),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minHeight: constraints.maxHeight,
+                      ),
+                      child: Form(
+                        key: _formKey,
+                        onChanged: _saveFormData,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildHeader(isDarkMode),
+                            const SizedBox(height: 24),
+                            _buildProgressIndicator(isDarkMode),
+                            const SizedBox(height: 32),
+                            if (isLargeTablet)
+                              _buildLargeTabletLayout(isDarkMode)
+                            else if (isTablet)
+                              _buildTabletLayout(isDarkMode)
+                            else
+                              _buildMobileLayout(isDarkMode),
+                            const SizedBox(height: 32),
+                            _buildSubmitButton(isDarkMode),
+                            SizedBox(height: MediaQuery.of(context).padding.bottom),
+                          ],
+                        ),
                       ),
                     ),
                   );
@@ -466,15 +520,19 @@ class _InstructorRegistrationPageState extends State<InstructorRegistrationPage>
               fontWeight: FontWeight.bold,
               color: _getTextColor(isDarkMode),
             ),
+            textAlign: TextAlign.center,
           ),
           const SizedBox(height: 8),
-          Text(
-            'املأ البيانات التالية لتصبح مدرساً في منصتنا',
-            style: GoogleFonts.tajawal(
-              fontSize: 14,
-              color: _getSecondaryTextColor(isDarkMode),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 20),
+            child: Text(
+              'املأ البيانات التالية لتصبح مدرساً في منصتنا',
+              style: GoogleFonts.tajawal(
+                fontSize: 14,
+                color: _getSecondaryTextColor(isDarkMode),
+              ),
+              textAlign: TextAlign.center,
             ),
-            textAlign: TextAlign.center,
           ),
         ],
       ),
@@ -531,8 +589,8 @@ class _InstructorRegistrationPageState extends State<InstructorRegistrationPage>
     );
   }
 
-  // Build tablet layout
-  Widget _buildTabletLayout(bool isDarkMode) {
+  // Build large tablet layout (3 columns)
+  Widget _buildLargeTabletLayout(bool isDarkMode) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -545,17 +603,55 @@ class _InstructorRegistrationPageState extends State<InstructorRegistrationPage>
             ],
           ),
         ),
-        const SizedBox(width: 24),
+        const SizedBox(width: 20),
         Expanded(
           child: Column(
             children: [
               _buildDepartmentSection(isDarkMode),
               const SizedBox(height: 24),
               _buildCertificatesSection(isDarkMode),
-              const SizedBox(height: 24),
+            ],
+          ),
+        ),
+        const SizedBox(width: 20),
+        Expanded(
+          child: Column(
+            children: [
               _buildAdditionalInfoSection(isDarkMode),
               const SizedBox(height: 24),
               _buildTermsSection(isDarkMode),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  // Build tablet layout (2 columns)
+  Widget _buildTabletLayout(bool isDarkMode) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Column(
+            children: [
+              _buildEducationSection(isDarkMode),
+              const SizedBox(height: 24),
+              _buildDepartmentSection(isDarkMode),
+              const SizedBox(height: 24),
+              _buildTermsSection(isDarkMode),
+            ],
+          ),
+        ),
+        const SizedBox(width: 20),
+        Expanded(
+          child: Column(
+            children: [
+              _buildExperienceSection(isDarkMode),
+              const SizedBox(height: 24),
+              _buildCertificatesSection(isDarkMode),
+              const SizedBox(height: 24),
+              _buildAdditionalInfoSection(isDarkMode),
             ],
           ),
         ),
@@ -568,15 +664,15 @@ class _InstructorRegistrationPageState extends State<InstructorRegistrationPage>
     return Column(
       children: [
         _buildEducationSection(isDarkMode),
-        const SizedBox(height: 24),
+        const SizedBox(height: 20),
         _buildDepartmentSection(isDarkMode),
-        const SizedBox(height: 24),
+        const SizedBox(height: 20),
         _buildExperienceSection(isDarkMode),
-        const SizedBox(height: 24),
+        const SizedBox(height: 20),
         _buildCertificatesSection(isDarkMode),
-        const SizedBox(height: 24),
+        const SizedBox(height: 20),
         _buildAdditionalInfoSection(isDarkMode),
-        const SizedBox(height: 24),
+        const SizedBox(height: 20),
         _buildTermsSection(isDarkMode),
       ],
     );
@@ -585,7 +681,8 @@ class _InstructorRegistrationPageState extends State<InstructorRegistrationPage>
   // Build education section
   Widget _buildEducationSection(bool isDarkMode) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      width: double.infinity,
+      padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.04),
       decoration: BoxDecoration(
         color: _getCardColor(isDarkMode),
         borderRadius: BorderRadius.circular(12),
@@ -604,17 +701,23 @@ class _InstructorRegistrationPageState extends State<InstructorRegistrationPage>
           const SizedBox(height: 20),
           DropdownButtonFormField<String>(
             value: _selectedEducationLevel,
+            isExpanded: true,
             decoration: InputDecoration(
               labelText: 'المستوى التعليمي الحالي *',
               prefixIcon: Icon(Icons.school_outlined),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
+              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 16),
             ),
             items: _educationLevels.map((level) {
               return DropdownMenuItem(
                 value: level,
-                child: Text(level, style: GoogleFonts.tajawal()),
+                child: Text(
+                  level,
+                  style: GoogleFonts.tajawal(),
+                  overflow: TextOverflow.ellipsis,
+                ),
               );
             }).toList(),
             onChanged: (value) {
@@ -642,7 +745,8 @@ class _InstructorRegistrationPageState extends State<InstructorRegistrationPage>
     });
 
     return Container(
-      padding: const EdgeInsets.all(20),
+      width: double.infinity,
+      padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.04),
       decoration: BoxDecoration(
         color: _getCardColor(isDarkMode),
         borderRadius: BorderRadius.circular(12),
@@ -694,6 +798,7 @@ class _InstructorRegistrationPageState extends State<InstructorRegistrationPage>
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
+                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 16),
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
@@ -716,6 +821,7 @@ class _InstructorRegistrationPageState extends State<InstructorRegistrationPage>
                       borderRadius: BorderRadius.circular(8),
                       child: Container(
                         constraints: BoxConstraints(maxHeight: 200),
+                        width: MediaQuery.of(context).size.width * 0.8,
                         decoration: BoxDecoration(
                           color: _getCardColor(isDarkMode),
                           borderRadius: BorderRadius.circular(8),
@@ -733,6 +839,7 @@ class _InstructorRegistrationPageState extends State<InstructorRegistrationPage>
                                   fontSize: 14,
                                   color: _getTextColor(isDarkMode),
                                 ),
+                                overflow: TextOverflow.ellipsis,
                               ),
                               onTap: () {
                                 onSelected(option);
@@ -753,7 +860,8 @@ class _InstructorRegistrationPageState extends State<InstructorRegistrationPage>
   // Build experience section
   Widget _buildExperienceSection(bool isDarkMode) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      width: double.infinity,
+      padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.04),
       decoration: BoxDecoration(
         color: _getCardColor(isDarkMode),
         borderRadius: BorderRadius.circular(12),
@@ -777,6 +885,7 @@ class _InstructorRegistrationPageState extends State<InstructorRegistrationPage>
               color: _getTextColor(isDarkMode),
             ),
           ),
+          const SizedBox(height: 12),
           Slider(
             value: _yearsOfExperience,
             min: 0,
@@ -801,6 +910,7 @@ class _InstructorRegistrationPageState extends State<InstructorRegistrationPage>
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
+              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 16),
             ),
             validator: (value) {
               if (value == null || value.isEmpty) {
@@ -820,7 +930,8 @@ class _InstructorRegistrationPageState extends State<InstructorRegistrationPage>
   // Build certificates section
   Widget _buildCertificatesSection(bool isDarkMode) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      width: double.infinity,
+      padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.04),
       decoration: BoxDecoration(
         color: _getCardColor(isDarkMode),
         borderRadius: BorderRadius.circular(12),
@@ -845,7 +956,8 @@ class _InstructorRegistrationPageState extends State<InstructorRegistrationPage>
             onTap: _pickFiles,
             borderRadius: BorderRadius.circular(8),
             child: Container(
-              padding: const EdgeInsets.all(16),
+              width: double.infinity,
+              padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.04),
               decoration: BoxDecoration(
                 border: Border.all(
                   color: isDarkMode ? Colors.grey[700]! : Colors.grey[300]!,
@@ -905,6 +1017,7 @@ class _InstructorRegistrationPageState extends State<InstructorRegistrationPage>
                         fontSize: 14,
                         color: _getTextColor(isDarkMode),
                       ),
+                      overflow: TextOverflow.ellipsis,
                     ),
                     subtitle: Text(
                       '${(file.size / 1024 / 1024).toStringAsFixed(2)} MB',
@@ -930,7 +1043,8 @@ class _InstructorRegistrationPageState extends State<InstructorRegistrationPage>
   // Build additional info section
   Widget _buildAdditionalInfoSection(bool isDarkMode) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      width: double.infinity,
+      padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.04),
       decoration: BoxDecoration(
         color: _getCardColor(isDarkMode),
         borderRadius: BorderRadius.circular(12),
@@ -956,6 +1070,7 @@ class _InstructorRegistrationPageState extends State<InstructorRegistrationPage>
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
+              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 16),
             ),
           ),
           const SizedBox(height: 16),
@@ -968,6 +1083,7 @@ class _InstructorRegistrationPageState extends State<InstructorRegistrationPage>
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
+              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 16),
             ),
           ),
         ],
@@ -978,7 +1094,8 @@ class _InstructorRegistrationPageState extends State<InstructorRegistrationPage>
   // Build terms section
   Widget _buildTermsSection(bool isDarkMode) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      width: double.infinity,
+      padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.04),
       decoration: BoxDecoration(
         color: _getCardColor(isDarkMode),
         borderRadius: BorderRadius.circular(12),
@@ -1091,12 +1208,14 @@ class _InstructorRegistrationPageState extends State<InstructorRegistrationPage>
           child: Icon(icon, color: Color(0xFF667EEA), size: 20),
         ),
         const SizedBox(width: 12),
-        Text(
-          title,
-          style: GoogleFonts.tajawal(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: _getTextColor(isDarkMode),
+        Expanded(
+          child: Text(
+            title,
+            style: GoogleFonts.tajawal(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: _getTextColor(isDarkMode),
+            ),
           ),
         ),
       ],
