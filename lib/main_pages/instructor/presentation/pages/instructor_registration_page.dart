@@ -2,6 +2,7 @@
 
 import 'package:courses_app/bloc/user_role_bloc.dart';
 import 'package:courses_app/core/utils/theme_manager.dart';
+import 'package:courses_app/services/instructor_service.dart';
 import 'package:courses_app/theme_cubit/theme_cubit.dart';
 import 'package:courses_app/theme_cubit/theme_state.dart';
 import 'package:flutter/material.dart';
@@ -11,6 +12,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
+import 'dart:io';
 
 class InstructorRegistrationPage extends StatefulWidget {
   const InstructorRegistrationPage({super.key});
@@ -23,6 +25,7 @@ class InstructorRegistrationPage extends StatefulWidget {
 class _InstructorRegistrationPageState extends State<InstructorRegistrationPage>
     with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
+  final InstructorService _instructorService = InstructorService();
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
 
@@ -268,25 +271,58 @@ class _InstructorRegistrationPageState extends State<InstructorRegistrationPage>
       _isSubmitting = true;
     });
 
-    // Save form data
-    await _saveFormData();
+    try {
+      // Convert PlatformFile to File for upload
+      List<File> certificateFiles = [];
+      for (var platformFile in _uploadedCertificates) {
+        if (platformFile.path != null) {
+          certificateFiles.add(File(platformFile.path!));
+        }
+      }
 
-    // Simulate API call
-    await Future.delayed(const Duration(seconds: 2));
+      // Call real API
+      final result = await _instructorService.applyToInstructor(
+        educationLevel: _selectedEducationLevel!,
+        department: _selectedDepartment!,
+        yearsOfExperience: _yearsOfExperience,
+        experienceDescription: _experienceController.text,
+        linkedinUrl: _linkedinController.text.trim().isEmpty 
+            ? null 
+            : _linkedinController.text.trim(),
+        portfolioUrl: _portfolioController.text.trim().isEmpty 
+            ? null 
+            : _portfolioController.text.trim(),
+        certificates: certificateFiles.isNotEmpty ? certificateFiles : null,
+      );
 
-    // Update user role
-    context.read<UserRoleBloc>().add(const BecomeTeacherEvent());
+      if (!mounted) return;
 
-    // Clear saved data
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('instructor_form_data');
+      // Clear saved data
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('instructor_form_data');
 
-    setState(() {
-      _isSubmitting = false;
-    });
+      setState(() {
+        _isSubmitting = false;
+      });
 
-    // Show success dialog
-    _showSuccessDialog();
+      if (result['success']) {
+        // Switch user role to instructor immediately
+        context.read<UserRoleBloc>().add(const BecomeTeacherEvent());
+        
+        // Show success dialog
+        _showSuccessDialog();
+      } else {
+        _showErrorSnackbar(result['message'] ?? 'فشل إرسال الطلب');
+      }
+    } catch (e) {
+      if (!mounted) return;
+      
+      setState(() {
+        _isSubmitting = false;
+      });
+      
+      _showErrorSnackbar('حدث خطأ: ${e.toString()}');
+    }
   }
 
   // Show success dialog
@@ -314,7 +350,7 @@ class _InstructorRegistrationPageState extends State<InstructorRegistrationPage>
               ),
               const SizedBox(height: 24),
               Text(
-                'تم إرسال طلبك بنجاح',
+                'تم التحويل إلى مدرس بنجاح!',
                 style: GoogleFonts.tajawal(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
@@ -323,7 +359,7 @@ class _InstructorRegistrationPageState extends State<InstructorRegistrationPage>
               ),
               const SizedBox(height: 12),
               Text(
-                'طلبك قيد المراجعة\nسيتم الرد خلال 2-3 أيام ',
+                'أنت الآن مدرس في المنصة\nيمكنك البدء في إنشاء الدورات',
                 style: GoogleFonts.tajawal(fontSize: 14, color: Colors.grey[600]),
                 textAlign: TextAlign.center,
               ),
@@ -422,52 +458,66 @@ class _InstructorRegistrationPageState extends State<InstructorRegistrationPage>
           data: isDarkMode ? ThemeManager.darkTheme : ThemeManager.lightTheme,
           child: Scaffold(
             backgroundColor: _getBackgroundColor(isDarkMode),
-            appBar: _buildAppBar(isDarkMode),
+            appBar: AppBar(
+              backgroundColor: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
+              elevation: 0,
+              leading: IconButton(
+                icon: Icon(Icons.arrow_back_ios, color: _getTextColor(isDarkMode)),
+                onPressed: () => Navigator.pop(context),
+              ),
+              title: Text(
+                'التسجيل كمدرس',
+                style: GoogleFonts.tajawal(
+                  color: _getTextColor(isDarkMode),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              centerTitle: true,
+            ),
             body: FadeTransition(
               opacity: _fadeAnimation,
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final screenWidth = constraints.maxWidth;
-                  final isTablet = screenWidth > 768;
-                  final isLargeTablet = screenWidth > 1024;
-                  
-                  return SingleChildScrollView(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: screenWidth * 0.04,
-                      vertical: screenWidth * 0.03,
-                    ).clamp(
-                      EdgeInsets.zero,
-                      EdgeInsets.all(32),
-                    ),
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(
-                        minHeight: constraints.maxHeight,
-                      ),
-                      child: Form(
-                        key: _formKey,
-                        onChanged: _saveFormData,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _buildHeader(isDarkMode),
-                            const SizedBox(height: 24),
-                            _buildProgressIndicator(isDarkMode),
-                            const SizedBox(height: 32),
-                            if (isLargeTablet)
-                              _buildLargeTabletLayout(isDarkMode)
-                            else if (isTablet)
-                              _buildTabletLayout(isDarkMode)
-                            else
-                              _buildMobileLayout(isDarkMode),
-                            const SizedBox(height: 32),
-                            _buildSubmitButton(isDarkMode),
-                            SizedBox(height: MediaQuery.of(context).padding.bottom),
-                          ],
-                        ),
-                      ),
-                    ),
-                  );
-                },
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(20),
+                child: Form(
+                  key: _formKey,
+                  onChanged: _saveFormData,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Progress indicator
+                      _buildProgressIndicator(isDarkMode),
+                      const SizedBox(height: 24),
+                      
+                      // Education level section
+                      _buildEducationSection(isDarkMode),
+                      const SizedBox(height: 24),
+                      
+                      // Department section
+                      _buildDepartmentSection(isDarkMode),
+                      const SizedBox(height: 24),
+                      
+                      // Experience section
+                      _buildExperienceSection(isDarkMode),
+                      const SizedBox(height: 24),
+                      
+                      // Additional info section
+                      _buildAdditionalInfoSection(isDarkMode),
+                      const SizedBox(height: 24),
+                      
+                      // Certificates section
+                      _buildCertificatesSection(isDarkMode),
+                      const SizedBox(height: 24),
+                      
+                      // Terms section
+                      _buildTermsSection(isDarkMode),
+                      const SizedBox(height: 32),
+                      
+                      // Submit button
+                      _buildSubmitButton(isDarkMode),
+                      SizedBox(height: MediaQuery.of(context).padding.bottom),
+                    ],
+                  ),
+                ),
               ),
             ),
           ),
@@ -476,239 +526,69 @@ class _InstructorRegistrationPageState extends State<InstructorRegistrationPage>
     );
   }
 
-  // Build app bar
-  PreferredSizeWidget _buildAppBar(bool isDarkMode) {
-    return AppBar(
-      backgroundColor: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
-      elevation: 0,
-      leading: IconButton(
-        icon: Icon(Icons.arrow_back_ios, color: _getTextColor(isDarkMode)),
-        onPressed: () => Navigator.pop(context),
-      ),
-      title: Text(
-        'التسجيل كمدرس',
-        style: GoogleFonts.tajawal(
-          color: _getTextColor(isDarkMode),
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-      centerTitle: true,
-    );
-  }
-
-  // Build header
-  Widget _buildHeader(bool isDarkMode) {
-    return Center(
-      child: Column(
-        children: [
-          Container(
-            width: 80,
-            height: 80,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
-              ),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(Icons.school, color: Colors.white, size: 40),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'انضم كمدرس معتمد',
-            style: GoogleFonts.tajawal(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: _getTextColor(isDarkMode),
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 8),
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 20),
-            child: Text(
-              'املأ البيانات التالية لتصبح مدرساً في منصتنا',
-              style: GoogleFonts.tajawal(
-                fontSize: 14,
-                color: _getSecondaryTextColor(isDarkMode),
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Build progress indicator
   Widget _buildProgressIndicator(bool isDarkMode) {
-    final progress = _calculateProgress();
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: _getCardColor(isDarkMode),
         borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        border: Border.all(color: Colors.grey.shade300),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'نسبة الإكمال',
-                style: GoogleFonts.tajawal(
-                  fontWeight: FontWeight.bold,
-                  color: _getTextColor(isDarkMode),
-                ),
-              ),
-              Text(
-                '${(progress * 100).toInt()}%',
-                style: GoogleFonts.tajawal(
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF667EEA),
-                ),
-              ),
-            ],
+          Text(
+            'اكمال النموذج',
+            style: GoogleFonts.tajawal(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: _getTextColor(isDarkMode),
+            ),
           ),
           const SizedBox(height: 12),
           LinearProgressIndicator(
-            value: progress,
-            minHeight: 8,
-            backgroundColor: isDarkMode ? Colors.grey[700] : Colors.grey[200],
-            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF667EEA)),
+            value: _calculateProgress(),
+            backgroundColor: Colors.grey.shade300,
+            valueColor: AlwaysStoppedAnimation<Color>(
+              Colors.green,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '${(_calculateProgress() * 100).toInt()}% مكتمل',
+            style: GoogleFonts.tajawal(
+              fontSize: 12,
+              color: _getSecondaryTextColor(isDarkMode),
+            ),
           ),
         ],
       ),
     );
   }
 
-  // Build large tablet layout (3 columns)
-  Widget _buildLargeTabletLayout(bool isDarkMode) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          child: Column(
-            children: [
-              _buildEducationSection(isDarkMode),
-              const SizedBox(height: 24),
-              _buildExperienceSection(isDarkMode),
-            ],
-          ),
-        ),
-        const SizedBox(width: 20),
-        Expanded(
-          child: Column(
-            children: [
-              _buildDepartmentSection(isDarkMode),
-              const SizedBox(height: 24),
-              _buildCertificatesSection(isDarkMode),
-            ],
-          ),
-        ),
-        const SizedBox(width: 20),
-        Expanded(
-          child: Column(
-            children: [
-              _buildAdditionalInfoSection(isDarkMode),
-              const SizedBox(height: 24),
-              _buildTermsSection(isDarkMode),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  // Build tablet layout (2 columns)
-  Widget _buildTabletLayout(bool isDarkMode) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          child: Column(
-            children: [
-              _buildEducationSection(isDarkMode),
-              const SizedBox(height: 24),
-              _buildDepartmentSection(isDarkMode),
-              const SizedBox(height: 24),
-              _buildTermsSection(isDarkMode),
-            ],
-          ),
-        ),
-        const SizedBox(width: 20),
-        Expanded(
-          child: Column(
-            children: [
-              _buildExperienceSection(isDarkMode),
-              const SizedBox(height: 24),
-              _buildCertificatesSection(isDarkMode),
-              const SizedBox(height: 24),
-              _buildAdditionalInfoSection(isDarkMode),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  // Build mobile layout
-  Widget _buildMobileLayout(bool isDarkMode) {
-    return Column(
-      children: [
-        _buildEducationSection(isDarkMode),
-        const SizedBox(height: 20),
-        _buildDepartmentSection(isDarkMode),
-        const SizedBox(height: 20),
-        _buildExperienceSection(isDarkMode),
-        const SizedBox(height: 20),
-        _buildCertificatesSection(isDarkMode),
-        const SizedBox(height: 20),
-        _buildAdditionalInfoSection(isDarkMode),
-        const SizedBox(height: 20),
-        _buildTermsSection(isDarkMode),
-      ],
-    );
-  }
-
-  // Build education section
   Widget _buildEducationSection(bool isDarkMode) {
     return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.04),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: _getCardColor(isDarkMode),
         borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        border: Border.all(color: Colors.grey.shade300),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildSectionTitle('المستوى التعليمي', Icons.school, isDarkMode),
-          const SizedBox(height: 20),
+          const SizedBox(height: 12),
           DropdownButtonFormField<String>(
             value: _selectedEducationLevel,
-            isExpanded: true,
             decoration: InputDecoration(
-              labelText: 'المستوى التعليمي الحالي *',
-              prefixIcon: Icon(Icons.school_outlined),
+              hintText: 'اختر المستوى التعليمي',
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: Colors.grey.shade300),
               ),
-              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+              filled: true,
+              fillColor: isDarkMode ? Colors.grey.shade800 : Colors.grey.shade100,
             ),
             items: _educationLevels.map((level) {
               return DropdownMenuItem(
@@ -716,7 +596,6 @@ class _InstructorRegistrationPageState extends State<InstructorRegistrationPage>
                 child: Text(
                   level,
                   style: GoogleFonts.tajawal(),
-                  overflow: TextOverflow.ellipsis,
                 ),
               );
             }).toList(),
@@ -725,365 +604,158 @@ class _InstructorRegistrationPageState extends State<InstructorRegistrationPage>
                 _selectedEducationLevel = value;
               });
             },
-            validator: (value) {
-              if (value == null) {
-                return 'هذا الحقل مطلوب';
-              }
-              return null;
-            },
           ),
         ],
       ),
     );
   }
 
-  // Build department section
   Widget _buildDepartmentSection(bool isDarkMode) {
-    List<String> allDepartments = [];
-    _departmentsMap.forEach((key, values) {
-      allDepartments.addAll(values.map((v) => '$key - $v'));
-    });
-
     return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.04),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: _getCardColor(isDarkMode),
         borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        border: Border.all(color: Colors.grey.shade300),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildSectionTitle('التخصص', Icons.category, isDarkMode),
-          const SizedBox(height: 20),
-          Autocomplete<String>(
-            optionsBuilder: (TextEditingValue textEditingValue) {
-              if (textEditingValue.text == '') {
-                return allDepartments;
-              }
-              return allDepartments.where((String option) {
-                return option.toLowerCase().contains(
-                  textEditingValue.text.toLowerCase(),
-                );
-              });
-            },
-            onSelected: (String selection) {
+          const SizedBox(height: 12),
+          DropdownButtonFormField<String>(
+            value: _selectedDepartment,
+            decoration: InputDecoration(
+              hintText: 'اختر التخصص',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: Colors.grey.shade300),
+              ),
+              filled: true,
+              fillColor: isDarkMode ? Colors.grey.shade800 : Colors.grey.shade100,
+            ),
+            items: _departmentsMap.entries.expand((entry) {
+              return [
+                DropdownMenuItem<String>(
+                  value: entry.key,
+                  child: Text(
+                    entry.key,
+                    style: GoogleFonts.tajawal(fontWeight: FontWeight.bold),
+                  ),
+                ),
+                ...entry.value.map((subDept) => DropdownMenuItem<String>(
+                  value: subDept,
+                  child: Text(
+                    '  $subDept',
+                    style: GoogleFonts.tajawal(),
+                  ),
+                )),
+              ];
+            }).toList(),
+            onChanged: (value) {
               setState(() {
-                _selectedDepartment = selection;
+                _selectedDepartment = value;
               });
             },
-            fieldViewBuilder:
-                (
-                  BuildContext context,
-                  TextEditingController textEditingController,
-                  FocusNode focusNode,
-                  VoidCallback onFieldSubmitted,
-                ) {
-                  textEditingController.text = _selectedDepartment ?? '';
-                  return TextFormField(
-                    controller: textEditingController,
-                    focusNode: focusNode,
-                    decoration: InputDecoration(
-                      labelText: 'تحديد نوع القسم *',
-                      prefixIcon: Icon(Icons.category_outlined),
-                      suffixIcon: Icon(Icons.search),
-                      hintText: 'اختر القسم المناسب لخبرتك',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'هذا الحقل مطلوب';
-                      }
-                      return null;
-                    },
-                  );
-                },
-            optionsViewBuilder:
-                (
-                  BuildContext context,
-                  AutocompleteOnSelected<String> onSelected,
-                  Iterable<String> options,
-                ) {
-                  return Align(
-                    alignment: Alignment.topLeft,
-                    child: Material(
-                      elevation: 4.0,
-                      borderRadius: BorderRadius.circular(8),
-                      child: Container(
-                        constraints: BoxConstraints(maxHeight: 200),
-                        width: MediaQuery.of(context).size.width * 0.8,
-                        decoration: BoxDecoration(
-                          color: _getCardColor(isDarkMode),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: ListView.builder(
-                          padding: EdgeInsets.zero,
-                          shrinkWrap: true,
-                          itemCount: options.length,
-                          itemBuilder: (BuildContext context, int index) {
-                            final String option = options.elementAt(index);
-                            return ListTile(
-                              title: Text(
-                                option,
-                                style: GoogleFonts.tajawal(
-                                  fontSize: 14,
-                                  color: _getTextColor(isDarkMode),
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              onTap: () {
-                                onSelected(option);
-                              },
-                            );
-                          },
-                        ),
-                      ),
-                    ),
-                  );
-                },
           ),
         ],
       ),
     );
   }
 
-  // Build experience section
   Widget _buildExperienceSection(bool isDarkMode) {
     return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.04),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: _getCardColor(isDarkMode),
         borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        border: Border.all(color: Colors.grey.shade300),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildSectionTitle('الخبرة التدريسية', Icons.work, isDarkMode),
-          const SizedBox(height: 20),
+          const SizedBox(height: 12),
+          TextFormField(
+            controller: _experienceController,
+            decoration: InputDecoration(
+              hintText: 'صف خبرتك التدريسية (40 حرف على الأقل)',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: Colors.grey.shade300),
+              ),
+              filled: true,
+              fillColor: isDarkMode ? Colors.grey.shade800 : Colors.grey.shade100,
+            ),
+            maxLines: 4,
+            validator: (value) {
+              if (value == null || value.length < 40) {
+                return 'يجب كتابة 40 حرف على الأقل';
+              }
+              return null;
+            },
+          ),
+          const SizedBox(height: 16),
           Text(
-            'سنوات الخبرة: ${_yearsOfExperience.toInt()} سنة',
+            'سنوات الخبرة: ${_yearsOfExperience.toInt()}',
             style: GoogleFonts.tajawal(
-              fontWeight: FontWeight.bold,
+              fontSize: 14,
               color: _getTextColor(isDarkMode),
             ),
           ),
-          const SizedBox(height: 12),
           Slider(
             value: _yearsOfExperience,
             min: 0,
-            max: 30,
-            divisions: 30,
+            max: 50,
+            divisions: 50,
             activeColor: Color(0xFF667EEA),
-            label: '${_yearsOfExperience.toInt()} سنة',
             onChanged: (value) {
               setState(() {
                 _yearsOfExperience = value;
               });
             },
           ),
-          const SizedBox(height: 20),
-          TextFormField(
-            controller: _experienceController,
-            maxLines: 5,
-            decoration: InputDecoration(
-              labelText: 'وصف الخبرات الشخصية *',
-              hintText: 'اكتب نبذة عن خبراتك في مجال التدريس والتخصص...',
-              alignLabelWithHint: true,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-            ),
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'هذا الحقل مطلوب';
-              }
-              if (value.length < 40) {
-                return 'يجب أن يحتوي الوصف على 40 حرف على الأقل';
-              }
-              return null;
-            },
-          ),
         ],
       ),
     );
   }
 
-  // Build certificates section
-  Widget _buildCertificatesSection(bool isDarkMode) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.04),
-      decoration: BoxDecoration(
-        color: _getCardColor(isDarkMode),
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildSectionTitle(
-            'الشهادات (اختياري)',
-            Icons.workspace_premium,
-            isDarkMode,
-          ),
-          const SizedBox(height: 20),
-          InkWell(
-            onTap: _pickFiles,
-            borderRadius: BorderRadius.circular(8),
-            child: Container(
-              width: double.infinity,
-              padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.04),
-              decoration: BoxDecoration(
-                border: Border.all(
-                  color: isDarkMode ? Colors.grey[700]! : Colors.grey[300]!,
-                  style: BorderStyle.solid,
-                  width: 2,
-                ),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.upload_file, color: Color(0xFF667EEA)),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'إضافة الشهادات المكتسبة',
-                          style: GoogleFonts.tajawal(
-                            fontWeight: FontWeight.bold,
-                            color: _getTextColor(isDarkMode),
-                          ),
-                        ),
-                        Text(
-                          'اختياري - PDF, JPG, PNG (حد أقصى 15MB)',
-                          style: GoogleFonts.tajawal(
-                            fontSize: 12,
-                            color: _getSecondaryTextColor(isDarkMode),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Icon(Icons.add_circle, color: Color(0xFF667EEA)),
-                ],
-              ),
-            ),
-          ),
-          if (_uploadedCertificates.isNotEmpty) ...[
-            const SizedBox(height: 16),
-            ListView.builder(
-              shrinkWrap: true,
-              physics: NeverScrollableScrollPhysics(),
-              itemCount: _uploadedCertificates.length,
-              itemBuilder: (context, index) {
-                final file = _uploadedCertificates[index];
-                return Card(
-                  margin: const EdgeInsets.only(bottom: 8),
-                  child: ListTile(
-                    leading: Icon(
-                      Icons.insert_drive_file,
-                      color: Color(0xFF667EEA),
-                    ),
-                    title: Text(
-                      file.name,
-                      style: GoogleFonts.tajawal(
-                        fontSize: 14,
-                        color: _getTextColor(isDarkMode),
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    subtitle: Text(
-                      '${(file.size / 1024 / 1024).toStringAsFixed(2)} MB',
-                      style: GoogleFonts.tajawal(
-                        fontSize: 12,
-                        color: _getSecondaryTextColor(isDarkMode),
-                      ),
-                    ),
-                    trailing: IconButton(
-                      icon: Icon(Icons.delete, color: Colors.red),
-                      onPressed: () => _removeCertificate(index),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  // Build additional info section
   Widget _buildAdditionalInfoSection(bool isDarkMode) {
     return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.04),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: _getCardColor(isDarkMode),
         borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        border: Border.all(color: Colors.grey.shade300),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildSectionTitle('معلومات إضافية', Icons.info, isDarkMode),
-          const SizedBox(height: 20),
+          const SizedBox(height: 12),
           TextFormField(
             controller: _linkedinController,
             decoration: InputDecoration(
-              labelText: 'رابط LinkedIn (اختياري)',
-              prefixIcon: Icon(Icons.link),
-              hintText: 'https://linkedin.com/in/username',
+              hintText: 'رابط ملف LinkedIn (اختياري)',
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: Colors.grey.shade300),
               ),
-              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+              filled: true,
+              fillColor: isDarkMode ? Colors.grey.shade800 : Colors.grey.shade100,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           TextFormField(
             controller: _portfolioController,
             decoration: InputDecoration(
-              labelText: 'الموقع الشخصي/Portfolio (اختياري)',
-              prefixIcon: Icon(Icons.language),
-              hintText: 'https://example.com',
+              hintText: 'رابط معرض الأعمال (اختياري)',
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: Colors.grey.shade300),
               ),
-              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+              filled: true,
+              fillColor: isDarkMode ? Colors.grey.shade800 : Colors.grey.shade100,
             ),
           ),
         ],
@@ -1091,151 +763,229 @@ class _InstructorRegistrationPageState extends State<InstructorRegistrationPage>
     );
   }
 
-  // Build terms section
-  Widget _buildTermsSection(bool isDarkMode) {
+  Widget _buildCertificatesSection(bool isDarkMode) {
     return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.04),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: _getCardColor(isDarkMode),
         borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        border: Border.all(color: Colors.grey.shade300),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          CheckboxListTile(
+          _buildSectionTitle('الشهادات', Icons.description, isDarkMode),
+          const SizedBox(height: 12),
+          if (_uploadedCertificates.isEmpty)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey.shade300),
+                borderRadius: BorderRadius.circular(8),
+                color: isDarkMode ? Colors.grey.shade800 : Colors.grey.shade50,
+              ),
+              child: Column(
+                children: [
+                  Icon(Icons.upload_file, 
+                    size: 48, 
+                    color: Colors.grey.shade400),
+                  const SizedBox(height: 8),
+                  Text(
+                    'اضغط لإضافة شهادات',
+                    style: GoogleFonts.tajawal(
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          if (_uploadedCertificates.isNotEmpty)
+            Column(
+              children: [
+                ...List.generate(
+                  _uploadedCertificates.length,
+                  (index) => Container(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: isDarkMode ? Colors.grey.shade800 : Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.grey.shade300),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.description, color: Color(0xFF667EEA)),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _uploadedCertificates[index].name,
+                                style: GoogleFonts.tajawal(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              Text(
+                                '${(_uploadedCertificates[index].size / 1024 / 1024).toStringAsFixed(2)} MB',
+                                style: GoogleFonts.tajawal(
+                                  fontSize: 12,
+                                  color: _getSecondaryTextColor(isDarkMode),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          icon: Icon(Icons.delete, color: Colors.red),
+                          onPressed: () => _removeCertificate(index),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                ElevatedButton.icon(
+                  onPressed: _pickFiles,
+                  icon: const Icon(Icons.add),
+                  label: Text('إضافة المزيد', style: GoogleFonts.tajawal()),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Color(0xFF667EEA),
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTermsSection(bool isDarkMode) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: _getCardColor(isDarkMode),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade300),
+      ),
+      child: Row(
+        children: [
+          Checkbox(
             value: _agreedToTerms,
             onChanged: (value) {
               setState(() {
                 _agreedToTerms = value ?? false;
               });
             },
-            title: Text(
-              'أوافق على الشروط والأحكام',
-              style: GoogleFonts.tajawal(
-                fontWeight: FontWeight.bold,
-                color: _getTextColor(isDarkMode),
-              ),
-            ),
-            subtitle: GestureDetector(
+            activeColor: Color(0xFF667EEA),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: GestureDetector(
               onTap: _showTermsDialog,
               child: Text(
-                'اضغط لقراءة الشروط والأحكام',
+                'أوافق على الشروط والأحكام',
                 style: GoogleFonts.tajawal(
-                  fontSize: 12,
-                  color: Color(0xFF667EEA),
-                  decoration: TextDecoration.underline,
+                  color: _agreedToTerms ? _getTextColor(isDarkMode) : Colors.grey,
+                  decoration: TextDecoration.combine([
+                    TextDecoration.underline,
+                  ]),
                 ),
               ),
             ),
-            controlAffinity: ListTileControlAffinity.leading,
-            contentPadding: EdgeInsets.zero,
           ),
         ],
       ),
     );
   }
 
-  // Build submit button
   Widget _buildSubmitButton(bool isDarkMode) {
-    // التحقق من اكتمال جميع الحقول الإجبارية (100%)
-    final isFormValid = _calculateProgress() == 1.0;
+    final isFormValid = _selectedEducationLevel != null &&
+        _selectedDepartment != null &&
+        _yearsOfExperience > 0 &&
+        _experienceController.text.length >= 40 &&
+        _agreedToTerms;
 
-    return Container(
+    return SizedBox(
       width: double.infinity,
-      height: 56,
-      decoration: BoxDecoration(
-        gradient: isFormValid
-            ? LinearGradient(
-                colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              )
-            : null,
-        color: isFormValid ? null : Colors.grey,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: isFormValid
-            ? [
-                BoxShadow(
-                  color: Color(0xFF667EEA).withOpacity(0.3),
-                  blurRadius: 8,
-                  offset: const Offset(0, 4),
-                ),
-              ]
-            : null,
-      ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: isFormValid && !_isSubmitting ? _submitForm : null,
-        child: Center(
-          child: _isSubmitting
-              ? CircularProgressIndicator(color: Colors.white)
-              : Text(
-                  'إرسال طلب الانضمام',
-                  style: GoogleFonts.tajawal(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
+      child: ElevatedButton(
+        onPressed: isFormValid && !_isSubmitting ? _submitForm : null,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: isFormValid ? Color(0xFF667EEA) : Colors.grey,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
+        child: _isSubmitting
+            ? Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    'جاري الإرسال...',
+                    style: GoogleFonts.tajawal(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              )
+            : Text(
+                'إرسال الطلب',
+                style: GoogleFonts.tajawal(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
       ),
     );
   }
 
-  // Build section title
   Widget _buildSectionTitle(String title, IconData icon, bool isDarkMode) {
     return Row(
       children: [
-        Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                Color(0xFF667EEA).withOpacity(0.2),
-                Color(0xFF764BA2).withOpacity(0.2),
-              ],
-            ),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Icon(icon, color: Color(0xFF667EEA), size: 20),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Text(
-            title,
-            style: GoogleFonts.tajawal(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: _getTextColor(isDarkMode),
-            ),
+        Icon(icon, color: Color(0xFF667EEA), size: 20),
+        const SizedBox(width: 8),
+        Text(
+          title,
+          style: GoogleFonts.tajawal(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: _getTextColor(isDarkMode),
           ),
         ),
       ],
     );
   }
 
-  // Helper methods for colors
+  // Helper methods
   Color _getTextColor(bool isDarkMode) {
-    return isDarkMode ? Colors.white : const Color(0xFF1E293B);
+    return isDarkMode ? Colors.white : Colors.black;
   }
 
   Color _getCardColor(bool isDarkMode) {
-    return isDarkMode ? const Color(0xFF1E1E1E) : Colors.white;
+    return isDarkMode ? const Color(0xFF2D2D2D) : Colors.white;
+  }
+
+  Color _getSecondaryTextColor(bool isDarkMode) {
+    return isDarkMode ? Colors.grey.shade400 : Colors.grey.shade600;
   }
 
   Color _getBackgroundColor(bool isDarkMode) {
     return isDarkMode ? const Color(0xFF121212) : const Color(0xFFF8FAFC);
-  }
-
-  Color _getSecondaryTextColor(bool isDarkMode) {
-    return isDarkMode ? Colors.grey[400]! : Colors.grey[600]!;
   }
 }

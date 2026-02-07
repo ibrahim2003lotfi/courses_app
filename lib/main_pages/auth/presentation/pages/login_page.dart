@@ -1,12 +1,14 @@
 import 'dart:ui';
 
+import 'package:courses_app/data/notifiers.dart';
 import 'package:courses_app/main_pages/auth/presentation/pages/forgot_password_page.dart';
 import 'package:courses_app/main_pages/auth/presentation/pages/register_page.dart';
 import 'package:courses_app/main_pages/auth/presentation/pages/verification_page.dart';
+import 'package:courses_app/services/auth_service.dart';
 import 'package:courses_app/widget_tree.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:courses_app/services/auth_service.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -615,6 +617,9 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
 
       // Handle successful login -> go directly to home (main app)
       if (response["status"] == 200) {
+        // Reset to home page
+        selectedPageNotifier.value = 0;
+        
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (context) => const WidgetTree()),

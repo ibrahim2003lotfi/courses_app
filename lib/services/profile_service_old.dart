@@ -12,53 +12,95 @@ class ProfileService {
 
   Future<Map<String, dynamic>> _authorizedGet(String path) async {
     final token = await _auth.getToken();
+  
+  print('🔵 Profile Service - Making GET request to: $path');
+  print('🔵 Full URL: ${ApiConfig.baseUrl}$path');
+  print('🔵 Token available: ${token != null ? "YES (${token.substring(0, 10)}...)" : "NO"}');
+  
+  if (token == null) {
+    print('❌ ERROR: No token found!');
+    return {
+      'status': 401,
+      'data': {'message': 'Not authenticated'},
+      'message': 'Not authenticated'
+    };
+  }
+
+  try {
+    print('🟡 Creating HTTP client...');
+    final client = http.Client();
     
-    print('🔵 Profile Service - Making GET request to: $path');
-    print('🔵 Full URL: ${ApiConfig.baseUrl}$path');
-    print('🔵 Token available: ${token != null ? "YES (${token.substring(0, 10)}...)" : "NO"}');
-    
-    if (token == null) {
-      print('❌ ERROR: No token found!');
-      return {
-        'status': 401,
-        'data': {'message': 'Not authenticated'},
-        'message': 'No authentication token',
-        'error': 'Not authenticated'
-      };
-    }
+    print('🟡 Sending request to: ${ApiConfig.baseUrl}$path');
+    final response = await client.get(
+      Uri.parse('${ApiConfig.baseUrl}$path'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+        'Connection': 'keep-alive',
+      },
+    ).timeout(const Duration(seconds: 10));
 
-    try {
-      final uri = Uri.parse('${ApiConfig.baseUrl}$path');
-      final response = await http.get(
-        uri,
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Accept': 'application/json',
-        },
-      );
+    print('🟢 Response status: ${response.statusCode}');
+    print('🟢 Response headers: ${response.headers}');
+    print('🟢 Response body: ${response.body}');
 
-      print('🔵 Response status: ${response.statusCode}');
-      print('🔵 Response body: ${response.body}');
-
-      final data = response.body.isNotEmpty ? jsonDecode(response.body) : null;
-
+    if (response.statusCode == 200) {
+      try {
+        final data = jsonDecode(response.body);
+        return {
+          'status': 200,
+          'data': data,
+          'message': 'Success'
+        };
+      } catch (e) {
+        print('❌ JSON Parse Error: $e');
+        return {
+          'status': 500,
+          'message': 'Error parsing server response',
+          'error': e.toString()
+        };
+      }
+    } else {
       return {
         'status': response.statusCode,
-        'data': data,
-        'message': (response.statusCode == 200)
-          ? (data?['message'] ?? 'Success')
-          : (data?['message'] ?? 'Request failed'),
-      };
-    } catch (e) {
-      print('❌ Unexpected Error: $e');
-      print('❌ Stack trace: ${StackTrace.current}');
-      return {
-        'status': 0,
-        'message': 'An unexpected error occurred',
-        'error': e.toString(),
-        'errorType': 'UnexpectedError'
+        'message': 'Error: ${response.statusCode}',
+        'error': response.body
       };
     }
+  } on http.ClientException catch (e) {
+    print('❌ HTTP Client Exception: ${e.message}');
+    print('❌ URI: ${e.uri}');
+    return {
+      'status': 0,
+      'message': 'Connection error: ${e.message}',
+      'error': e.toString(),
+      'errorType': 'ClientException'
+    };
+  } on SocketException catch (e) {
+    print('❌ Socket Exception: $e');
+    return {
+      'status': 0,
+      'message': 'Network error: Please check your internet connection',
+      'error': e.toString(),
+      'errorType': 'SocketException'
+    };
+  } on TimeoutException catch (e) {
+    print('❌ Timeout Exception: $e');
+    return {
+      'status': 0,
+      'message': 'Request timed out',
+      'error': e.toString(),
+      'errorType': 'TimeoutException'
+    };
+  } catch (e) {
+    print('❌ Unexpected Error: $e');
+    print('❌ Stack trace: ${StackTrace.current}');
+    return {
+      'status': 0,
+      'message': 'An unexpected error occurred',
+      'error': e.toString(),
+      'errorType': 'UnexpectedError'
+    };
   }
 
   Future<Map<String, dynamic>> _authorizedRequest(
@@ -67,7 +109,6 @@ class ProfileService {
     Map<String, dynamic>? body,
   }) async {
     final token = await _auth.getToken();
-    print('🔵 _authorizedRequest: $method $path');
     try {
       final uri = Uri.parse('${ApiConfig.baseUrl}$path');
       late http.Response response;
@@ -80,11 +121,9 @@ class ProfileService {
 
       switch (method.toUpperCase()) {
         case 'GET':
-          print('🔵 Making GET request to $uri');
           response = await http.get(uri, headers: headers);
           break;
         case 'POST':
-          print('🔵 Making POST request to $uri');
           response = await http.post(
             uri,
             headers: headers,
@@ -92,7 +131,6 @@ class ProfileService {
           );
           break;
         case 'PUT':
-          print('🔵 Making PUT request to $uri');
           response = await http.put(
             uri,
             headers: headers,
@@ -100,7 +138,6 @@ class ProfileService {
           );
           break;
         case 'DELETE':
-          print('🔵 Making DELETE request to $uri');
           response = await http.delete(uri, headers: headers);
           break;
         default:
@@ -163,6 +200,7 @@ class ProfileService {
     };
   }
 
+
   /// Save onboarding preferences
   Future<Map<String, dynamic>> saveOnboarding({
     required String learningState,
@@ -178,16 +216,24 @@ class ProfileService {
         },
       );
 
+      if (response['status'] == 200) {
+        return {
+          'status': 200,
+          'message': 'Onboarding preferences saved successfully',
+          'data': response['data'],
+        };
+      }
+
       return {
-        'status': response['status'],
-        'data': response['data'],
-        'message': response['status'] == 200 ? 'Onboarding saved successfully' : response['message'],
+        'status': response['status'] ?? 500,
+        'message': response['message'] ?? 'Failed to save preferences',
+        'error': response['error'],
       };
     } catch (e) {
+      print('❌ Error saving onboarding: $e');
       return {
         'status': 0,
-        'data': null,
-        'message': 'Failed to save onboarding preferences',
+        'message': 'Failed to save preferences',
         'error': e.toString(),
       };
     }
@@ -212,6 +258,7 @@ class ProfileService {
     
     return _authorizedRequest('PUT', '/me', body: body);
   }
+
 
   /// Upload avatar image
   Future<Map<String, dynamic>> uploadAvatar(File avatarFile) async {
@@ -282,88 +329,12 @@ class ProfileService {
     }
   }
 
-  /// Upload cover image
-  Future<Map<String, dynamic>> uploadCover(File coverFile) async {
-    print('🔵 Uploading cover: ${coverFile.path}');
-    final token = await _auth.getToken();
-    
-    if (token == null) {
-      return {
-        'status': 401,
-        'message': 'No authentication token',
-        'error': 'Not authenticated'
-      };
-    }
-
-    try {
-      print('🔵 Creating multipart request for cover upload');
-      
-      final request = http.MultipartRequest(
-        'POST',
-        Uri.parse('${ApiConfig.baseUrl}/me/cover'),
-      );
-
-      // Add headers
-      request.headers['Authorization'] = 'Bearer $token';
-      request.headers['Accept'] = 'application/json';
-
-      // Check file size (max 2MB)
-      final fileSize = await coverFile.length();
-      print('🔵 Cover file size: $fileSize bytes');
-      
-      if (fileSize > 2 * 1024 * 1024) {
-        return {
-          'status': 413,
-          'data': null,
-          'message': 'حجم الصورة كبير جداً (الحد الأقصى 2MB)',
-        };
-      }
-
-      // Add cover file
-      request.files.add(
-        await http.MultipartFile.fromPath('cover', coverFile.path),
-      );
-
-      print('🔵 Sending cover upload request...');
-      final streamed = await request.send();
-      final response = await http.Response.fromStream(streamed);
-      
-      print('🔵 Cover upload response: ${response.statusCode}');
-      print('🔵 Response body: ${response.body}');
-
-      final data = response.body.isNotEmpty ? jsonDecode(response.body) : null;
-
-      return {
-        'status': response.statusCode,
-        'data': data,
-        'message': (response.statusCode == 200)
-          ? (data?['message'] ?? 'تم رفع صورة الغلاف بنجاح')
-          : (data?['message'] ?? 'فشل رفع صورة الغلاف')
-      };
-    } catch (e) {
-      print('❌ Cover upload error: $e');
-      return {
-        'status': 0,
-        'data': null,
-        'message': 'خطأ في رفع صورة الغلاف',
-        'error': e.toString(),
-      };
-    }
-  }
-
   /// Delete current account
   Future<Map<String, dynamic>> deleteAccount() async {
-    print('🔵 Deleting user account...');
-    print('🔵 About to call DELETE /me endpoint');
     final result = await _authorizedRequest('DELETE', '/me');
-    
-    print('🔵 Delete account response status: ${result['status']}');
-    print('🔵 Delete account response: ${result['data']}');
-    
     if (result['status'] == 200) {
-      print('🔵 Account deleted successfully, clearing local token');
-      // Clear local token without calling logout API (token already deleted)
-      await _auth.clearToken();
+      // Clear local token
+      await _auth.logout();
     }
     return result;
   }

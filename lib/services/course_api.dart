@@ -1,5 +1,5 @@
 import 'dart:convert';
-
+import 'dart:io';
 
 import '../config/api.dart';
 import 'api_client.dart';
@@ -55,51 +55,76 @@ class CourseApi {
 
   }
 
-  /// Create regular instructor course
+  /// Create regular instructor course with file uploads
   Future<Map<String, dynamic>> createInstructorCourse({
     required String title,
     String? description,
     num? price,
     String? level,
     String? categoryId,
+    String? categoryName,
+    File? thumbnailImage,
+    List<Map<String, dynamic>>? lessons,
   }) async {
-    final body = {
+    final fields = {
       "title": title,
       if (description != null) "description": description,
-      if (price != null) "price": price,
+      if (price != null) "price": price.toString(),
       if (level != null) "level": level,
       if (categoryId != null) "category_id": categoryId,
+      if (categoryName != null) "category_name": categoryName,
+      if (lessons != null) "lessons_json": jsonEncode(lessons),
     };
 
-    final response = await _client.post(
+    final files = <String, File>{};
+    if (thumbnailImage != null) {
+      files['thumbnail_image'] = thumbnailImage;
+    }
+
+    final response = await _client.postMultipart(
       "/instructor/courses",
-      body as Map<String, dynamic>,
+      fields: fields,
+      files: files.isNotEmpty ? files : null,
     );
 
     return jsonDecode(response.body) as Map<String, dynamic>;
   }
 
-  /// Create university course (second tab)
+  /// Create university course with file uploads
   Future<Map<String, dynamic>> createUniversityCourse({
     required String title,
     String? description,
     required num price,
     String? level,
-    required String universityId,
-    required String facultyId,
+    required String universityName,
+    required String facultyName,
+    String? categoryId,
+    String? categoryName,
+    File? thumbnailImage,
+    List<Map<String, dynamic>>? lessons,
   }) async {
-    final body = {
+    final fields = {
       "title": title,
       if (description != null) "description": description,
-      "price": price,
+      "price": price.toString(),
       if (level != null) "level": level,
-      "university_id": universityId,
-      "faculty_id": facultyId,
+      "university_name": universityName,
+      "faculty_name": facultyName,
+      if (categoryId != null) "category_id": categoryId,
+      if (categoryName != null) "category_name": categoryName,
+      "type": "university",
+      if (lessons != null) "lessons_json": jsonEncode(lessons),
     };
 
-    final response = await _client.post(
-      "/instructor/university-courses",
-      body as Map<String, dynamic>,
+    final files = <String, File>{};
+    if (thumbnailImage != null) {
+      files['thumbnail_image'] = thumbnailImage;
+    }
+
+    final response = await _client.postMultipart(
+      "/instructor/courses",
+      fields: fields,
+      files: files.isNotEmpty ? files : null,
     );
 
     return jsonDecode(response.body) as Map<String, dynamic>;

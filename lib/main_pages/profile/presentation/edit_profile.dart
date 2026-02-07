@@ -24,7 +24,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
   // Controllers
   late TextEditingController _nameController;
   late TextEditingController _emailController;
-  late TextEditingController _usernameController;
+  late TextEditingController _phoneController;
   late TextEditingController _bioController;
 
   // Image variables
@@ -36,59 +36,53 @@ class _EditProfilePageState extends State<EditProfilePage> {
   bool _isLoadingProfile = true;
   String? _errorMessage;
 
-  // Certificates list
-  List<Map<String, String>> _certificates = [
-    {'title': 'شهادة Flutter المتقدم', 'date': '2024'},
-    {'title': 'شهادة UI/UX Design', 'date': '2024'},
-    {'title': 'شهادة التسويق الرقمي', 'date': '2023'},
-  ];
-
   @override
   void initState() {
     super.initState();
     _nameController = TextEditingController();
     _emailController = TextEditingController();
-    _usernameController = TextEditingController();
+    _phoneController = TextEditingController();
     _bioController = TextEditingController();
     _loadProfile();
   }
 
   Future<void> _loadProfile() async {
+  setState(() {
+    _isLoadingProfile = true;
+    _errorMessage = null;
+  });
+
+  final result = await _profileService.getMe();
+  if (!mounted) return;
+
+  if (result['status'] == 200 && result['data'] != null) {
+    final data = result['data'] as Map<String, dynamic>;
+    final user = data['user'] as Map<String, dynamic>?;
+    final profile = data['profile'] as Map<String, dynamic>?;
+
+    _nameController.text = user?['name'] ?? '';
+    _emailController.text = user?['email'] ?? '';
+    _phoneController.text = user?['phone'] ?? '';
+    _bioController.text = profile?['bio'] ?? '';
+
     setState(() {
-      _isLoadingProfile = true;
-      _errorMessage = null;
+      _isLoadingProfile = false;
     });
-
-    final result = await _profileService.getMe();
-    if (!mounted) return;
-
-    if (result['status'] == 200) {
-      final data = result['data'] as Map<String, dynamic>;
-      final user = data['user'] as Map<String, dynamic>?;
-      final profile = data['profile'] as Map<String, dynamic>?;
-
-      _nameController.text = user?['name'] ?? '';
-      _emailController.text = user?['email'] ?? '';
-      _usernameController.text = profile?['username'] ?? '';
-      _bioController.text = profile?['bio'] ?? '';
-
-      setState(() {
-        _isLoadingProfile = false;
-      });
-    } else {
-      setState(() {
-        _errorMessage =
-            (result['data']?['message'] as String?) ?? 'فشل تحميل البيانات';
-        _isLoadingProfile = false;
-      });
-    }
+  } else {
+    setState(() {
+      _errorMessage = result['message'] as String? 
+        ?? (result['data']?['message'] as String?) 
+        ?? 'فشل تحميل البيانات';
+      _isLoadingProfile = false;
+    });
   }
+}
 
   @override
   void dispose() {
     _nameController.dispose();
     _emailController.dispose();
-    _usernameController.dispose();
+    _phoneController.dispose();
     _bioController.dispose();
     super.dispose();
   }
@@ -156,11 +150,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
                       // Personal Information Section
                       SliverToBoxAdapter(
                         child: _buildPersonalInfoSection(isDarkMode),
-                      ),
-
-                      // Certificates Section
-                      SliverToBoxAdapter(
-                        child: _buildCertificatesEditSection(isDarkMode),
                       ),
 
                       // Action Buttons
@@ -408,15 +397,19 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
             const SizedBox(height: 16),
 
-            // Username Field
+            // Phone Field
             _buildTextField(
-              controller: _usernameController,
-              label: 'اسم المستخدم',
-              icon: Icons.alternate_email,
+              controller: _phoneController,
+              label: 'رقم الهاتف',
+              icon: Icons.phone,
               isDarkMode: isDarkMode,
+              keyboardType: TextInputType.phone,
               validator: (value) {
                 if (value == null || value.isEmpty) {
-                  return 'الرجاء إدخال اسم المستخدم';
+                  return 'الرجاء إدخال رقم الهاتف';
+                }
+                if (value.length < 10) {
+                  return 'الرجاء إدخال رقم هاتف صحيح';
                 }
                 return null;
               },
@@ -427,16 +420,11 @@ class _EditProfilePageState extends State<EditProfilePage> {
             // Bio Field
             _buildTextField(
               controller: _bioController,
-              label: 'السيرة الذاتية',
+              label: 'السيرة الذاتية (اختياري)',
               icon: Icons.description,
               isDarkMode: isDarkMode,
               maxLines: 4,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'الرجاء إدخال السيرة الذاتية';
-                }
-                return null;
-              },
+              // Bio is optional, no validation
             ),
           ],
         ),
@@ -486,143 +474,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: Colors.red),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCertificatesEditSection(bool isDarkMode) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20.0),
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: _getCardColor(isDarkMode),
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.workspace_premium,
-                      color: Color(0xFFF59E0B),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      'الشهادات المكتسبة',
-                      style: GoogleFonts.tajawal(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: _getTextColor(isDarkMode),
-                      ),
-                    ),
-                  ],
-                ),
-                IconButton(
-                  icon: const Icon(Icons.add_circle, color: Color(0xFF3B82F6)),
-                  onPressed: () => _showAddCertificateDialog(isDarkMode),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 16),
-
-            if (_certificates.isEmpty)
-              Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(20.0),
-                  child: Text(
-                    'لا توجد شهادات بعد',
-                    style: GoogleFonts.tajawal(
-                      color: _getSecondaryTextColor(isDarkMode),
-                    ),
-                  ),
-                ),
-              )
-            else
-              ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: _certificates.length,
-                itemBuilder: (context, index) {
-                  final cert = _certificates[index];
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 12),
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: isDarkMode
-                          ? const Color(0xFF2A2A2A)
-                          : const Color(0xFFF8FAFC),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: isDarkMode
-                            ? Colors.grey[700]!
-                            : const Color(0xFFE2E8F0),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF59E0B).withOpacity(0.1),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.workspace_premium,
-                            color: Color(0xFFF59E0B),
-                            size: 20,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                cert['title']!,
-                                style: GoogleFonts.tajawal(
-                                  fontWeight: FontWeight.bold,
-                                  color: _getTextColor(isDarkMode),
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                cert['date']!,
-                                style: GoogleFonts.tajawal(
-                                  fontSize: 12,
-                                  color: _getSecondaryTextColor(isDarkMode),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.delete, color: Colors.red),
-                          onPressed: () {
-                            setState(() {
-                              _certificates.removeAt(index);
-                            });
-                          },
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-          ],
         ),
       ),
     );
@@ -753,71 +604,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
     );
   }
 
-  void _showAddCertificateDialog(bool isDarkMode) {
-    final titleController = TextEditingController();
-    final dateController = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (context) => Theme(
-        data: isDarkMode ? ThemeManager.darkTheme : ThemeManager.lightTheme,
-        child: AlertDialog(
-          title: Text(
-            'إضافة شهادة جديدة',
-            style: GoogleFonts.tajawal(fontWeight: FontWeight.bold),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: titleController,
-                decoration: InputDecoration(
-                  labelText: 'اسم الشهادة',
-                  labelStyle: GoogleFonts.tajawal(),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: dateController,
-                decoration: InputDecoration(
-                  labelText: 'تاريخ الحصول عليها',
-                  labelStyle: GoogleFonts.tajawal(),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text('إلغاء', style: GoogleFonts.tajawal()),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                if (titleController.text.isNotEmpty &&
-                    dateController.text.isNotEmpty) {
-                  setState(() {
-                    _certificates.add({
-                      'title': titleController.text,
-                      'date': dateController.text,
-                    });
-                  });
-                  Navigator.pop(context);
-                }
-              },
-              child: Text('إضافة', style: GoogleFonts.tajawal()),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Future<void> _saveProfile(bool isDarkMode) async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -830,6 +616,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
       final updateResult = await _profileService.updateProfile(
         name: _nameController.text.trim(),
         email: _emailController.text.trim(),
+        phone: _phoneController.text.trim(),
         bio: _bioController.text.trim(),
       );
 
@@ -863,6 +650,24 @@ class _EditProfilePageState extends State<EditProfilePage> {
               content: Text(
                 (avatarResult['data']?['message'] as String?) ??
                     'تم حفظ البيانات ولكن فشل رفع الصورة',
+                style: GoogleFonts.tajawal(),
+              ),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+      }
+
+      // رفع صورة الغلاف إن وُجدت
+      if (_coverImage != null) {
+        final coverResult = await _profileService
+            .uploadCover(File(_coverImage!.path));
+        if (coverResult['status'] != 200 && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                (coverResult['data']?['message'] as String?) ??
+                    'تم حفظ البيانات ولكن فشل رفع صورة الغلاف',
                 style: GoogleFonts.tajawal(),
               ),
               backgroundColor: Colors.orange,

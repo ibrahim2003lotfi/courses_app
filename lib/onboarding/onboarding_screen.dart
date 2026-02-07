@@ -1,6 +1,7 @@
 // lib/main_pages/onboarding/onboarding_screen.dart
 import 'package:courses_app/core/utils/onboarding_manager.dart';
 import 'package:courses_app/core/utils/theme_manager.dart';
+import 'package:courses_app/data/notifiers.dart';
 import 'package:courses_app/services/profile_service.dart';
 import 'package:courses_app/theme_cubit/theme_cubit.dart';
 import 'package:courses_app/theme_cubit/theme_state.dart';
@@ -180,6 +181,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     await OnboardingManager.completeOnboarding();
 
     // Navigate to main app (home with bottom navigation)
+    // Reset to home page
+    selectedPageNotifier.value = 0;
+    
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (context) => const WidgetTree()),

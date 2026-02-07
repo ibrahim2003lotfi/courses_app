@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:courses_app/bloc/user_role_bloc.dart';
 import 'package:courses_app/core/utils/theme_manager.dart';
 import 'package:courses_app/main_pages/auth/presentation/pages/login_page.dart';
@@ -23,16 +25,29 @@ class _ProfilePageState extends State<ProfilePage> {
   final ProfileService _profileService = ProfileService();
   final AuthService _authService = AuthService();
 
+  // State variables
+  Map<String, dynamic>? _user;
+  Map<String, dynamic>? _profile;
+  Map<String, dynamic>? _stats;
+  List<Map<String, dynamic>>? _certificates;
   bool _isLoading = true;
   String? _errorMessage;
-
-  Map<String, dynamic>? _user; // from backend user
-  Map<String, dynamic>? _profile; // extra profile fields
-  Map<String, dynamic>? _stats; // enrolled/completed/certificates
 
   @override
   void initState() {
     super.initState();
+    
+    // Debug: Check authentication status
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final authService = AuthService();
+      final token = await authService.getToken();
+      print('🔵 ProfilePage init - Token exists: ${token != null}');
+      if (token != null) {
+        print('🔵 Token preview: ${token.substring(0, min(20, token.length))}...');
+      }
+    });
+    
+    // Load profile data when page is initialized
     _loadProfile();
   }
 
@@ -42,25 +57,99 @@ class _ProfilePageState extends State<ProfilePage> {
       _errorMessage = null;
     });
 
-    final result = await _profileService.getMe();
-    if (!mounted) return;
+    print('🔵 Loading profile data...');
+    try {
+      final result = await _profileService.getMe();
+      
+      if (!mounted) return;
 
-    if (result['status'] == 200) {
-      final data = result['data'] as Map<String, dynamic>;
+      print('🔵 Profile load result status: ${result['status']}');
+      print('🔵 Profile data keys: ${result['data']?.keys}');
+
+      if (result['status'] == 200 && result['data'] != null) {
+        final data = result['data'] as Map<String, dynamic>;
+        
+        // Debug: Print the exact structure
+        if (data['user'] != null) {
+          print('🔵 User data: ${data['user']}');
+          
+          // Update UserRoleBloc based on role from API
+          final userRole = data['user']['role']?.toString().toLowerCase();
+          print('🔵 User role from API: $userRole');
+          if (userRole == 'instructor') {
+            context.read<UserRoleBloc>().add(const BecomeTeacherEvent());
+            print('🔵 Dispatched BecomeTeacherEvent');
+          } else {
+            // Reset to student if not instructor
+            context.read<UserRoleBloc>().add(const ResetRoleEvent());
+            print('🔵 Dispatched ResetRoleEvent');
+          }
+        } else {
+          print('⚠️ No user data in response');
+        }
+        
+        if (data['profile'] != null) {
+          print('🔵 Profile data: ${data['profile']}');
+        } else {
+          print('⚠️ No profile data in response');
+        }
+        
+        if (data['certificates'] != null) {
+          print('🔵 Certificates data: ${data['certificates']}');
+        } else {
+          print('⚠️ No certificates data in response');
+        }
+        
+        setState(() {
+          _user = data['user'] as Map<String, dynamic>?;
+          _profile = (data['profile'] as Map<String, dynamic>?) ?? {};
+          _stats = (data['stats'] as Map<String, dynamic>?) ?? {
+            'enrolled': 0,
+            'completed': 0,
+            'certificates': 0,
+          };
+          _certificates = (data['certificates'] as List<dynamic>?)
+              ?.map((cert) => cert as Map<String, dynamic>)
+              .toList();
+          _isLoading = false;
+        });
+      } else {
+        final errorMessage = result['message']?.toString() ?? 'حدث خطأ غير معروف';
+        print('❌ Error loading profile: $errorMessage');
+        
+        setState(() {
+          _errorMessage = errorMessage;
+          _isLoading = false;
+        });
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('خطأ في تحميل الملف الشخصي: $errorMessage'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      print('❌ Exception in _loadProfile: $e');
+      final errorMessage = 'حدث خطأ في تحميل البيانات: ${e.toString()}';
+      
       setState(() {
-        _user = data['user'] as Map<String, dynamic>?;
-        _profile = data['profile'] as Map<String, dynamic>?;
-        _stats = data['stats'] as Map<String, dynamic>?;
+        _errorMessage = errorMessage;
         _isLoading = false;
       });
-    } else {
-      setState(() {
-        _errorMessage =
-            (result['data']?['message'] as String?) ?? 'حدث خطأ أثناء تحميل البيانات';
-        _isLoading = false;
-      });
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(errorMessage),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
-  }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -85,6 +174,11 @@ class _ProfilePageState extends State<ProfilePage> {
             : 'انضم حديثًا';
         final String avatarUrl = _profile?['avatar_url'] ??
             'https://picsum.photos/seed/profile/200/200';
+        final String coverUrl = _profile?['cover_url'] ??
+            'https://picsum.photos/seed/cover/800/300';
+        
+        print('🔵 Build method - Avatar URL: $avatarUrl');
+        print('🔵 Build method - Cover URL: $coverUrl');
 
         final Map<String, dynamic> userProfile = {
           'name': name,
@@ -92,7 +186,7 @@ class _ProfilePageState extends State<ProfilePage> {
           'username': username,
           'type': isTeacher ? 'مدرس' : 'انضم الينا كمدرس',
           'profileImage': avatarUrl,
-          'coverImage': 'https://picsum.photos/seed/cover/800/300',
+          'coverImage': coverUrl,
           'joinDate': joinDateText,
           'bio': bio,
         };
@@ -104,43 +198,12 @@ class _ProfilePageState extends State<ProfilePage> {
           'certificates': _stats?['certificates'] ?? 0,
         };
 
-        // الشهادات المكتسبة
-        final List<Map<String, dynamic>> certificates = [
-          {
-            'title': 'شهادة Flutter المتقدم',
-            'date': '2024',
-            'color': Colors.blue,
-            'icon': Icons.code,
-          },
-          {
-            'title': 'شهادة UI/UX Design',
-            'date': '2024',
-            'color': Colors.purple,
-            'icon': Icons.design_services,
-          },
-          {
-            'title': 'شهادة التسويق الرقمي',
-            'date': '2023',
-            'color': Colors.orange,
-            'icon': Icons.campaign,
-          },
-          {
-            'title': 'شهادة إدارة المشاريع',
-            'date': '2023',
-            'color': Colors.green,
-            'icon': Icons.business_center,
-          },
-          {
-            'title': 'شهادة تحليل البيانات',
-            'date': '2023',
-            'color': Colors.teal,
-            'icon': Icons.analytics,
-          },
-        ];
-
         return BlocBuilder<ThemeCubit, ThemeState>(
           builder: (context, themeState) {
             final isDarkMode = themeState.isDarkMode;
+
+            // الشهادات المكتسبة من API
+            final List<Map<String, dynamic>> certificates = _certificates ?? [];
 
             if (_isLoading) {
               return Scaffold(
@@ -191,7 +254,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     slivers: [
                       // Header with Cover and Profile Image
                       SliverToBoxAdapter(
-                        child: _buildProfileHeader(isDarkMode, avatarUrl),
+                        child: _buildProfileHeader(isDarkMode, avatarUrl, coverUrl),
                       ),
 
                       // User Info Section
@@ -254,7 +317,32 @@ class _ProfilePageState extends State<ProfilePage> {
     return isDarkMode ? Colors.grey[400]! : Colors.grey[600]!;
   }
 
-  Widget _buildProfileHeader(bool isDarkMode, String avatarUrl) {
+  // Helper method to convert hex color to Color
+  Color _hexToColor(String hexColor) {
+    try {
+      return Color(int.parse(hexColor.replaceFirst('#', '0xFF')));
+    } catch (e) {
+      return Colors.blue; // fallback color
+    }
+  }
+
+  // Helper method to get icon from string name
+  IconData _getIconFromString(String iconName) {
+    switch (iconName) {
+      case 'code':
+        return Icons.code;
+      case 'design_services':
+        return Icons.design_services;
+      case 'campaign':
+        return Icons.campaign;
+      case 'web':
+        return Icons.web;
+      default:
+        return Icons.workspace_premium;
+    }
+  }
+
+  Widget _buildProfileHeader(bool isDarkMode, String avatarUrl, String coverUrl) {
     return Container(
       height: 280,
       child: Stack(
@@ -269,7 +357,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 colors: [const Color(0xFF3B82F6), const Color(0xFF1E40AF)],
               ),
               image: DecorationImage(
-                image: NetworkImage('https://picsum.photos/seed/cover/800/300'),
+                image: NetworkImage(coverUrl),
                 fit: BoxFit.cover,
                 colorFilter: ColorFilter.mode(
                   // ignore: deprecated_member_use
@@ -648,15 +736,15 @@ class _ProfilePageState extends State<ProfilePage> {
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             colors: [
-                              certificate['color'].withOpacity(0.2),
-                              certificate['color'].withOpacity(0.1),
+                              _hexToColor(certificate['color'] ?? '#3B82F6').withOpacity(0.2),
+                              _hexToColor(certificate['color'] ?? '#3B82F6').withOpacity(0.1),
                             ],
                           ),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
-                          certificate['icon'],
-                          color: certificate['color'],
+                          _getIconFromString(certificate['icon'] ?? 'workspace_premium'),
+                          color: _hexToColor(certificate['color'] ?? '#3B82F6'),
                           size: 24,
                         ),
                       ),
@@ -939,29 +1027,60 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Future<void> _performDeleteAccount() async {
     final scaffoldMessenger = ScaffoldMessenger.of(context);
-    final result = await _profileService.deleteAccount();
-
-    if (!mounted) return;
-
-    if (result['status'] == 200) {
-      scaffoldMessenger.showSnackBar(
-        const SnackBar(
-          content: Text('تم حذف الحساب بنجاح'),
-          backgroundColor: Colors.green,
+    
+    // Show loading indicator
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const AlertDialog(
+        content: Row(
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(width: 20),
+            Text('جاري حذف الحساب...'),
+          ],
         ),
-      );
+      ),
+    );
+    
+    try {
+      final result = await _profileService.deleteAccount();
 
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (context) => const LoginPage()),
-        (route) => false,
-      );
-    } else {
-      final message =
-          (result['data']?['message'] as String?) ?? 'فشل حذف الحساب، حاول مرة أخرى';
+      if (!mounted) return;
+
+      // Close loading dialog
+      Navigator.pop(context);
+
+      if (result['status'] == 200) {
+        scaffoldMessenger.showSnackBar(
+          const SnackBar(
+            content: Text('تم حذف الحساب بنجاح'),
+            backgroundColor: Colors.green,
+          ),
+        );
+
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const LoginPage()),
+          (route) => false,
+        );
+      } else {
+        scaffoldMessenger.showSnackBar(
+          SnackBar(
+            content: Text(result['message'] ?? 'فشل حذف الحساب'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      
+      // Close loading dialog
+      Navigator.pop(context);
+      
       scaffoldMessenger.showSnackBar(
         SnackBar(
-          content: Text(message),
+          content: Text('حدث خطأ: ${e.toString()}'),
           backgroundColor: Colors.red,
         ),
       );

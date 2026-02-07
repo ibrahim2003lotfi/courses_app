@@ -211,6 +211,12 @@ class AuthService {
     await storage.delete(key: "user_id");
   }
 
+  /// Clear local token without calling logout API
+  Future<void> clearToken() async {
+    await storage.delete(key: "token");
+    await storage.delete(key: "user_id");
+  }
+
   Future<String?> getToken() async {
     return await storage.read(key: "token");
   }

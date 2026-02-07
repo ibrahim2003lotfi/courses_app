@@ -1,41 +1,24 @@
+import 'dart:io';
 import 'package:courses_app/services/course_api.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:courses_app/theme_cubit/theme_cubit.dart';
 import 'package:courses_app/theme_cubit/theme_state.dart';
+import 'package:image_picker/image_picker.dart';
 
-// نموذج بيانات الفيديو
+// نموذج بيانات الفيديو - updated with file instead of URL
 class CourseVideo {
   String title;
   String description;
-  String url;
-  String duration;
+  File? videoFile; // Changed from URL to File
+  String? fileName;
 
   CourseVideo({
     required this.title,
     required this.description,
-    required this.url,
-    required this.duration,
-  });
-}
-
-// نموذج بيانات الكورس الجامعي
-class UniversityCourse {
-  String universityName;
-  String faculty;
-  String subjectName;
-  String price;
-  String description;
-  String imageUrl;
-
-  UniversityCourse({
-    required this.universityName,
-    required this.faculty,
-    required this.subjectName,
-    required this.price,
-    required this.description,
-    required this.imageUrl,
+    this.videoFile,
+    this.fileName,
   });
 }
 
@@ -50,34 +33,43 @@ class _AddCoursePageState extends State<AddCoursePage>
     with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   final _universityFormKey = GlobalKey<FormState>();
-  
+
   late TabController _tabController;
+  final ImagePicker _imagePicker = ImagePicker();
 
   // Controllers for Educational Course
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
-  final _teacherController = TextEditingController();
-  final _durationController = TextEditingController();
-  final _lessonsController = TextEditingController();
   final _priceController = TextEditingController();
-  final _imageUrlController = TextEditingController();
-  final _teacherImageController = TextEditingController();
-  final _tagsController = TextEditingController();
 
-  // Controllers for University Course
+  // Controllers for University Course (now has full fields like educational)
+  final _uniTitleController = TextEditingController();
+  final _uniDescriptionController = TextEditingController();
+  final _uniPriceController = TextEditingController();
+
+  // University-specific fields (first 3 fields)
   final _universityNameController = TextEditingController();
   final _facultyController = TextEditingController();
-  final _subjectNameController = TextEditingController();
-  final _universityPriceController = TextEditingController();
-  final _universityDescriptionController = TextEditingController();
-  final _universityImageUrlController = TextEditingController();
+  final _lectureNameController = TextEditingController();
 
-  // قائمة الفيديوهات
+  // Course image files (file picker instead of URL)
+  File? _courseImageFile;
+  File? _universityCourseImageFile;
+
+  // Video lists
   final List<CourseVideo> _courseVideos = [];
+  final List<CourseVideo> _universityVideos = [];
 
+  // Selections for Educational
   String? _selectedCategory;
   String _selectedLevel = 'مبتدئ';
   bool _isFree = false;
+
+  // Selections for University
+  String? _uniSelectedCategory;
+  String _uniSelectedLevel = 'مبتدئ';
+  bool _uniIsFree = false;
+
   bool _isLoading = false;
   bool _showPreview = false;
 
@@ -105,93 +97,113 @@ class _AddCoursePageState extends State<AddCoursePage>
     _tabController.dispose();
     _titleController.dispose();
     _descriptionController.dispose();
-    _teacherController.dispose();
-    _durationController.dispose();
-    _lessonsController.dispose();
     _priceController.dispose();
-    _imageUrlController.dispose();
-    _teacherImageController.dispose();
-    _tagsController.dispose();
+    _uniTitleController.dispose();
+    _uniDescriptionController.dispose();
+    _uniPriceController.dispose();
     _universityNameController.dispose();
     _facultyController.dispose();
-    _subjectNameController.dispose();
-    _universityPriceController.dispose();
-    _universityDescriptionController.dispose();
-    _universityImageUrlController.dispose();
+    _lectureNameController.dispose();
     super.dispose();
   }
 
-  Future<void> _saveCourse() async {
+  // Pick image from gallery
+  Future<void> _pickCourseImage(bool isUniversity) async {
+    try {
+      final XFile? pickedFile = await _imagePicker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 85,
+      );
+      
+      if (pickedFile != null) {
+        setState(() {
+          if (isUniversity) {
+            _universityCourseImageFile = File(pickedFile.path);
+          } else {
+            _courseImageFile = File(pickedFile.path);
+          }
+        });
+      }
+    } catch (e) {
+      _showErrorSnackBar('فشل اختيار الصورة: $e');
+    }
+  }
+
+  // Pick video from gallery
+  Future<File?> _pickVideoFile() async {
+    try {
+      final XFile? pickedFile = await _imagePicker.pickVideo(
+        source: ImageSource.gallery,
+      );
+      
+      if (pickedFile != null) {
+        return File(pickedFile.path);
+      }
+    } catch (e) {
+      _showErrorSnackBar('فشل اختيار الفيديو: $e');
+    }
+    return null;
+  }
+
+  Future<void> _saveEducationalCourse() async {
     if (!_formKey.currentState!.validate()) {
       return;
     }
 
     if (_courseVideos.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'الرجاء إضافة فيديو واحد على الأقل',
-            style: GoogleFonts.tajawal(fontWeight: FontWeight.w600),
-          ),
-          backgroundColor: Colors.orange,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      _showErrorSnackBar('الرجاء إضافة فيديو واحد على الأقل');
       return;
     }
 
-    setState(() {
-      _isLoading = true;
-    });
+    setState(() => _isLoading = true);
 
     try {
-      // Call backend to create regular instructor course
+      // Prepare lessons data
+      final lessons = _courseVideos.map((video) => {
+        'title': video.title,
+        'description': video.description,
+        'file_name': video.fileName ?? 'video.mp4',
+      }).toList();
+
+      print('🟡 Creating course with title: ${_titleController.text.trim()}');
+      print('🟡 Lessons count: ${lessons.length}');
+      print('🟡 Category: $_selectedCategory');
+      print('🟡 Level: ${_mapLevelToBackend(_selectedLevel)}');
+      print('🟡 Has thumbnail: ${_courseImageFile != null}');
+
       final api = CourseApi();
-      await api.createInstructorCourse(
+      final response = await api.createInstructorCourse(
         title: _titleController.text.trim(),
         description: _descriptionController.text.trim().isEmpty
             ? null
             : _descriptionController.text.trim(),
-        price: _isFree
-            ? 0
-            : num.tryParse(_priceController.text.trim()) ?? 0,
+        price: _isFree ? 0 : num.tryParse(_priceController.text.trim()) ?? 0,
         level: _mapLevelToBackend(_selectedLevel),
-        // category mapping can be improved later when categories are dynamic
+        categoryName: _selectedCategory,
+        thumbnailImage: _courseImageFile,
+        lessons: lessons,
       );
+
+      print('🟡 API Response: $response');
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'تم حفظ الدورة بنجاح!',
-            style: GoogleFonts.tajawal(fontWeight: FontWeight.w600),
-          ),
-          backgroundColor: Colors.green,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-
-      Future.delayed(const Duration(seconds: 1), () {
-        if (mounted) Navigator.pop(context);
-      });
-    } catch (e) {
+      if (response['success'] == true) {
+        _showSuccessSnackBar('تم حفظ الدورة بنجاح!');
+        Future.delayed(const Duration(seconds: 1), () {
+          if (mounted) Navigator.pop(context);
+        });
+      } else {
+        _showErrorSnackBar(response['message'] ?? 'فشل حفظ الدورة');
+      }
+    } catch (e, stackTrace) {
+      print('🔴 Course creation error: $e');
+      print('🔴 Stack trace: $stackTrace');
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'فشل حفظ الدورة: $e',
-            style: GoogleFonts.tajawal(fontWeight: FontWeight.w600),
-          ),
-          backgroundColor: Colors.red,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      _showErrorSnackBar('فشل حفظ الدورة: $e');
     } finally {
       if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
+        setState(() => _isLoading = false);
       }
     }
   }
@@ -201,311 +213,388 @@ class _AddCoursePageState extends State<AddCoursePage>
       return;
     }
 
-    setState(() {
-      _isLoading = true;
-    });
+    if (_universityVideos.isEmpty) {
+      _showErrorSnackBar('الرجاء إضافة فيديو واحد على الأقل');
+      return;
+    }
+
+    setState(() => _isLoading = true);
 
     try {
-      // NOTE: for now we don't have a picker for real university / faculty IDs.
-      // This call will need proper IDs once the UI is extended.
+      // Prepare lessons data
+      final lessons = _universityVideos.map((video) => {
+        'title': video.title,
+        'description': video.description,
+        'file_name': video.fileName ?? 'video.mp4',
+      }).toList();
+
       final api = CourseApi();
-      await api.createUniversityCourse(
-        title: _subjectNameController.text.trim(),
-        description: _universityDescriptionController.text.trim().isEmpty
+      final response = await api.createUniversityCourse(
+        title: _lectureNameController.text.trim(),
+        description: _uniDescriptionController.text.trim().isEmpty
             ? null
-            : _universityDescriptionController.text.trim(),
-        price: num.tryParse(_universityPriceController.text.trim()) ?? 0,
-        level: 'beginner',
-        universityId: '', // TODO: connect to real selection
-        facultyId: '', // TODO: connect to real selection
+            : _uniDescriptionController.text.trim(),
+        price: _uniIsFree ? 0 : num.tryParse(_uniPriceController.text.trim()) ?? 0,
+        level: _mapLevelToBackend(_uniSelectedLevel),
+        universityName: _universityNameController.text.trim(),
+        facultyName: _facultyController.text.trim(),
+        categoryName: _uniSelectedCategory,
+        thumbnailImage: _universityCourseImageFile,
+        lessons: lessons,
       );
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'تم حفظ الكورس الجامعي بنجاح!',
-            style: GoogleFonts.tajawal(fontWeight: FontWeight.w600),
-          ),
-          backgroundColor: Colors.green,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-
-      Future.delayed(const Duration(seconds: 1), () {
-        if (mounted) Navigator.pop(context);
-      });
+      if (response['success'] == true) {
+        _showSuccessSnackBar('تم حفظ الكورس الجامعي بنجاح!');
+        Future.delayed(const Duration(seconds: 1), () {
+          if (mounted) Navigator.pop(context);
+        });
+      } else {
+        _showErrorSnackBar(response['message'] ?? 'فشل حفظ الكورس');
+      }
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'فشل حفظ الكورس الجامعي: $e',
-            style: GoogleFonts.tajawal(fontWeight: FontWeight.w600),
-          ),
-          backgroundColor: Colors.red,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      _showErrorSnackBar('فشل حفظ الكورس الجامعي: $e');
     } finally {
       if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
+        setState(() => _isLoading = false);
       }
     }
   }
 
-  // دالة لإضافة فيديو جديد
-  void _showAddVideoDialog(bool isDarkMode, {CourseVideo? video, int? index}) {
-    final videoTitleController = TextEditingController(
-      text: video?.title ?? '',
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: GoogleFonts.tajawal(fontWeight: FontWeight.w600),
+        ),
+        backgroundColor: Colors.red,
+        behavior: SnackBarBehavior.floating,
+      ),
     );
-    final videoDescriptionController = TextEditingController(
-      text: video?.description ?? '',
+  }
+
+  void _showSuccessSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: GoogleFonts.tajawal(fontWeight: FontWeight.w600),
+        ),
+        backgroundColor: Colors.green,
+        behavior: SnackBarBehavior.floating,
+      ),
     );
-    final videoUrlController = TextEditingController(text: video?.url ?? '');
-    final videoDurationController = TextEditingController(
-      text: video?.duration ?? '',
-    );
+  }
+
+  // Video dialog with file picker
+  void _showAddVideoDialog(bool isDarkMode, bool isUniversity, {CourseVideo? video, int? index}) {
+    final isEditing = video != null;
+    final videoTitleController = TextEditingController(text: video?.title ?? '');
+    final videoDescriptionController = TextEditingController(text: video?.description ?? '');
+    File? selectedVideoFile = video?.videoFile;
+    String? selectedFileName = video?.fileName;
     final videoFormKey = GlobalKey<FormState>();
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        height: MediaQuery.of(context).size.height * 0.85,
-        decoration: BoxDecoration(
-          color: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(24),
-            topRight: Radius.circular(24),
-          ),
-        ),
-        child: Form(
-          key: videoFormKey,
-          child: Column(
-            children: [
-              // Header
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  border: Border(
-                    bottom: BorderSide(
-                      color: isDarkMode ? Colors.white10 : Colors.black12,
-                    ),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        video == null ? 'إضافة فيديو جديد' : 'تعديل الفيديو',
-                        style: GoogleFonts.tajawal(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w800,
-                          color: isDarkMode
-                              ? Colors.white
-                              : const Color(0xFF1F2937),
-                        ),
-                      ),
-                    ),
-                    IconButton(
-                      icon: Icon(
-                        Icons.close,
-                        color: isDarkMode
-                            ? Colors.white
-                            : const Color(0xFF1F2937),
-                      ),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                  ],
-                ),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) {
+          return Container(
+            height: MediaQuery.of(context).size.height * 0.75,
+            decoration: BoxDecoration(
+              color: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(24),
+                topRight: Radius.circular(24),
               ),
-
-              // Form
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildTextField(
-                        controller: videoTitleController,
-                        label: 'عنوان الفيديو',
-                        hint: 'مثال: مقدمة في البرمجة',
-                        isDarkMode: isDarkMode,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'الرجاء إدخال عنوان الفيديو';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      _buildTextField(
-                        controller: videoDescriptionController,
-                        label: 'وصف الفيديو',
-                        hint: 'وصف مختصر لمحتوى الفيديو',
-                        isDarkMode: isDarkMode,
-                        maxLines: 3,
-                      ),
-                      const SizedBox(height: 16),
-                      _buildTextField(
-                        controller: videoUrlController,
-                        label: 'رابط الفيديو',
-                        hint: 'https://example.com/video.mp4',
-                        isDarkMode: isDarkMode,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'الرجاء إدخال رابط الفيديو';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      _buildTextField(
-                        controller: videoDurationController,
-                        label: 'مدة الفيديو',
-                        hint: 'مثال: 15:30',
-                        isDarkMode: isDarkMode,
-                        keyboardType: TextInputType.text,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'الرجاء إدخال مدة الفيديو';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'صيغة المدة: MM:SS أو HH:MM:SS',
-                        style: GoogleFonts.tajawal(
-                          fontSize: 12,
-                          color: isDarkMode ? Colors.white38 : Colors.black38,
+            ),
+            child: Form(
+              key: videoFormKey,
+              child: Column(
+                children: [
+                  // Header
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      border: Border(
+                        bottom: BorderSide(
+                          color: isDarkMode ? Colors.white10 : Colors.black12,
                         ),
                       ),
-                    ],
-                  ),
-                ),
-              ),
-
-              // Buttons
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  border: Border(
-                    top: BorderSide(
-                      color: isDarkMode ? Colors.white10 : Colors.black12,
                     ),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: ElevatedButton(
-                          onPressed: () {
-                            if (videoFormKey.currentState!.validate()) {
-                              final newVideo = CourseVideo(
-                                title: videoTitleController.text,
-                                description: videoDescriptionController.text,
-                                url: videoUrlController.text,
-                                duration: videoDurationController.text,
-                              );
-
-                              setState(() {
-                                if (video == null) {
-                                  _courseVideos.add(newVideo);
-                                } else {
-                                  _courseVideos[index!] = newVideo;
-                                }
-                              });
-
-                              Navigator.pop(context);
-
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    video == null
-                                        ? 'تم إضافة الفيديو بنجاح'
-                                        : 'تم تحديث الفيديو بنجاح',
-                                    style: GoogleFonts.tajawal(
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                  backgroundColor: Colors.green,
-                                  behavior: SnackBarBehavior.floating,
-                                ),
-                              );
-                            }
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.transparent,
-                            shadowColor: Colors.transparent,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                          ),
+                    child: Row(
+                      children: [
+                        Expanded(
                           child: Text(
-                            video == null ? 'إضافة الفيديو' : 'تحديث الفيديو',
+                            isEditing ? 'تعديل الفيديو' : 'إضافة فيديو جديد',
                             style: GoogleFonts.tajawal(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                              color: isDarkMode
+                                  ? Colors.white
+                                  : const Color(0xFF1F2937),
                             ),
                           ),
                         ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () => Navigator.pop(context),
-                        style: OutlinedButton.styleFrom(
-                          side: BorderSide(
-                            color: isDarkMode ? Colors.white30 : Colors.black26,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                        ),
-                        child: Text(
-                          'إلغاء',
-                          style: GoogleFonts.tajawal(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
+                        IconButton(
+                          icon: Icon(
+                            Icons.close,
                             color: isDarkMode
                                 ? Colors.white
                                 : const Color(0xFF1F2937),
                           ),
+                          onPressed: () => Navigator.pop(context),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Form
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildTextField(
+                            controller: videoTitleController,
+                            label: 'عنوان الفيديو',
+                            hint: 'مثال: مقدمة في البرمجة',
+                            isDarkMode: isDarkMode,
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'الرجاء إدخال عنوان الفيديو';
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 16),
+                          _buildTextField(
+                            controller: videoDescriptionController,
+                            label: 'وصف الفيديو',
+                            hint: 'وصف مختصر لمحتوى الفيديو',
+                            isDarkMode: isDarkMode,
+                            maxLines: 3,
+                          ),
+                          const SizedBox(height: 20),
+
+                          // Video file picker
+                          Text(
+                            'ملف الفيديو',
+                            style: GoogleFonts.tajawal(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: isDarkMode ? Colors.white : const Color(0xFF1F2937),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          InkWell(
+                            onTap: () async {
+                              final file = await _pickVideoFile();
+                              if (file != null) {
+                                setModalState(() {
+                                  selectedVideoFile = file;
+                                  selectedFileName = file.path.split('/').last;
+                                });
+                              }
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: isDarkMode ? const Color(0xFF2D2D2D) : const Color(0xFFF3F4F6),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: selectedVideoFile != null
+                                      ? const Color(0xFF667EEA)
+                                      : (isDarkMode ? Colors.white10 : Colors.black12),
+                                  width: selectedVideoFile != null ? 2 : 1,
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(10),
+                                    decoration: BoxDecoration(
+                                      gradient: const LinearGradient(
+                                        colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
+                                      ),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: const Icon(Icons.video_library, color: Colors.white, size: 24),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          selectedVideoFile != null
+                                              ? 'تم اختيار الفيديو'
+                                              : 'اختر ملف الفيديو',
+                                          style: GoogleFonts.tajawal(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w600,
+                                            color: isDarkMode
+                                                ? Colors.white
+                                                : const Color(0xFF1F2937),
+                                          ),
+                                        ),
+                                        if (selectedFileName != null) ...[
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            selectedFileName!,
+                                            style: GoogleFonts.tajawal(
+                                              fontSize: 12,
+                                              color: isDarkMode
+                                                  ? Colors.white60
+                                                  : const Color(0xFF6B7280),
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ],
+                                      ],
+                                    ),
+                                  ),
+                                  Icon(
+                                    selectedVideoFile != null ? Icons.check_circle : Icons.arrow_forward_ios,
+                                    color: selectedVideoFile != null
+                                        ? const Color(0xFF667EEA)
+                                        : (isDarkMode ? Colors.white38 : Colors.black38),
+                                    size: 20,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          if (selectedVideoFile == null && !isEditing)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 8),
+                              child: Text(
+                                'الرجاء اختيار ملف الفيديو',
+                                style: GoogleFonts.tajawal(
+                                  fontSize: 12,
+                                  color: Colors.red,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  // Buttons
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      border: Border(
+                        top: BorderSide(
+                          color: isDarkMode ? Colors.white10 : Colors.black12,
                         ),
                       ),
                     ),
-                  ],
-                ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: ElevatedButton(
+                              onPressed: () {
+                                if (videoFormKey.currentState!.validate() &&
+                                    (selectedVideoFile != null || isEditing)) {
+                                  final newVideo = CourseVideo(
+                                    title: videoTitleController.text,
+                                    description: videoDescriptionController.text,
+                                    videoFile: selectedVideoFile ?? video?.videoFile,
+                                    fileName: selectedFileName ?? video?.fileName,
+                                  );
+
+                                  setState(() {
+                                    final targetList = isUniversity ? _universityVideos : _courseVideos;
+                                    if (isEditing && index != null) {
+                                      targetList[index] = newVideo;
+                                    } else {
+                                      targetList.add(newVideo);
+                                    }
+                                  });
+
+                                  Navigator.pop(context);
+                                  _showSuccessSnackBar(isEditing
+                                      ? 'تم تحديث الفيديو بنجاح'
+                                      : 'تم إضافة الفيديو بنجاح');
+                                } else if (selectedVideoFile == null && !isEditing) {
+                                  _showErrorSnackBar('الرجاء اختيار ملف الفيديو');
+                                }
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.transparent,
+                                shadowColor: Colors.transparent,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                              ),
+                              child: Text(
+                                isEditing ? 'تحديث الفيديو' : 'إضافة الفيديو',
+                                style: GoogleFonts.tajawal(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => Navigator.pop(context),
+                            style: OutlinedButton.styleFrom(
+                              side: BorderSide(
+                                color: isDarkMode ? Colors.white30 : Colors.black26,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                            ),
+                            child: Text(
+                              'إلغاء',
+                              style: GoogleFonts.tajawal(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                color: isDarkMode
+                                    ? Colors.white
+                                    : const Color(0xFF1F2937),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
   }
 
-  // دالة لحذف فيديو
-  void _deleteVideo(int index) {
+  void _deleteVideo(int index, bool isUniversity) {
     showDialog(
       context: context,
       builder: (context) => BlocBuilder<ThemeCubit, ThemeState>(
@@ -547,19 +636,11 @@ class _AddCoursePageState extends State<AddCoursePage>
               TextButton(
                 onPressed: () {
                   setState(() {
-                    _courseVideos.removeAt(index);
+                    final targetList = isUniversity ? _universityVideos : _courseVideos;
+                    targetList.removeAt(index);
                   });
                   Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        'تم حذف الفيديو بنجاح',
-                        style: GoogleFonts.tajawal(fontWeight: FontWeight.w600),
-                      ),
-                      backgroundColor: Colors.red,
-                      behavior: SnackBarBehavior.floating,
-                    ),
-                  );
+                  _showSuccessSnackBar('تم حذف الفيديو بنجاح');
                 },
                 child: Text(
                   'حذف',
@@ -606,20 +687,6 @@ class _AddCoursePageState extends State<AddCoursePage>
               ),
               onPressed: () => Navigator.pop(context),
             ),
-            actions: [
-              if (_tabController.index == 0)
-                IconButton(
-                  icon: Icon(
-                    _showPreview ? Icons.edit : Icons.visibility,
-                    color: isDarkMode ? Colors.white : const Color(0xFF1F2937),
-                  ),
-                  onPressed: () {
-                    setState(() {
-                      _showPreview = !_showPreview;
-                    });
-                  },
-                ),
-            ],
             bottom: TabBar(
               controller: _tabController,
               labelStyle: GoogleFonts.tajawal(
@@ -637,11 +704,6 @@ class _AddCoursePageState extends State<AddCoursePage>
                 Tab(text: 'كورس تعليمي'),
                 Tab(text: 'كورس جامعي'),
               ],
-              onTap: (index) {
-                setState(() {
-                  _showPreview = false;
-                });
-              },
             ),
           ),
           body: TabBarView(
@@ -649,7 +711,6 @@ class _AddCoursePageState extends State<AddCoursePage>
             children: [
               // Tab 1: Educational Course
               _buildEducationalCourseTab(isDarkMode),
-              
               // Tab 2: University Course
               _buildUniversityCourseTab(isDarkMode),
             ],
@@ -667,16 +728,13 @@ class _AddCoursePageState extends State<AddCoursePage>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (_showPreview) ...[
-              _buildPreviewSection(isDarkMode),
-              const SizedBox(height: 24),
-            ] else ...[
-              _buildFormSection(isDarkMode),
-            ],
-
-            // أزرار الحفظ والإلغاء
+            _buildFormSection(isDarkMode, false),
             const SizedBox(height: 32),
-            _buildActionButtons(isDarkMode, onSave: _saveCourse),
+            _buildActionButtons(
+              isDarkMode,
+              onSave: _saveEducationalCourse,
+              isLoading: _isLoading,
+            ),
             const SizedBox(height: 20),
           ],
         ),
@@ -692,9 +750,57 @@ class _AddCoursePageState extends State<AddCoursePage>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildUniversityFormSection(isDarkMode),
+            // University-specific first 3 fields
+            _buildSectionTitle('معلومات الجامعة', isDarkMode),
+            const SizedBox(height: 16),
+            _buildTextField(
+              controller: _universityNameController,
+              label: 'اسم الجامعة',
+              hint: 'أدخل اسم الجامعة',
+              isDarkMode: isDarkMode,
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'الرجاء إدخال اسم الجامعة';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 16),
+            _buildTextField(
+              controller: _facultyController,
+              label: 'اسم الكلية',
+              hint: 'أدخل اسم الكلية',
+              isDarkMode: isDarkMode,
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'الرجاء إدخال اسم الكلية';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 16),
+            _buildTextField(
+              controller: _lectureNameController,
+              label: 'اسم المحاضرة',
+              hint: 'أدخل اسم المحاضرة',
+              isDarkMode: isDarkMode,
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'الرجاء إدخال اسم المحاضرة';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 24),
+
+            // Rest same as educational
+            _buildFormSection(isDarkMode, true),
             const SizedBox(height: 32),
-            _buildActionButtons(isDarkMode, onSave: _saveUniversityCourse),
+            _buildActionButtons(
+              isDarkMode,
+              onSave: _saveUniversityCourse,
+              isLoading: _isLoading,
+            ),
             const SizedBox(height: 20),
           ],
         ),
@@ -702,95 +808,24 @@ class _AddCoursePageState extends State<AddCoursePage>
     );
   }
 
-  Widget _buildActionButtons(bool isDarkMode, {required VoidCallback onSave}) {
-    return Row(
-      children: [
-        Expanded(
-          child: Container(
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF667EEA).withOpacity(0.3),
-                  blurRadius: 8,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: ElevatedButton(
-              onPressed: _isLoading ? null : onSave,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.transparent,
-                shadowColor: Colors.transparent,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                padding: const EdgeInsets.symmetric(vertical: 16),
-              ),
-              child: _isLoading
-                  ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(
-                        color: Colors.white,
-                        strokeWidth: 2,
-                      ),
-                    )
-                  : Text(
-                      'حفظ الدورة',
-                      style: GoogleFonts.tajawal(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                      ),
-                    ),
-            ),
-          ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: OutlinedButton(
-            onPressed: () => Navigator.pop(context),
-            style: OutlinedButton.styleFrom(
-              side: BorderSide(
-                color: isDarkMode
-                    ? Colors.white30
-                    : Colors.black26,
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              padding: const EdgeInsets.symmetric(vertical: 16),
-            ),
-            child: Text(
-              'إلغاء',
-              style: GoogleFonts.tajawal(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: isDarkMode
-                    ? Colors.white
-                    : const Color(0xFF1F2937),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
+  Widget _buildFormSection(bool isDarkMode, bool isUniversity) {
+    final titleController = isUniversity ? _uniTitleController : _titleController;
+    final descriptionController = isUniversity ? _uniDescriptionController : _descriptionController;
+    final priceController = isUniversity ? _uniPriceController : _priceController;
+    final selectedCategory = isUniversity ? _uniSelectedCategory : _selectedCategory;
+    final selectedLevel = isUniversity ? _uniSelectedLevel : _selectedLevel;
+    final isFree = isUniversity ? _uniIsFree : _isFree;
+    final courseImageFile = isUniversity ? _universityCourseImageFile : _courseImageFile;
+    final videos = isUniversity ? _universityVideos : _courseVideos;
 
-  Widget _buildFormSection(bool isDarkMode) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // المعلومات الأساسية - Keep only title and description (removed trainer name)
         _buildSectionTitle('المعلومات الأساسية', isDarkMode),
         const SizedBox(height: 16),
         _buildTextField(
-          controller: _titleController,
+          controller: titleController,
           label: 'عنوان الدورة',
           hint: 'أدخل عنوان الدورة',
           isDarkMode: isDarkMode,
@@ -803,105 +838,75 @@ class _AddCoursePageState extends State<AddCoursePage>
         ),
         const SizedBox(height: 16),
         _buildTextField(
-          controller: _descriptionController,
+          controller: descriptionController,
           label: 'وصف الدورة',
           hint: 'أدخل وصفاً تفصيلياً للدورة',
           isDarkMode: isDarkMode,
           maxLines: 4,
         ),
-        const SizedBox(height: 16),
-        _buildTextField(
-          controller: _teacherController,
-          label: 'اسم المدرب',
-          hint: 'أدخل اسم المدرب',
-          isDarkMode: isDarkMode,
-          validator: (value) {
-            if (value == null || value.isEmpty) {
-              return 'الرجاء إدخال اسم المدرب';
-            }
-            return null;
-          },
-        ),
         const SizedBox(height: 24),
 
+        // تفاصيل الدورة - Keep only category and level (removed hours and lessons count)
         _buildSectionTitle('تفاصيل الدورة', isDarkMode),
         const SizedBox(height: 16),
         _buildDropdownField(
           label: 'الفئة',
-          value: _selectedCategory,
+          value: selectedCategory,
           items: _categories,
           isDarkMode: isDarkMode,
           onChanged: (value) {
             setState(() {
-              _selectedCategory = value;
+              if (isUniversity) {
+                _uniSelectedCategory = value;
+              } else {
+                _selectedCategory = value;
+              }
             });
           },
         ),
         const SizedBox(height: 16),
         _buildDropdownField(
           label: 'المستوى',
-          value: _selectedLevel,
+          value: selectedLevel,
           items: _levels,
           isDarkMode: isDarkMode,
           onChanged: (value) {
             setState(() {
-              _selectedLevel = value!;
+              if (isUniversity) {
+                _uniSelectedLevel = value!;
+              } else {
+                _selectedLevel = value!;
+              }
             });
           },
         ),
-        const SizedBox(height: 16),
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final isMobile = constraints.maxWidth < 600;
-            if (isMobile) {
-              return Column(
-                children: [
-                  _buildTextField(
-                    controller: _durationController,
-                    label: 'المدة (بالساعات)',
-                    hint: '20',
-                    isDarkMode: isDarkMode,
-                    keyboardType: TextInputType.number,
+        // Note about auto-calculation
+        const SizedBox(height: 12),
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: isDarkMode ? const Color(0xFF2D4A3D) : const Color(0xFFE8F5E9),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.info_outline, size: 18, color: isDarkMode ? Colors.green.shade300 : Colors.green.shade700),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'سيتم احتساب المدة وعدد الدروس تلقائياً بناءً على الفيديوهات المضافة',
+                  style: GoogleFonts.tajawal(
+                    fontSize: 12,
+                    color: isDarkMode ? Colors.green.shade300 : Colors.green.shade700,
                   ),
-                  const SizedBox(height: 16),
-                  _buildTextField(
-                    controller: _lessonsController,
-                    label: 'عدد الدروس',
-                    hint: '30',
-                    isDarkMode: isDarkMode,
-                    keyboardType: TextInputType.number,
-                  ),
-                ],
-              );
-            } else {
-              return Row(
-                children: [
-                  Expanded(
-                    child: _buildTextField(
-                      controller: _durationController,
-                      label: 'المدة (بالساعات)',
-                      hint: '20',
-                      isDarkMode: isDarkMode,
-                      keyboardType: TextInputType.number,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: _buildTextField(
-                      controller: _lessonsController,
-                      label: 'عدد الدروس',
-                      hint: '30',
-                      isDarkMode: isDarkMode,
-                      keyboardType: TextInputType.number,
-                    ),
-                  ),
-                ],
-              );
-            }
-          },
+                ),
+              ),
+            ],
+          ),
         ),
         const SizedBox(height: 24),
 
+        // التسعير - Keep as is
         _buildSectionTitle('التسعير', isDarkMode),
         const SizedBox(height: 16),
         Container(
@@ -930,12 +935,16 @@ class _AddCoursePageState extends State<AddCoursePage>
                 ),
               ),
               Switch(
-                value: _isFree,
+                value: isFree,
                 onChanged: (value) {
                   setState(() {
-                    _isFree = value;
+                    if (isUniversity) {
+                      _uniIsFree = value;
+                    } else {
+                      _isFree = value;
+                    }
                     if (value) {
-                      _priceController.text = '0';
+                      priceController.text = '0';
                     }
                   });
                 },
@@ -944,10 +953,10 @@ class _AddCoursePageState extends State<AddCoursePage>
             ],
           ),
         ),
-        if (!_isFree) ...[
+        if (!isFree) ...[
           const SizedBox(height: 16),
           _buildTextField(
-            controller: _priceController,
+            controller: priceController,
             label: 'السعر',
             hint: 'S.P 199',
             isDarkMode: isDarkMode,
@@ -956,24 +965,78 @@ class _AddCoursePageState extends State<AddCoursePage>
         ],
         const SizedBox(height: 24),
 
+        // الصور والوسائط - Changed to image file uploader, removed trainer image
         _buildSectionTitle('الصور والوسائط', isDarkMode),
         const SizedBox(height: 16),
-        _buildTextField(
-          controller: _imageUrlController,
-          label: 'رابط صورة الدورة',
-          hint: 'https://example.com/course-image.jpg',
-          isDarkMode: isDarkMode,
-        ),
-        const SizedBox(height: 16),
-        _buildTextField(
-          controller: _teacherImageController,
-          label: 'رابط صورة المدرب',
-          hint: 'https://example.com/teacher-image.jpg',
-          isDarkMode: isDarkMode,
+        InkWell(
+          onTap: () => _pickCourseImage(isUniversity),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: courseImageFile != null
+                    ? const Color(0xFF667EEA)
+                    : (isDarkMode ? Colors.white10 : Colors.black12),
+                width: courseImageFile != null ? 2 : 1,
+              ),
+            ),
+            child: Column(
+              children: [
+                if (courseImageFile != null) ...[
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.file(
+                      courseImageFile,
+                      height: 150,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'اضغط لتغيير الصورة',
+                    style: GoogleFonts.tajawal(
+                      fontSize: 14,
+                      color: isDarkMode ? Colors.white60 : const Color(0xFF6B7280),
+                    ),
+                  ),
+                ] else ...[
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
+                          ),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(Icons.image, color: Colors.white, size: 24),
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        'اختر صورة الدورة',
+                        style: GoogleFonts.tajawal(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: isDarkMode
+                              ? Colors.white
+                              : const Color(0xFF1F2937),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ],
+            ),
+          ),
         ),
         const SizedBox(height: 24),
 
-        // قسم الفيديوهات الجديد
+        // فيديوهات الدورة - Updated with file upload instead of URL
         _buildSectionTitle('فيديوهات الدورة', isDarkMode),
         const SizedBox(height: 8),
         Text(
@@ -987,7 +1050,7 @@ class _AddCoursePageState extends State<AddCoursePage>
 
         // زر إضافة فيديو
         InkWell(
-          onTap: () => _showAddVideoDialog(isDarkMode),
+          onTap: () => _showAddVideoDialog(isDarkMode, isUniversity),
           child: Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -1029,7 +1092,7 @@ class _AddCoursePageState extends State<AddCoursePage>
         ),
 
         // قائمة الفيديوهات المضافة
-        if (_courseVideos.isNotEmpty) ...[
+        if (videos.isNotEmpty) ...[
           const SizedBox(height: 16),
           Container(
             decoration: BoxDecoration(
@@ -1056,7 +1119,7 @@ class _AddCoursePageState extends State<AddCoursePage>
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        'الفيديوهات المضافة (${_courseVideos.length})',
+                        'الفيديوهات المضافة (${videos.length})',
                         style: GoogleFonts.tajawal(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
@@ -1072,11 +1135,11 @@ class _AddCoursePageState extends State<AddCoursePage>
                 ListView.separated(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
-                  itemCount: _courseVideos.length,
+                  itemCount: videos.length,
                   separatorBuilder: (context, index) =>
                       const Divider(height: 1),
                   itemBuilder: (context, index) {
-                    final video = _courseVideos[index];
+                    final video = videos[index];
                     return ListTile(
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: 16,
@@ -1131,28 +1194,20 @@ class _AddCoursePageState extends State<AddCoursePage>
                               ),
                             ),
                           ],
-                          const SizedBox(height: 4),
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.access_time,
-                                size: 14,
+                          if (video.fileName != null) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              video.fileName!,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.tajawal(
+                                fontSize: 12,
                                 color: isDarkMode
                                     ? Colors.white38
                                     : Colors.black38,
                               ),
-                              const SizedBox(width: 4),
-                              Text(
-                                video.duration,
-                                style: GoogleFonts.tajawal(
-                                  fontSize: 12,
-                                  color: isDarkMode
-                                      ? Colors.white38
-                                      : Colors.black38,
-                                ),
-                              ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ],
                       ),
                       trailing: Row(
@@ -1166,6 +1221,7 @@ class _AddCoursePageState extends State<AddCoursePage>
                             ),
                             onPressed: () => _showAddVideoDialog(
                               isDarkMode,
+                              isUniversity,
                               video: video,
                               index: index,
                             ),
@@ -1176,7 +1232,7 @@ class _AddCoursePageState extends State<AddCoursePage>
                               color: Colors.red,
                               size: 20,
                             ),
-                            onPressed: () => _deleteVideo(index),
+                            onPressed: () => _deleteVideo(index, isUniversity),
                           ),
                         ],
                       ),
@@ -1187,380 +1243,87 @@ class _AddCoursePageState extends State<AddCoursePage>
             ),
           ),
         ],
-        const SizedBox(height: 24),
-
-        _buildSectionTitle('معلومات إضافية', isDarkMode),
-        const SizedBox(height: 16),
-        _buildTextField(
-          controller: _tagsController,
-          label: 'الكلمات المفتاحية',
-          hint: 'برمجة, تطوير, ويب (مفصولة بفواصل)',
-          isDarkMode: isDarkMode,
-        ),
       ],
     );
   }
 
-  Widget _buildUniversityFormSection(bool isDarkMode) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildActionButtons(bool isDarkMode, {required VoidCallback onSave, required bool isLoading}) {
+    return Row(
       children: [
-        _buildSectionTitle('المعلومات الأساسية', isDarkMode),
-        const SizedBox(height: 16),
-        _buildTextField(
-          controller: _universityNameController,
-          label: 'اسم الجامعة',
-          hint: 'أدخل اسم الجامعة',
-          isDarkMode: isDarkMode,
-          validator: (value) {
-            if (value == null || value.isEmpty) {
-              return 'الرجاء إدخال اسم الجامعة';
-            }
-            return null;
-          },
-        ),
-        const SizedBox(height: 16),
-        _buildTextField(
-          controller: _facultyController,
-          label: 'اسم الكلية',
-          hint: 'أدخل اسم الكلية',
-          isDarkMode: isDarkMode,
-          validator: (value) {
-            if (value == null || value.isEmpty) {
-              return 'الرجاء إدخال اسم الكلية';
-            }
-            return null;
-          },
-        ),
-        const SizedBox(height: 16),
-        _buildTextField(
-          controller: _subjectNameController,
-          label: 'اسم المادة',
-          hint: 'أدخل اسم المادة',
-          isDarkMode: isDarkMode,
-          validator: (value) {
-            if (value == null || value.isEmpty) {
-              return 'الرجاء إدخال اسم المادة';
-            }
-            return null;
-          },
-        ),
-        const SizedBox(height: 24),
-
-        _buildSectionTitle('وصف الكورس', isDarkMode),
-        const SizedBox(height: 16),
-        _buildTextField(
-          controller: _universityDescriptionController,
-          label: 'وصف الكورس الجامعي',
-          hint: 'أدخل وصفاً تفصيلياً للكورس الجامعي',
-          isDarkMode: isDarkMode,
-          maxLines: 4,
-        ),
-        const SizedBox(height: 24),
-
-        _buildSectionTitle('التسعير', isDarkMode),
-        const SizedBox(height: 16),
-        _buildTextField(
-          controller: _universityPriceController,
-          label: 'سعر الكورس',
-          hint: 'S.P 299',
-          isDarkMode: isDarkMode,
-          keyboardType: TextInputType.number,
-          validator: (value) {
-            if (value == null || value.isEmpty) {
-              return 'الرجاء إدخال سعر الكورس';
-            }
-            return null;
-          },
-        ),
-        const SizedBox(height: 24),
-
-        _buildSectionTitle('الصورة', isDarkMode),
-        const SizedBox(height: 16),
-        _buildTextField(
-          controller: _universityImageUrlController,
-          label: 'رابط صورة الكورس',
-          hint: 'https://example.com/university-course.jpg',
-          isDarkMode: isDarkMode,
-        ),
-        const SizedBox(height: 16),
-        
-        // معاينة صورة الكورس الجامعي
-        if (_universityImageUrlController.text.isNotEmpty) ...[
-          const SizedBox(height: 16),
-          Text(
-            'معاينة الصورة',
-            style: GoogleFonts.tajawal(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: isDarkMode ? Colors.white : const Color(0xFF1F2937),
-            ),
-          ),
-          const SizedBox(height: 8),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: Image.network(
-              _universityImageUrlController.text,
-              height: 200,
-              width: double.infinity,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) {
-                return Container(
-                  height: 200,
-                  decoration: BoxDecoration(
-                    color: isDarkMode
-                        ? const Color(0xFF2D2D2D)
-                        : const Color(0xFFF3F4F6),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.image_not_supported,
-                          size: 48,
-                          color: isDarkMode ? Colors.white30 : Colors.black26,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'تعذر تحميل الصورة',
-                          style: GoogleFonts.tajawal(
-                            color: isDarkMode ? Colors.white30 : Colors.black26,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-        ],
-      ],
-    );
-  }
-
-  Widget _buildPreviewSection(bool isDarkMode) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'معاينة الدورة',
-          style: GoogleFonts.tajawal(
-            fontSize: 20,
-            fontWeight: FontWeight.w800,
-            color: isDarkMode ? Colors.white : const Color(0xFF1F2937),
-          ),
-        ),
-        const SizedBox(height: 16),
-        Container(
-          decoration: BoxDecoration(
-            color: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(isDarkMode ? 0.1 : 0.05),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
+        Expanded(
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
-            ],
-          ),
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (_imageUrlController.text.isNotEmpty)
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: Image.network(
-                    _imageUrlController.text,
-                    height: 200,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        height: 200,
-                        color: isDarkMode
-                            ? const Color(0xFF2D2D2D)
-                            : const Color(0xFFF3F4F6),
-                        child: Center(
-                          child: Icon(
-                            Icons.image_not_supported,
-                            size: 48,
-                            color: isDarkMode ? Colors.white30 : Colors.black26,
-                          ),
-                        ),
-                      );
-                    },
-                  ),
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF667EEA).withOpacity(0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
                 ),
-              const SizedBox(height: 16),
-              Text(
-                _titleController.text.isEmpty
-                    ? 'عنوان الدورة'
-                    : _titleController.text,
-                style: GoogleFonts.tajawal(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: isDarkMode ? Colors.white : const Color(0xFF1F2937),
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                _teacherController.text.isEmpty
-                    ? 'اسم المدرب'
-                    : _teacherController.text,
-                style: GoogleFonts.tajawal(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: isDarkMode ? Colors.white70 : const Color(0xFF6B7280),
-                ),
-              ),
-              const SizedBox(height: 12),
-              if (_descriptionController.text.isNotEmpty) ...[
-                Text(
-                  _descriptionController.text,
-                  style: GoogleFonts.tajawal(
-                    fontSize: 14,
-                    height: 1.5,
-                    color: isDarkMode
-                        ? Colors.white70
-                        : const Color(0xFF4B5563),
-                  ),
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 12),
               ],
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  if (_selectedCategory != null)
-                    _buildChip(_selectedCategory!, isDarkMode),
-                  _buildChip(_selectedLevel, isDarkMode),
-                  if (_durationController.text.isNotEmpty)
-                    _buildChip('${_durationController.text} ساعة', isDarkMode),
-                  if (_lessonsController.text.isNotEmpty)
-                    _buildChip('${_lessonsController.text} درس', isDarkMode),
-                  if (_courseVideos.isNotEmpty)
-                    _buildChip('${_courseVideos.length} فيديو', isDarkMode),
-                ],
+            ),
+            child: ElevatedButton(
+              onPressed: isLoading ? null : onSave,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.transparent,
+                shadowColor: Colors.transparent,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 16),
               ),
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Center(
-                  child: Text(
-                    _isFree
-                        ? 'مجاني'
-                        : (_priceController.text.isEmpty
-                              ? 'S.P0'
-                              : 'S.P${_priceController.text}'),
-                    style: GoogleFonts.tajawal(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
+              child: isLoading
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : Text(
+                      'حفظ الدورة',
+                      style: GoogleFonts.tajawal(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
                     ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-
-        // معاينة الفيديوهات
-        if (_courseVideos.isNotEmpty) ...[
-          const SizedBox(height: 24),
-          Text(
-            'الفيديوهات (${_courseVideos.length})',
-            style: GoogleFonts.tajawal(
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
-              color: isDarkMode ? Colors.white : const Color(0xFF1F2937),
             ),
           ),
-          const SizedBox(height: 12),
-          ListView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: _courseVideos.length,
-            itemBuilder: (context, index) {
-              final video = _courseVideos[index];
-              return Container(
-                margin: const EdgeInsets.only(bottom: 12),
-                decoration: BoxDecoration(
-                  color: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(isDarkMode ? 0.1 : 0.05),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: ListTile(
-                  leading: Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
-                      ),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Center(
-                      child: Text(
-                        '${index + 1}',
-                        style: GoogleFonts.tajawal(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ),
-                  title: Text(
-                    video.title,
-                    style: GoogleFonts.tajawal(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: isDarkMode
-                          ? Colors.white
-                          : const Color(0xFF1F2937),
-                    ),
-                  ),
-                  subtitle: Text(
-                    video.duration,
-                    style: GoogleFonts.tajawal(
-                      fontSize: 12,
-                      color: isDarkMode
-                          ? Colors.white60
-                          : const Color(0xFF6B7280),
-                    ),
-                  ),
-                  trailing: Icon(
-                    Icons.play_circle_outline,
-                    color: const Color(0xFF667EEA),
-                  ),
-                ),
-              );
-            },
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: OutlinedButton(
+            onPressed: () => Navigator.pop(context),
+            style: OutlinedButton.styleFrom(
+              side: BorderSide(
+                color: isDarkMode
+                    ? Colors.white30
+                    : Colors.black26,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              padding: const EdgeInsets.symmetric(vertical: 16),
+            ),
+            child: Text(
+              'إلغاء',
+              style: GoogleFonts.tajawal(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: isDarkMode
+                    ? Colors.white
+                    : const Color(0xFF1F2937),
+              ),
+            ),
           ),
-        ],
+        ),
       ],
     );
   }
@@ -1712,24 +1475,6 @@ class _AddCoursePageState extends State<AddCoursePage>
           },
         ),
       ],
-    );
-  }
-
-  Widget _buildChip(String label, bool isDarkMode) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: isDarkMode ? const Color(0xFF2D2D2D) : const Color(0xFFF3F4F6),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Text(
-        label,
-        style: GoogleFonts.tajawal(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          color: isDarkMode ? Colors.white70 : const Color(0xFF4B5563),
-        ),
-      ),
     );
   }
 }
