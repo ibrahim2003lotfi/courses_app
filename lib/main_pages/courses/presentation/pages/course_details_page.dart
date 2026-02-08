@@ -79,9 +79,7 @@ class _CourseDetailsPageState extends State<CourseDetailsPage> {
       slivers: [
         EnrolledCourseHeader(course: enrolledCourse),
         CourseProgressWidget(course: enrolledCourse),
-        SliverToBoxAdapter(
-          child: _buildRatingSection(context, enrolledCourse),
-        ),
+        SliverToBoxAdapter(child: _buildRatingSection(context, enrolledCourse)),
         SliverToBoxAdapter(
           child: _buildContinueLearningButton(context, enrolledCourse),
         ),
@@ -138,9 +136,21 @@ class _CourseDetailsPageState extends State<CourseDetailsPage> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                isMobile 
-                    ? _buildMobileRatingLayout(context, course, currentRating, hasRated, isDarkMode)
-                    : _buildDesktopRatingLayout(context, course, currentRating, hasRated, isDarkMode),
+                isMobile
+                    ? _buildMobileRatingLayout(
+                        context,
+                        course,
+                        currentRating,
+                        hasRated,
+                        isDarkMode,
+                      )
+                    : _buildDesktopRatingLayout(
+                        context,
+                        course,
+                        currentRating,
+                        hasRated,
+                        isDarkMode,
+                      ),
               ],
             ),
           ),
@@ -178,9 +188,7 @@ class _CourseDetailsPageState extends State<CourseDetailsPage> {
                     style: GoogleFonts.tajawal(
                       fontWeight: FontWeight.w500,
                       fontSize: 14,
-                      color: isDarkMode
-                          ? Colors.white70
-                          : Color(0xFF666666),
+                      color: isDarkMode ? Colors.white70 : Color(0xFF666666),
                     ),
                     textAlign: TextAlign.right,
                   ),
@@ -254,15 +262,11 @@ class _CourseDetailsPageState extends State<CourseDetailsPage> {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                hasRated
-                    ? 'شكراً لتقييمك!'
-                    : 'كيف كانت تجربتك مع هذه الدورة؟',
+                hasRated ? 'شكراً لتقييمك!' : 'كيف كانت تجربتك مع هذه الدورة؟',
                 style: GoogleFonts.tajawal(
                   fontWeight: FontWeight.w500,
                   fontSize: 16,
-                  color: isDarkMode
-                      ? Colors.white70
-                      : Color(0xFF666666),
+                  color: isDarkMode ? Colors.white70 : Color(0xFF666666),
                 ),
                 textAlign: TextAlign.right,
               ),
@@ -361,15 +365,19 @@ class _CourseDetailsPageState extends State<CourseDetailsPage> {
             child: Container(
               height: isMobile ? 60 : 70,
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
+                gradient: LinearGradient(
+                  colors: isDarkMode
+                      ? [Color(0xFF4C1D95), Color(0xFF5B21B6)]
+                      : [Color(0xFF667EEA), Color(0xFF764BA2)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
-                    color: Color(0xFF667EEA).withOpacity(0.3),
+                    color: isDarkMode
+                        ? Color(0xFF4C1D95).withOpacity(0.3)
+                        : Color(0xFF667EEA).withOpacity(0.3),
                     blurRadius: 8,
                     offset: const Offset(0, 4),
                   ),
@@ -446,11 +454,8 @@ class _CourseDetailsPageState extends State<CourseDetailsPage> {
 
   void _rateCourse(BuildContext context, String courseId, double rating) {
     context.read<CourseManagementBloc>().add(
-          RateCourseEvent(
-            courseId: courseId,
-            rating: rating,
-          ),
-        );
+      RateCourseEvent(courseId: courseId, rating: rating),
+    );
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(

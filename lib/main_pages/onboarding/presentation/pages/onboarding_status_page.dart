@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:courses_app/services/api_service.dart';
-import 'package:courses_app/services/auth_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class OnboardingStatusPage extends StatefulWidget {
@@ -34,10 +33,12 @@ class _OnboardingStatusPageState extends State<OnboardingStatusPage> {
   Future<void> _loadCurrentStatus() async {
     final prefs = await SharedPreferences.getInstance();
     final userId = prefs.getString('user_id');
-    
+
     if (userId != null) {
       try {
-        final response = await ApiService.get('/onboarding/profile?user_id=$userId');
+        final response = await ApiService.get(
+          '/onboarding/profile?user_id=$userId',
+        );
         if (response['success']) {
           final data = response['data'];
           setState(() {
@@ -85,12 +86,14 @@ class _OnboardingStatusPageState extends State<OnboardingStatusPage> {
                 ),
               ),
               const SizedBox(height: 30),
-              
+
               // Status Options
-              ..._statusOptions.map((status) => _buildStatusCard(status)).toList(),
-              
+              ..._statusOptions
+                  .map((status) => _buildStatusCard(status))
+                  .toList(),
+
               const SizedBox(height: 20),
-              
+
               // Additional Fields
               if (_selectedStatus == 'graduate') ...[
                 _buildTextField('الجامعة', _universityController, Icons.school),
@@ -99,9 +102,9 @@ class _OnboardingStatusPageState extends State<OnboardingStatusPage> {
                 const SizedBox(height: 15),
                 _buildTextField('التخصص', _majorController, Icons.science),
               ],
-              
+
               const Spacer(),
-              
+
               // Continue Button
               SizedBox(
                 width: double.infinity,
@@ -173,7 +176,11 @@ class _OnboardingStatusPageState extends State<OnboardingStatusPage> {
     );
   }
 
-  Widget _buildTextField(String label, TextEditingController controller, IconData icon) {
+  Widget _buildTextField(
+    String label,
+    TextEditingController controller,
+    IconData icon,
+  ) {
     return Container(
       margin: const EdgeInsets.only(bottom: 15),
       child: TextField(
@@ -206,7 +213,10 @@ class _OnboardingStatusPageState extends State<OnboardingStatusPage> {
         decoration: InputDecoration(
           labelText: 'سنة التخرج',
           labelStyle: GoogleFonts.tajawal(color: Colors.grey[600]),
-          prefixIcon: const Icon(Icons.calendar_today, color: Color(0xFF667EEA)),
+          prefixIcon: const Icon(
+            Icons.calendar_today,
+            color: Color(0xFF667EEA),
+          ),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),
             borderSide: BorderSide(color: Colors.grey[300]!),
@@ -245,20 +255,24 @@ class _OnboardingStatusPageState extends State<OnboardingStatusPage> {
 
   Future<void> _saveStatus() async {
     setState(() => _isLoading = true);
-    
+
     try {
       final prefs = await SharedPreferences.getInstance();
       final userId = prefs.getString('user_id');
-      
+
       if (userId != null) {
         final response = await ApiService.post('/onboarding/status', {
           'user_id': userId,
           'status': _selectedStatus,
-          'university': _selectedStatus == 'graduate' ? _universityController.text.trim() : null,
-          'major': _selectedStatus == 'graduate' ? _majorController.text.trim() : null,
+          'university': _selectedStatus == 'graduate'
+              ? _universityController.text.trim()
+              : null,
+          'major': _selectedStatus == 'graduate'
+              ? _majorController.text.trim()
+              : null,
           'graduation_year': _graduationYear,
         });
-        
+
         if (response['success']) {
           Navigator.pushNamed(context, '/onboarding/interests');
         } else {
@@ -275,10 +289,7 @@ class _OnboardingStatusPageState extends State<OnboardingStatusPage> {
   void _showErrorSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(
-          message,
-          style: GoogleFonts.tajawal(color: Colors.white),
-        ),
+        content: Text(message, style: GoogleFonts.tajawal(color: Colors.white)),
         backgroundColor: Colors.red[600],
       ),
     );

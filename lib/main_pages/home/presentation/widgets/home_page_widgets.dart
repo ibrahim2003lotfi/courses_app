@@ -990,7 +990,7 @@ class TrendingCourses extends StatelessWidget {
         'lessons': course['lessons'] ?? 30,
         'level': course['level'] ?? 'متوسط',
         'lastUpdated': course['lastUpdated'] ?? '2024',
-        'price': course['price'] ?? '200,000 S.P',
+        'price': course['price'] ?? '',
         'description':
             course['description'] ??
             'دورة تعليمية شاملة تغطي أهم المفاهيم والمهارات في هذا المجال.',
@@ -1024,7 +1024,44 @@ class TrendingCourses extends StatelessWidget {
 
         final safeTrending = trending;
         if (safeTrending.isEmpty) {
-          return Container();
+          return Directionality(
+            textDirection: TextDirection.rtl,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 8,
+                    ),
+                    child: Text(
+                      'الأكثر شيوعًا',
+                      style:
+                          Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.w800,
+                            color: theme.colorScheme.onBackground,
+                          ) ??
+                          TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w800,
+                            color: theme.colorScheme.onBackground,
+                          ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Text(
+                      'لا يوجد كورسات شائعة حاليا',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                      textAlign: TextAlign.right,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
         }
 
         return Directionality(
@@ -1138,28 +1175,6 @@ class TrendingCourses extends StatelessWidget {
                         ),
                       );
                     },
-                  ),
-                  Positioned(
-                    top: 6,
-                    left: 6,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 3,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFEF4444),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        course['price']?.toString() ?? '200,000 S.P',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
                   ),
                 ],
               ),

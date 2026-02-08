@@ -2,6 +2,7 @@
 import 'package:courses_app/core/utils/theme_manager.dart';
 import 'package:courses_app/main_pages/courses/presentation/pages/course_details_page.dart';
 import 'package:courses_app/main_pages/courses/presentation/widgets/add_courses.dart';
+import 'package:courses_app/services/course_api.dart';
 
 import 'package:flutter/material.dart';
 
@@ -29,6 +30,194 @@ class PublishedCoursesTab extends StatefulWidget {
 }
 
 class _PublishedCoursesTabState extends State<PublishedCoursesTab> {
+  bool _isLoading = false;
+  String? _error;
+  List<Map<String, dynamic>> _courses = const [];
+
+  @override
+  void initState() {
+    super.initState();
+    _courses = widget.courses;
+    _loadPublishedCourses();
+  }
+
+  Future<void> _deleteCourseFromBackend(Map<String, dynamic> course) async {
+    final courseId = course['id']?.toString();
+    if (courseId == null || courseId.isEmpty) {
+      return;
+    }
+
+    try {
+      final api = CourseApi();
+      final result = await api.deleteInstructorCourse(courseId);
+
+      if (result['success'] == true) {
+        await _loadPublishedCourses();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'تم حذف "${course['title']}" بنجاح',
+                style: GoogleFonts.tajawal(
+                  fontSize: widget.smallFontSize,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          );
+        }
+      } else {
+        final msg = result['message'] ?? 'فشل حذف الدورة';
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                msg,
+                style: GoogleFonts.tajawal(
+                  fontSize: widget.smallFontSize,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'فشل حذف الدورة: $e',
+            style: GoogleFonts.tajawal(
+              fontSize: widget.smallFontSize,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+      );
+    }
+  }
+
+  Future<void> _loadPublishedCourses() async {
+    if (!mounted) return;
+
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+
+    try {
+      final api = CourseApi();
+      final data = await api.getInstructorCourses();
+
+      // Check if response contains an error
+      if (data.containsKey('error')) {
+        // Handle authentication errors
+        if (data['error'] == 'no_user' || data['error'] == 'unauthenticated') {
+          throw Exception('يجب تسجيل الدخول أولاً');
+        }
+        // Handle authorization errors
+        if (data['error'] == 'unauthorized') {
+          throw Exception(
+            'ليس لديك صلاحية المعلم. يرجى التقدم بطلب للحصول على صلاحية المعلم',
+          );
+        }
+        // Handle middleware errors
+        if (data['error'] == 'middleware_error') {
+          throw Exception('حدث خطأ في الخادم. يرجى المحاولة مرة أخرى');
+        }
+      }
+
+      // Check if response is valid
+      if (!data.containsKey('courses')) {
+        throw Exception('Invalid response from server');
+      }
+
+      final raw =
+          (data['courses'] as List?)?.cast<Map<String, dynamic>>() ?? [];
+
+      final mapped = raw.map<Map<String, dynamic>>((c) {
+        final id = (c['id'] ?? '').toString();
+        final instructorName = (c['instructor'] is Map)
+            ? ((c['instructor'] as Map)['name'] ?? '').toString()
+            : '';
+        final categoryName = (c['category'] is Map)
+            ? ((c['category'] as Map)['name'] ?? '').toString()
+            : '';
+
+        final totalStudents = c['total_students'] ?? 0;
+        final price = c['price'] ?? 0;
+
+        final courseImageUrl = (c['course_image_url'] ?? '').toString();
+
+        // حقول إضافية نحتاجها في شاشة التعديل
+        final description = (c['description'] ?? '').toString();
+        final levelBackend = (c['level'] ?? '')
+            .toString(); // beginner/intermediate/advanced
+
+        return {
+          'id': id,
+          'title': (c['title'] ?? '').toString(),
+          'description': description,
+          'level_backend': levelBackend,
+          'category_name': categoryName,
+          'teacher': instructorName,
+          'category': categoryName,
+          'rating': (c['rating'] ?? 0).toDouble(),
+          'students': totalStudents.toString(),
+          'enrollments': totalStudents,
+          'price': price.toString(),
+          'status': 'نشط',
+          'image': courseImageUrl.isNotEmpty
+              ? courseImageUrl
+              : 'https://picsum.photos/seed/published_$id/400/300',
+        };
+      }).toList();
+
+      if (!mounted) return;
+      setState(() {
+        _courses = mapped;
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
+
+      // Log the error for debugging
+      print('Error loading published courses: $e');
+    }
+  }
+
+  String _getErrorMessage(String error) {
+    // Convert technical errors to user-friendly Arabic messages
+    if (error.contains('يجب تسجيل الدخول') ||
+        error.contains('Unauthenticated') ||
+        error.contains('no_user')) {
+      return 'يجب تسجيل الدخول أولاً للمتابعة';
+    }
+    if (error.contains('ليس لديك صلاحية') ||
+        error.contains('Unauthorized') ||
+        error.contains('unauthorized')) {
+      return 'ليس لديك صلاحية المعلم. يرجى التقدم بطلب للحصول على صلاحية المعلم';
+    }
+    if (error.contains('SocketException') ||
+        error.contains('Connection refused') ||
+        error.contains('Connection timed out')) {
+      return 'لا يمكن الاتصال بالخادم. تأكد من تشغيل الخادم والاتصال بالإنترنت';
+    }
+    if (error.contains('timeout')) {
+      return 'انتهت مهلة الاتصال. تحقق من اتصالك بالإنترنت وحاول مرة أخرى';
+    }
+    if (error.contains('Invalid response')) {
+      return 'استجابة غير صالحة من الخادم. يرجى المحاولة مرة أخرى';
+    }
+    // Return the original error if no specific match found
+    return error;
+  }
+
   @override
   Widget build(BuildContext context) {
     // Use widget.parentContext for dialogs and navigation
@@ -91,7 +280,68 @@ class _PublishedCoursesTabState extends State<PublishedCoursesTab> {
 
         // Courses List
         Expanded(
-          child: widget.courses.isEmpty
+          child: _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : _error != null
+              ? Center(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.error_outline,
+                          size: 64,
+                          color: Colors.red[400],
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'فشل تحميل دوراتك',
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.tajawal(
+                            fontSize: widget.baseFontSize,
+                            fontWeight: FontWeight.w700,
+                            color: themeData.colorScheme.onBackground,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          _getErrorMessage(_error!),
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.tajawal(
+                            fontSize: widget.smallFontSize,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        ElevatedButton.icon(
+                          onPressed: _loadPublishedCourses,
+                          icon: const Icon(Icons.refresh),
+                          label: Text(
+                            'إعادة المحاولة',
+                            style: GoogleFonts.tajawal(
+                              fontSize: widget.smallFontSize,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: themeData.colorScheme.primary,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 12,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              : _courses.isEmpty
               ? EmptyState(
                   icon: Icons.publish_outlined,
                   message: 'لا توجد دورات منشورة',
@@ -115,44 +365,44 @@ class _PublishedCoursesTabState extends State<PublishedCoursesTab> {
                                 crossAxisSpacing: 16,
                                 mainAxisSpacing: 16,
                               ),
-                          itemCount: widget.courses.length,
+                          itemCount: _courses.length,
                           itemBuilder: (context, index) {
                             return PublishedCourseCard(
-                              course: widget.courses[index],
+                              course: _courses[index],
                               isGridView: true,
                               baseFontSize: widget.baseFontSize,
                               smallFontSize: widget.smallFontSize,
                               isDarkMode: widget.isDarkMode,
                               onTap: () => _showCourseOptionsBottomSheet(
                                 widget.parentContext,
-                                widget.courses[index],
+                                _courses[index],
                               ),
                             );
                           },
                         ),
                       );
-                    } else {
-                      return ListView.builder(
-                        padding: const EdgeInsets.all(16.0),
-                        itemCount: widget.courses.length,
-                        itemBuilder: (context, index) {
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 16.0),
-                            child: PublishedCourseCard(
-                              course: widget.courses[index],
-                              isGridView: false,
-                              baseFontSize: widget.baseFontSize,
-                              smallFontSize: widget.smallFontSize,
-                              isDarkMode: widget.isDarkMode,
-                              onTap: () => _showCourseOptionsBottomSheet(
-                                widget.parentContext,
-                                widget.courses[index],
-                              ),
-                            ),
-                          );
-                        },
-                      );
                     }
+
+                    return ListView.builder(
+                      padding: const EdgeInsets.all(16.0),
+                      itemCount: _courses.length,
+                      itemBuilder: (context, index) {
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 16.0),
+                          child: PublishedCourseCard(
+                            course: _courses[index],
+                            isGridView: false,
+                            baseFontSize: widget.baseFontSize,
+                            smallFontSize: widget.smallFontSize,
+                            isDarkMode: widget.isDarkMode,
+                            onTap: () => _showCourseOptionsBottomSheet(
+                              widget.parentContext,
+                              _courses[index],
+                            ),
+                          ),
+                        );
+                      },
+                    );
                   },
                 ),
         ),
@@ -160,12 +410,16 @@ class _PublishedCoursesTabState extends State<PublishedCoursesTab> {
     );
   }
 
-  void _navigateToAddCoursePage(BuildContext context) {
+  Future<void> _navigateToAddCoursePage(BuildContext context) async {
     // Navigate to the add course page instead of showing a dialog
-    Navigator.push(
+    final created = await Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => AddCoursePage()),
     );
+
+    if (created == true) {
+      await _loadPublishedCourses();
+    }
   }
 
   void _showCourseOptionsBottomSheet(
@@ -206,10 +460,20 @@ class _PublishedCoursesTabState extends State<PublishedCoursesTab> {
     BuildContext context,
     Map<String, dynamic> course,
   ) {
-    // Navigate to the edit course page instead of showing a dialog
+    // فتح صفحة إضافة الدورة في وضع التعديل مع تعبئة بعض البيانات المتوفرة
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => AddCoursePage()),
+      MaterialPageRoute(
+        builder: (context) => AddCoursePage(
+          courseId: course['id']?.toString(),
+          initialTitle: course['title']?.toString(),
+          initialDescription: course['description']?.toString(),
+          initialPrice: num.tryParse(course['price']?.toString() ?? ''),
+          initialLevelBackend: course['level_backend']?.toString(),
+          initialCategoryName: course['category_name']?.toString(),
+          isEditing: true,
+        ),
+      ),
     );
   }
 
@@ -226,21 +490,7 @@ class _PublishedCoursesTabState extends State<PublishedCoursesTab> {
         isDarkMode: widget.isDarkMode,
         onConfirm: () {
           Navigator.pop(context);
-          // Handle course deletion
-          setState(() {
-            // In a real app, you would remove from your data source
-          });
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'تم حذف "${course['title']}" بنجاح',
-                style: GoogleFonts.tajawal(
-                  fontSize: widget.smallFontSize,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-          );
+          _deleteCourseFromBackend(course);
         },
       ),
     );

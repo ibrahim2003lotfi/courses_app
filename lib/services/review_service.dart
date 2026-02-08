@@ -1,5 +1,4 @@
 import 'dart:convert';
-import '../config/api.dart';
 import 'api_client.dart';
 
 class ReviewService {
@@ -16,10 +15,7 @@ class ReviewService {
       if (review != null && review.isNotEmpty) "review": review,
     };
 
-    final response = await _client.post(
-      "/courses/$courseId/rate",
-      body,
-    );
+    final response = await _client.post("/courses/$courseId/rate", body);
 
     return jsonDecode(response.body) as Map<String, dynamic>;
   }
@@ -34,7 +30,7 @@ class ReviewService {
   /// Delete user's rating
   Future<Map<String, dynamic>> deleteRating(String courseId) async {
     final response = await _client.delete("/courses/$courseId/my-rating");
-    
+
     return jsonDecode(response.body) as Map<String, dynamic>;
   }
 
@@ -52,4 +48,3 @@ class ReviewService {
     return jsonDecode(response.body) as Map<String, dynamic>;
   }
 }
-

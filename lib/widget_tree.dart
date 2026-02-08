@@ -4,7 +4,12 @@ import 'package:courses_app/main_pages/home/presentation/pages/home_page.dart';
 import 'package:courses_app/main_pages/profile/presentation/pages/profile_page.dart';
 import 'package:courses_app/main_pages/search/presentation/pages/search_page.dart';
 import 'package:courses_app/navbar/presentation/main_navbar_page.dart';
+import 'package:courses_app/services/profile_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import 'bloc/user_role_bloc.dart';
 
 /// All main app pages
 final List<Widget> pages = [
@@ -23,6 +28,46 @@ class WidgetTree extends StatefulWidget {
 
 class _WidgetTreeState extends State<WidgetTree>
     with AutomaticKeepAliveClientMixin {
+  final ProfileService _profileService = ProfileService();
+
+  @override
+  void initState() {
+    super.initState();
+    _bootstrapRole();
+  }
+
+  Future<void> _bootstrapRole() async {
+    try {
+      // 1) Get role from backend
+      final result = await _profileService.getMe();
+      if (!mounted) return;
+
+      String backendRole = '';
+      if (result['status'] == 200) {
+        final data = result['data'] as Map<String, dynamic>;
+        final user = data['user'] as Map<String, dynamic>?;
+        backendRole = (user?['role'] ?? '').toString().toLowerCase();
+      }
+
+      // 2) Get locally saved instructor flag (when user submitted instructor form)
+      final prefs = await SharedPreferences.getInstance();
+      final bool localInstructorFlag =
+          prefs.getBool('is_local_instructor') ?? false;
+
+      // 3) Decide effective role for UI
+      final bool isInstructorFromBackend = backendRole == 'instructor';
+      final bool isTeacher = isInstructorFromBackend || localInstructorFlag;
+
+      if (isTeacher) {
+        context.read<UserRoleBloc>().add(const BecomeTeacherEvent());
+      } else {
+        context.read<UserRoleBloc>().add(const ResetRoleEvent());
+      }
+    } catch (_) {
+      // ignore bootstrap errors; app can still function without role preloading
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     super.build(context);

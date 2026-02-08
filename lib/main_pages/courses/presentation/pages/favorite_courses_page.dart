@@ -39,74 +39,6 @@ class _CoursesPageContentState extends State<_CoursesPageContent>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
-  // Sample data for teacher's published courses (only used for teacher role)
-  final List<Map<String, dynamic>> publishedCourses = [
-    {
-      'id': 'p1',
-      'title': 'دورة Flutter المتقدمة - بناء تطبيقات احترافية',
-      'image': 'https://picsum.photos/seed/flutter1/400/300',
-      'teacher': 'أحمد محمد',
-      'category': 'برمجة',
-      'rating': 4.8,
-      'reviews': 1247,
-      'students': '10,258',
-      'duration': 28,
-      'lessons': 45,
-      'level': 'متقدم',
-      'lastUpdated': 'ديسمبر 2024',
-      'price': '800,000 S.P',
-      'description':
-          'هذه الدورة الشاملة تغطي جميع جوانب تطوير تطبيقات Flutter بشكل احترافي.',
-      'tags': ['Flutter', 'Dart', 'Mobile', 'Firebase', 'API'],
-      'instructorImage': 'https://picsum.photos/seed/instructor1/200/200',
-      'createdAt': '2024-12-01',
-      'status': 'نشط',
-      'enrollments': 10258,
-    },
-    {
-      'id': 'p2',
-      'title': 'تعلم React Native من الصفر',
-      'image': 'https://picsum.photos/seed/react/400/300',
-      'teacher': 'سارة أحمد',
-      'category': 'برmجة',
-      'rating': 4.6,
-      'reviews': 892,
-      'students': '7,543',
-      'duration': 22,
-      'lessons': 38,
-      'level': 'مبتدئ',
-      'lastUpdated': 'نوفمبر 2024',
-      'price': '650,000 S.P',
-      'description': 'تعلم تطوير تطبيقات الهاتف المحمول باستخدام React Native.',
-      'tags': ['React Native', 'JavaScript', 'Mobile'],
-      'instructorImage': 'https://picsum.photos/seed/instructor2/200/200',
-      'createdAt': '2024-11-15',
-      'status': 'نشط',
-      'enrollments': 7543,
-    },
-    {
-      'id': 'p3',
-      'title': 'UI/UX Design للمبتدئين',
-      'image': 'https://picsum.photos/seed/design1/400/300',
-      'teacher': 'محمد علي',
-      'category': 'تصميم',
-      'rating': 4.9,
-      'reviews': 1543,
-      'students': '12,847',
-      'duration': 18,
-      'lessons': 32,
-      'level': 'مبتدئ',
-      'lastUpdated': 'يناير 2025',
-      'price': '400,000 S.P',
-      'description': 'تعلم أساسيات تصميم واجهات المستخدم وتجربة المستخدم.',
-      'tags': ['UI', 'UX', 'Design', 'Figma'],
-      'instructorImage': 'https://picsum.photos/seed/instructor3/200/200',
-      'createdAt': '2025-01-10',
-      'status': 'مسودة',
-      'enrollments': 0,
-    },
-  ];
-
   @override
   void initState() {
     super.initState();
@@ -114,7 +46,7 @@ class _CoursesPageContentState extends State<_CoursesPageContent>
       length: widget.isTeacher ? 3 : 2,
       vsync: this,
     );
-    
+
     // Load user courses when page initializes
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<CourseManagementBloc>().add(LoadUserCoursesEvent());
@@ -193,21 +125,22 @@ class _CoursesPageContentState extends State<_CoursesPageContent>
 
                 // TabBarView - Wrapped with BlocBuilder for course management state
                 Expanded(
-                  child: BlocBuilder<CourseManagementBloc, CourseManagementState>(
-                    builder: (context, courseState) {
-                      return TabBarView(
-                        controller: _tabController,
-                        children: _buildTabViews(
-                          context,
-                          widget.isTeacher,
-                          baseFontSize,
-                          smallFontSize,
-                          isDarkMode,
-                          courseState, // Pass the course state
-                        ),
-                      );
-                    },
-                  ),
+                  child:
+                      BlocBuilder<CourseManagementBloc, CourseManagementState>(
+                        builder: (context, courseState) {
+                          return TabBarView(
+                            controller: _tabController,
+                            children: _buildTabViews(
+                              context,
+                              widget.isTeacher,
+                              baseFontSize,
+                              smallFontSize,
+                              isDarkMode,
+                              courseState, // Pass the course state
+                            ),
+                          );
+                        },
+                      ),
                 ),
               ],
             ),
@@ -295,7 +228,7 @@ class _CoursesPageContentState extends State<_CoursesPageContent>
     if (isTeacher) {
       views.add(
         PublishedCoursesTab(
-          courses: publishedCourses,
+          courses: const [],
           baseFontSize: baseFontSize,
           smallFontSize: smallFontSize,
           isDarkMode: isDarkMode,

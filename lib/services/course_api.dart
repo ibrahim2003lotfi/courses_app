@@ -25,6 +25,7 @@ class CourseApi {
     if (search != null && search.isNotEmpty) {
       queryParams['search'] = search;
     }
+
     if (level != null && level.isNotEmpty) {
       queryParams['level'] = level;
     }
@@ -47,12 +48,91 @@ class CourseApi {
     return jsonDecode(response.body) as Map<String, dynamic>;
   }
 
+  /// Delete instructor course (DB-backed)
+  Future<Map<String, dynamic>> deleteInstructorCourse(String courseId) async {
+    try {
+      final response = await _client.delete('/instructor/courses-db/$courseId');
+
+      if (response.body.isEmpty) {
+        return {
+          'success': false,
+          'error': 'empty_response',
+          'message': 'استجابة فارغة من الخادم',
+        };
+      }
+
+      try {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      } catch (e) {
+        return {
+          'success': false,
+          'error': 'invalid_response',
+          'message': 'استجابة غير صالحة من الخادم',
+          'raw_response': response.body,
+        };
+      }
+    } catch (e) {
+      return {
+        'success': false,
+        'error': 'network_error',
+        'message': 'فشل الاتصال بالخادم: $e',
+      };
+    }
+  }
+
+  /// Update instructor course (DB-backed)
+  Future<Map<String, dynamic>> updateInstructorCourse({
+    required String id,
+    String? title,
+    String? description,
+    num? price,
+    String? level,
+    String? categoryId,
+    String? categoryName,
+  }) async {
+    final body = <String, String>{};
+    if (title != null) body['title'] = title;
+    if (description != null) body['description'] = description;
+    if (price != null) body['price'] = price.toString();
+    if (level != null) body['level'] = level;
+    if (categoryId != null) body['category_id'] = categoryId;
+    if (categoryName != null) body['category_name'] = categoryName;
+
+    try {
+      final response = await _client.put('/instructor/courses-db/$id', body);
+
+      if (response.body.isEmpty) {
+        return {
+          'success': false,
+          'error': 'empty_response',
+          'message': 'استجابة فارغة من الخادم',
+        };
+      }
+
+      try {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      } catch (e) {
+        return {
+          'success': false,
+          'error': 'invalid_response',
+          'message': 'استجابة غير صالحة من الخادم',
+          'raw_response': response.body,
+        };
+      }
+    } catch (e) {
+      return {
+        'success': false,
+        'error': 'network_error',
+        'message': 'فشل الاتصال بالخادم: $e',
+      };
+    }
+  }
+
   /// Get single course details by slug
   Future<Map<String, dynamic>> getCourseDetails(String slug) async {
     final response = await _client.get("/courses/$slug");
 
     return jsonDecode(response.body) as Map<String, dynamic>;
-
   }
 
   /// Create regular instructor course with file uploads
@@ -82,12 +162,32 @@ class CourseApi {
     }
 
     final response = await _client.postMultipart(
-      "/instructor/courses",
+      "/instructor/courses-db",
       fields: fields,
       files: files.isNotEmpty ? files : null,
     );
 
-    return jsonDecode(response.body) as Map<String, dynamic>;
+    // Handle empty or invalid response
+    if (response.body.isEmpty) {
+      return {
+        'success': false,
+        'error': 'empty_response',
+        'message': 'استجابة فارغة من الخادم',
+      };
+    }
+
+    try {
+      return jsonDecode(response.body) as Map<String, dynamic>;
+    } catch (e) {
+      // If JSON parsing fails, return error with raw response
+      return {
+        'success': false,
+        'error': 'invalid_response',
+        'message': 'استجابة غير صالحة من الخادم',
+        'raw_response': response.body,
+        'status_code': response.statusCode,
+      };
+    }
   }
 
   /// Create university course with file uploads
@@ -127,12 +227,34 @@ class CourseApi {
       files: files.isNotEmpty ? files : null,
     );
 
-    return jsonDecode(response.body) as Map<String, dynamic>;
+    // Handle empty or invalid response
+    if (response.body.isEmpty) {
+      return {
+        'success': false,
+        'error': 'empty_response',
+        'message': 'استجابة فارغة من الخادم',
+      };
+    }
+
+    try {
+      return jsonDecode(response.body) as Map<String, dynamic>;
+    } catch (e) {
+      // If JSON parsing fails, return error with raw response
+      return {
+        'success': false,
+        'error': 'invalid_response',
+        'message': 'استجابة غير صالحة من الخادم',
+        'raw_response': response.body,
+        'status_code': response.statusCode,
+      };
+    }
   }
 
   /// Get course sections (for instructors)
   Future<Map<String, dynamic>> getCourseSections(String courseId) async {
-    final response = await _client.get("/instructor/courses/$courseId/sections");
+    final response = await _client.get(
+      "/instructor/courses/$courseId/sections",
+    );
 
     return jsonDecode(response.body) as Map<String, dynamic>;
   }
@@ -180,15 +302,25 @@ class CourseApi {
   }
 
   /// Delete section
-  Future<Map<String, dynamic>> deleteSection(String courseId, String sectionId) async {
-    final response = await _client.delete("/instructor/courses/$courseId/sections/$sectionId");
+  Future<Map<String, dynamic>> deleteSection(
+    String courseId,
+    String sectionId,
+  ) async {
+    final response = await _client.delete(
+      "/instructor/courses/$courseId/sections/$sectionId",
+    );
 
     return jsonDecode(response.body) as Map<String, dynamic>;
   }
 
   /// Get lessons for a section
-  Future<Map<String, dynamic>> getLessons(String courseId, String sectionId) async {
-    final response = await _client.get("/instructor/courses/$courseId/sections/$sectionId/lessons");
+  Future<Map<String, dynamic>> getLessons(
+    String courseId,
+    String sectionId,
+  ) async {
+    final response = await _client.get(
+      "/instructor/courses/$courseId/sections/$sectionId/lessons",
+    );
 
     return jsonDecode(response.body) as Map<String, dynamic>;
   }
@@ -254,20 +386,104 @@ class CourseApi {
   }
 
   /// Delete lesson
-  Future<Map<String, dynamic>> deleteLesson(String courseId, String sectionId, String lessonId) async {
-    final response = await _client.delete("/instructor/courses/$courseId/sections/$sectionId/lessons/$lessonId");
+  Future<Map<String, dynamic>> deleteLesson(
+    String courseId,
+    String sectionId,
+    String lessonId,
+  ) async {
+    final response = await _client.delete(
+      "/instructor/courses/$courseId/sections/$sectionId/lessons/$lessonId",
+    );
 
     return jsonDecode(response.body) as Map<String, dynamic>;
   }
 
+  /// Get instructor's courses
+  Future<Map<String, dynamic>> getInstructorCourses() async {
+    try {
+      // Use the DB-backed endpoint for instructor courses
+      final response = await _client.get("/instructor/my-courses-db");
+
+      if (response.body.isEmpty) {
+        return {
+          'success': false,
+          'error': 'empty_response',
+          'message': 'استجابة فارغة من الخادم',
+          'courses': [],
+        };
+      }
+
+      try {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      } catch (e) {
+        return {
+          'success': false,
+          'error': 'invalid_response',
+          'message': 'استجابة غير صالحة من الخادم',
+          'raw_response': response.body,
+          'courses': [],
+        };
+      }
+    } catch (e) {
+      print('🔴 Error fetching instructor courses: $e');
+      return {
+        'success': false,
+        'error': 'network_error',
+        'message': 'فشل الاتصال بالخادم: $e',
+        'courses': [],
+      };
+    }
+  }
+
   /// Get stream URL for a lesson (for enrolled students)
-  Future<Map<String, dynamic>> getLessonStream(String courseSlug, String lessonId) async {
+  Future<Map<String, dynamic>> getLessonStream(
+    String courseSlug,
+    String lessonId,
+  ) async {
     final response = await _client.get("/courses/$courseSlug/stream/$lessonId");
 
     return jsonDecode(response.body) as Map<String, dynamic>;
   }
+
+  /// Upload video for a lesson
+  Future<Map<String, dynamic>> uploadLessonVideo({
+    required String courseId,
+    required String lessonId,
+    required File videoFile,
+    int? duration,
+  }) async {
+    final fields = <String, String>{};
+    if (duration != null) {
+      fields['duration'] = duration.toString();
+    }
+
+    final files = <String, File>{'video': videoFile};
+
+    final response = await _client.postMultipart(
+      "/instructor/courses/$courseId/lessons/$lessonId/video",
+      fields: fields,
+      files: files,
+    );
+
+    // Handle empty or invalid response
+    if (response.body.isEmpty) {
+      return {
+        'success': false,
+        'error': 'empty_response',
+        'message': 'استجابة فارغة من الخادم',
+      };
+    }
+
+    try {
+      return jsonDecode(response.body) as Map<String, dynamic>;
+    } catch (e) {
+      return {
+        'success': false,
+        'error': 'invalid_response',
+        'message': 'استجابة غير صالحة من الخادم',
+        'raw_response': response.body,
+        'status_code': response.statusCode,
+      };
+    }
+  }
 }
-
-
-
-

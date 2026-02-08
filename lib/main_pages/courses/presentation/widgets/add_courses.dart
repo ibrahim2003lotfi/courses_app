@@ -23,7 +23,24 @@ class CourseVideo {
 }
 
 class AddCoursePage extends StatefulWidget {
-  const AddCoursePage({super.key});
+  final String? courseId;
+  final String? initialTitle;
+  final String? initialDescription;
+  final num? initialPrice;
+  final String? initialLevelBackend; // beginner/intermediate/advanced
+  final String? initialCategoryName;
+  final bool isEditing;
+
+  const AddCoursePage({
+    super.key,
+    this.courseId,
+    this.initialTitle,
+    this.initialDescription,
+    this.initialPrice,
+    this.initialLevelBackend,
+    this.initialCategoryName,
+    this.isEditing = false,
+  });
 
   @override
   State<AddCoursePage> createState() => _AddCoursePageState();
@@ -71,7 +88,6 @@ class _AddCoursePageState extends State<AddCoursePage>
   bool _uniIsFree = false;
 
   bool _isLoading = false;
-  bool _showPreview = false;
 
   final List<String> _categories = [
     'برمجة',
@@ -90,6 +106,37 @@ class _AddCoursePageState extends State<AddCoursePage>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+
+    // Prefill fields when editing an existing course (educational tab)
+    if (widget.isEditing) {
+      if (widget.initialTitle != null) {
+        _titleController.text = widget.initialTitle!;
+      }
+      if (widget.initialDescription != null) {
+        _descriptionController.text = widget.initialDescription!;
+      }
+      if (widget.initialPrice != null) {
+        _priceController.text = widget.initialPrice!.toString();
+        _isFree = widget.initialPrice == 0;
+      }
+      if (widget.initialCategoryName != null) {
+        _selectedCategory = widget.initialCategoryName;
+      }
+      if (widget.initialLevelBackend != null) {
+        // Map backend level to Arabic label used in UI
+        switch (widget.initialLevelBackend) {
+          case 'beginner':
+            _selectedLevel = 'مبتدئ';
+            break;
+          case 'intermediate':
+            _selectedLevel = 'متوسط';
+            break;
+          case 'advanced':
+            _selectedLevel = 'متقدم';
+            break;
+        }
+      }
+    }
   }
 
   @override
@@ -114,7 +161,7 @@ class _AddCoursePageState extends State<AddCoursePage>
         source: ImageSource.gallery,
         imageQuality: 85,
       );
-      
+
       if (pickedFile != null) {
         setState(() {
           if (isUniversity) {
@@ -135,7 +182,7 @@ class _AddCoursePageState extends State<AddCoursePage>
       final XFile? pickedFile = await _imagePicker.pickVideo(
         source: ImageSource.gallery,
       );
-      
+
       if (pickedFile != null) {
         return File(pickedFile.path);
       }
@@ -150,7 +197,8 @@ class _AddCoursePageState extends State<AddCoursePage>
       return;
     }
 
-    if (_courseVideos.isEmpty) {
+    // عند إنشاء دورة جديدة نلزم بوجود فيديو، أما في وضع التعديل فقط نسمح بدون فيديوهات
+    if (!widget.isEditing && _courseVideos.isEmpty) {
       _showErrorSnackBar('الرجاء إضافة فيديو واحد على الأقل');
       return;
     }
@@ -159,11 +207,15 @@ class _AddCoursePageState extends State<AddCoursePage>
 
     try {
       // Prepare lessons data
-      final lessons = _courseVideos.map((video) => {
-        'title': video.title,
-        'description': video.description,
-        'file_name': video.fileName ?? 'video.mp4',
-      }).toList();
+      final lessons = _courseVideos
+          .map(
+            (video) => {
+              'title': video.title,
+              'description': video.description,
+              'file_name': video.fileName ?? 'video.mp4',
+            },
+          )
+          .toList();
 
       print('🟡 Creating course with title: ${_titleController.text.trim()}');
       print('🟡 Lessons count: ${lessons.length}');
@@ -172,35 +224,130 @@ class _AddCoursePageState extends State<AddCoursePage>
       print('🟡 Has thumbnail: ${_courseImageFile != null}');
 
       final api = CourseApi();
-      final response = await api.createInstructorCourse(
-        title: _titleController.text.trim(),
-        description: _descriptionController.text.trim().isEmpty
-            ? null
-            : _descriptionController.text.trim(),
-        price: _isFree ? 0 : num.tryParse(_priceController.text.trim()) ?? 0,
-        level: _mapLevelToBackend(_selectedLevel),
-        categoryName: _selectedCategory,
-        thumbnailImage: _courseImageFile,
-        lessons: lessons,
-      );
+      Map<String, dynamic> response;
+
+      if (widget.isEditing && widget.courseId != null) {
+        // تحديث بيانات دورة موجودة في DB (بدون التعامل مع الفيديوهات هنا)
+        response = await api.updateInstructorCourse(
+          id: widget.courseId!,
+          title: _titleController.text.trim(),
+          description: _descriptionController.text.trim().isEmpty
+              ? null
+              : _descriptionController.text.trim(),
+          price: _isFree ? 0 : num.tryParse(_priceController.text.trim()) ?? 0,
+          level: _mapLevelToBackend(_selectedLevel),
+          categoryName: _selectedCategory,
+        );
+      } else {
+        // إنشاء دورة جديدة كما كان سابقاً
+        response = await api.createInstructorCourse(
+          title: _titleController.text.trim(),
+          description: _descriptionController.text.trim().isEmpty
+              ? null
+              : _descriptionController.text.trim(),
+          price: _isFree ? 0 : num.tryParse(_priceController.text.trim()) ?? 0,
+          level: _mapLevelToBackend(_selectedLevel),
+          categoryName: _selectedCategory,
+          thumbnailImage: _courseImageFile,
+          lessons: lessons,
+        );
+      }
 
       print('🟡 API Response: $response');
 
       if (!mounted) return;
 
+      // Check for authentication/authorization errors
+      if (response.containsKey('error')) {
+        final errorCode = response['error'];
+        if (errorCode == 'no_user' || errorCode == 'unauthenticated') {
+          _showErrorSnackBar('يجب تسجيل الدخول أولاً');
+          return;
+        }
+        if (errorCode == 'unauthorized') {
+          _showErrorSnackBar(
+            'ليس لديك صلاحية المعلم. يرجى التقدم بطلب للحصول على صلاحية المعلم',
+          );
+          return;
+        }
+        if (errorCode == 'middleware_error') {
+          _showErrorSnackBar('حدث خطأ في الخادم. يرجى المحاولة مرة أخرى');
+          return;
+        }
+      }
+
       if (response['success'] == true) {
-        _showSuccessSnackBar('تم حفظ الدورة بنجاح!');
+        final courseId = response['course']?['id'];
+        final sections = response['course']?['sections'];
+
+        // في وضع الإنشاء فقط نرفع الفيديوهات
+        if (!widget.isEditing &&
+            courseId != null &&
+            sections != null &&
+            sections.isNotEmpty &&
+            sections[0]['lessons'] != null) {
+          final lessonsList = sections[0]['lessons'] as List;
+
+          print('🟡 Uploading ${lessonsList.length} videos...');
+
+          for (
+            var i = 0;
+            i < lessonsList.length && i < _courseVideos.length;
+            i++
+          ) {
+            final lessonId = lessonsList[i]['id'];
+            final videoFile = _courseVideos[i].videoFile;
+
+            if (lessonId != null && videoFile != null) {
+              print('🟡 Uploading video ${i + 1}/${lessonsList.length}');
+
+              final uploadResponse = await api.uploadLessonVideo(
+                courseId: courseId,
+                lessonId: lessonId,
+                videoFile: videoFile,
+                duration: 0,
+              );
+
+              print('🟡 Video ${i + 1} upload response: $uploadResponse');
+
+              if (uploadResponse['success'] != true) {
+                print(
+                  '🔴 Video ${i + 1} upload failed: ${uploadResponse['message']}',
+                );
+              }
+            }
+          }
+        }
+
+        _showSuccessSnackBar(
+          widget.isEditing ? 'تم تحديث الدورة بنجاح!' : 'تم حفظ الدورة بنجاح!',
+        );
         Future.delayed(const Duration(seconds: 1), () {
-          if (mounted) Navigator.pop(context);
+          if (mounted) Navigator.pop(context, true);
         });
       } else {
-        _showErrorSnackBar(response['message'] ?? 'فشل حفظ الدورة');
+        final errorMessage = response['message'] ?? 'فشل حفظ الدورة';
+        _showErrorSnackBar(errorMessage);
       }
     } catch (e, stackTrace) {
       print('🔴 Course creation error: $e');
       print('🔴 Stack trace: $stackTrace');
       if (!mounted) return;
-      _showErrorSnackBar('فشل حفظ الدورة: $e');
+
+      // Handle specific error types
+      String errorMessage = 'فشل حفظ الدورة';
+      if (e.toString().contains('SocketException') ||
+          e.toString().contains('Connection refused')) {
+        errorMessage = 'لا يمكن الاتصال بالخادم. تأكد من تشغيل الخادم';
+      } else if (e.toString().contains('timeout')) {
+        errorMessage = 'انتهت مهلة الاتصال. تحقق من اتصالك بالإنترنت';
+      } else if (e.toString().contains('Unauthenticated') ||
+          e.toString().contains('Unauthorized')) {
+        errorMessage = 'يجب تسجيل الدخول كمعلم لإضافة دورة';
+      } else {
+        errorMessage = 'فشل حفظ الدورة: ${e.toString()}';
+      }
+      _showErrorSnackBar(errorMessage);
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -222,11 +369,15 @@ class _AddCoursePageState extends State<AddCoursePage>
 
     try {
       // Prepare lessons data
-      final lessons = _universityVideos.map((video) => {
-        'title': video.title,
-        'description': video.description,
-        'file_name': video.fileName ?? 'video.mp4',
-      }).toList();
+      final lessons = _universityVideos
+          .map(
+            (video) => {
+              'title': video.title,
+              'description': video.description,
+              'file_name': video.fileName ?? 'video.mp4',
+            },
+          )
+          .toList();
 
       final api = CourseApi();
       final response = await api.createUniversityCourse(
@@ -234,7 +385,9 @@ class _AddCoursePageState extends State<AddCoursePage>
         description: _uniDescriptionController.text.trim().isEmpty
             ? null
             : _uniDescriptionController.text.trim(),
-        price: _uniIsFree ? 0 : num.tryParse(_uniPriceController.text.trim()) ?? 0,
+        price: _uniIsFree
+            ? 0
+            : num.tryParse(_uniPriceController.text.trim()) ?? 0,
         level: _mapLevelToBackend(_uniSelectedLevel),
         universityName: _universityNameController.text.trim(),
         facultyName: _facultyController.text.trim(),
@@ -245,17 +398,92 @@ class _AddCoursePageState extends State<AddCoursePage>
 
       if (!mounted) return;
 
+      // Check for authentication/authorization errors
+      if (response.containsKey('error')) {
+        final errorCode = response['error'];
+        if (errorCode == 'no_user' || errorCode == 'unauthenticated') {
+          _showErrorSnackBar('يجب تسجيل الدخول أولاً');
+          return;
+        }
+        if (errorCode == 'unauthorized') {
+          _showErrorSnackBar(
+            'ليس لديك صلاحية المعلم. يرجى التقدم بطلب للحصول على صلاحية المعلم',
+          );
+          return;
+        }
+        if (errorCode == 'middleware_error') {
+          _showErrorSnackBar('حدث خطأ في الخادم. يرجى المحاولة مرة أخرى');
+          return;
+        }
+      }
+
       if (response['success'] == true) {
+        final courseId = response['course']?['id'];
+        final sections = response['course']?['sections'];
+
+        // Upload videos if we have course ID and lessons
+        if (courseId != null &&
+            sections != null &&
+            sections.isNotEmpty &&
+            sections[0]['lessons'] != null) {
+          final lessons = sections[0]['lessons'] as List;
+
+          print('🟡 Uploading ${lessons.length} university videos...');
+
+          for (
+            var i = 0;
+            i < lessons.length && i < _universityVideos.length;
+            i++
+          ) {
+            final lessonId = lessons[i]['id'];
+            final videoFile = _universityVideos[i].videoFile;
+
+            if (lessonId != null && videoFile != null) {
+              print('🟡 Uploading video ${i + 1}/${lessons.length}');
+
+              final uploadResponse = await api.uploadLessonVideo(
+                courseId: courseId,
+                lessonId: lessonId,
+                videoFile: videoFile,
+                duration: 0,
+              );
+
+              print('🟡 Video ${i + 1} upload response: $uploadResponse');
+
+              if (uploadResponse['success'] != true) {
+                print(
+                  '🔴 Video ${i + 1} upload failed: ${uploadResponse['message']}',
+                );
+              }
+            }
+          }
+        }
+
         _showSuccessSnackBar('تم حفظ الكورس الجامعي بنجاح!');
         Future.delayed(const Duration(seconds: 1), () {
-          if (mounted) Navigator.pop(context);
+          if (mounted) Navigator.pop(context, true);
         });
       } else {
-        _showErrorSnackBar(response['message'] ?? 'فشل حفظ الكورس');
+        final errorMessage = response['message'] ?? 'فشل حفظ الكورس';
+        _showErrorSnackBar(errorMessage);
       }
     } catch (e) {
       if (!mounted) return;
-      _showErrorSnackBar('فشل حفظ الكورس الجامعي: $e');
+
+      // Handle specific error types
+      String errorMessage = 'فشل حفظ الكورس الجامعي';
+      if (e.toString().contains('SocketException') ||
+          e.toString().contains('Connection refused')) {
+        errorMessage = 'لا يمكن الاتصال بالخادم. تأكد من تشغيل الخادم';
+      } else if (e.toString().contains('timeout')) {
+        errorMessage = 'انتهت مهلة الاتصال. تحقق من اتصالك بالإنترنت';
+      } else if (e.toString().contains('Unauthenticated') ||
+          e.toString().contains('Unauthorized')) {
+        errorMessage = 'يجب تسجيل الدخول كمعلم لإضافة كورس';
+      } else {
+        errorMessage = 'فشل حفظ الكورس الجامعي: ${e.toString()}';
+      }
+      _showErrorSnackBar(errorMessage);
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -290,10 +518,19 @@ class _AddCoursePageState extends State<AddCoursePage>
   }
 
   // Video dialog with file picker
-  void _showAddVideoDialog(bool isDarkMode, bool isUniversity, {CourseVideo? video, int? index}) {
+  void _showAddVideoDialog(
+    bool isDarkMode,
+    bool isUniversity, {
+    CourseVideo? video,
+    int? index,
+  }) {
     final isEditing = video != null;
-    final videoTitleController = TextEditingController(text: video?.title ?? '');
-    final videoDescriptionController = TextEditingController(text: video?.description ?? '');
+    final videoTitleController = TextEditingController(
+      text: video?.title ?? '',
+    );
+    final videoDescriptionController = TextEditingController(
+      text: video?.description ?? '',
+    );
     File? selectedVideoFile = video?.videoFile;
     String? selectedFileName = video?.fileName;
     final videoFormKey = GlobalKey<FormState>();
@@ -389,7 +626,9 @@ class _AddCoursePageState extends State<AddCoursePage>
                             style: GoogleFonts.tajawal(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
-                              color: isDarkMode ? Colors.white : const Color(0xFF1F2937),
+                              color: isDarkMode
+                                  ? Colors.white
+                                  : const Color(0xFF1F2937),
                             ),
                           ),
                           const SizedBox(height: 8),
@@ -406,12 +645,16 @@ class _AddCoursePageState extends State<AddCoursePage>
                             child: Container(
                               padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(
-                                color: isDarkMode ? const Color(0xFF2D2D2D) : const Color(0xFFF3F4F6),
+                                color: isDarkMode
+                                    ? const Color(0xFF2D2D2D)
+                                    : const Color(0xFFF3F4F6),
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
                                   color: selectedVideoFile != null
                                       ? const Color(0xFF667EEA)
-                                      : (isDarkMode ? Colors.white10 : Colors.black12),
+                                      : (isDarkMode
+                                            ? Colors.white10
+                                            : Colors.black12),
                                   width: selectedVideoFile != null ? 2 : 1,
                                 ),
                               ),
@@ -421,16 +664,24 @@ class _AddCoursePageState extends State<AddCoursePage>
                                     padding: const EdgeInsets.all(10),
                                     decoration: BoxDecoration(
                                       gradient: const LinearGradient(
-                                        colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
+                                        colors: [
+                                          Color(0xFF667EEA),
+                                          Color(0xFF764BA2),
+                                        ],
                                       ),
                                       borderRadius: BorderRadius.circular(8),
                                     ),
-                                    child: const Icon(Icons.video_library, color: Colors.white, size: 24),
+                                    child: const Icon(
+                                      Icons.video_library,
+                                      color: Colors.white,
+                                      size: 24,
+                                    ),
                                   ),
                                   const SizedBox(width: 12),
                                   Expanded(
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Text(
                                           selectedVideoFile != null
@@ -462,10 +713,14 @@ class _AddCoursePageState extends State<AddCoursePage>
                                     ),
                                   ),
                                   Icon(
-                                    selectedVideoFile != null ? Icons.check_circle : Icons.arrow_forward_ios,
+                                    selectedVideoFile != null
+                                        ? Icons.check_circle
+                                        : Icons.arrow_forward_ios,
                                     color: selectedVideoFile != null
                                         ? const Color(0xFF667EEA)
-                                        : (isDarkMode ? Colors.white38 : Colors.black38),
+                                        : (isDarkMode
+                                              ? Colors.white38
+                                              : Colors.black38),
                                     size: 20,
                                   ),
                                 ],
@@ -516,13 +771,18 @@ class _AddCoursePageState extends State<AddCoursePage>
                                     (selectedVideoFile != null || isEditing)) {
                                   final newVideo = CourseVideo(
                                     title: videoTitleController.text,
-                                    description: videoDescriptionController.text,
-                                    videoFile: selectedVideoFile ?? video?.videoFile,
-                                    fileName: selectedFileName ?? video?.fileName,
+                                    description:
+                                        videoDescriptionController.text,
+                                    videoFile:
+                                        selectedVideoFile ?? video?.videoFile,
+                                    fileName:
+                                        selectedFileName ?? video?.fileName,
                                   );
 
                                   setState(() {
-                                    final targetList = isUniversity ? _universityVideos : _courseVideos;
+                                    final targetList = isUniversity
+                                        ? _universityVideos
+                                        : _courseVideos;
                                     if (isEditing && index != null) {
                                       targetList[index] = newVideo;
                                     } else {
@@ -531,11 +791,16 @@ class _AddCoursePageState extends State<AddCoursePage>
                                   });
 
                                   Navigator.pop(context);
-                                  _showSuccessSnackBar(isEditing
-                                      ? 'تم تحديث الفيديو بنجاح'
-                                      : 'تم إضافة الفيديو بنجاح');
-                                } else if (selectedVideoFile == null && !isEditing) {
-                                  _showErrorSnackBar('الرجاء اختيار ملف الفيديو');
+                                  _showSuccessSnackBar(
+                                    isEditing
+                                        ? 'تم تحديث الفيديو بنجاح'
+                                        : 'تم إضافة الفيديو بنجاح',
+                                  );
+                                } else if (selectedVideoFile == null &&
+                                    !isEditing) {
+                                  _showErrorSnackBar(
+                                    'الرجاء اختيار ملف الفيديو',
+                                  );
                                 }
                               },
                               style: ElevatedButton.styleFrom(
@@ -544,7 +809,9 @@ class _AddCoursePageState extends State<AddCoursePage>
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
-                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 16,
+                                ),
                               ),
                               child: Text(
                                 isEditing ? 'تحديث الفيديو' : 'إضافة الفيديو',
@@ -563,7 +830,9 @@ class _AddCoursePageState extends State<AddCoursePage>
                             onPressed: () => Navigator.pop(context),
                             style: OutlinedButton.styleFrom(
                               side: BorderSide(
-                                color: isDarkMode ? Colors.white30 : Colors.black26,
+                                color: isDarkMode
+                                    ? Colors.white30
+                                    : Colors.black26,
                               ),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
@@ -636,7 +905,9 @@ class _AddCoursePageState extends State<AddCoursePage>
               TextButton(
                 onPressed: () {
                   setState(() {
-                    final targetList = isUniversity ? _universityVideos : _courseVideos;
+                    final targetList = isUniversity
+                        ? _universityVideos
+                        : _courseVideos;
                     targetList.removeAt(index);
                   });
                   Navigator.pop(context);
@@ -699,7 +970,9 @@ class _AddCoursePageState extends State<AddCoursePage>
               ),
               indicatorColor: const Color(0xFF667EEA),
               labelColor: const Color(0xFF667EEA),
-              unselectedLabelColor: isDarkMode ? Colors.white60 : Colors.black54,
+              unselectedLabelColor: isDarkMode
+                  ? Colors.white60
+                  : Colors.black54,
               tabs: const [
                 Tab(text: 'كورس تعليمي'),
                 Tab(text: 'كورس جامعي'),
@@ -809,13 +1082,23 @@ class _AddCoursePageState extends State<AddCoursePage>
   }
 
   Widget _buildFormSection(bool isDarkMode, bool isUniversity) {
-    final titleController = isUniversity ? _uniTitleController : _titleController;
-    final descriptionController = isUniversity ? _uniDescriptionController : _descriptionController;
-    final priceController = isUniversity ? _uniPriceController : _priceController;
-    final selectedCategory = isUniversity ? _uniSelectedCategory : _selectedCategory;
+    final titleController = isUniversity
+        ? _uniTitleController
+        : _titleController;
+    final descriptionController = isUniversity
+        ? _uniDescriptionController
+        : _descriptionController;
+    final priceController = isUniversity
+        ? _uniPriceController
+        : _priceController;
+    final selectedCategory = isUniversity
+        ? _uniSelectedCategory
+        : _selectedCategory;
     final selectedLevel = isUniversity ? _uniSelectedLevel : _selectedLevel;
     final isFree = isUniversity ? _uniIsFree : _isFree;
-    final courseImageFile = isUniversity ? _universityCourseImageFile : _courseImageFile;
+    final courseImageFile = isUniversity
+        ? _universityCourseImageFile
+        : _courseImageFile;
     final videos = isUniversity ? _universityVideos : _courseVideos;
 
     return Column(
@@ -885,19 +1168,29 @@ class _AddCoursePageState extends State<AddCoursePage>
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: isDarkMode ? const Color(0xFF2D4A3D) : const Color(0xFFE8F5E9),
+            color: isDarkMode
+                ? const Color(0xFF2D4A3D)
+                : const Color(0xFFE8F5E9),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Row(
             children: [
-              Icon(Icons.info_outline, size: 18, color: isDarkMode ? Colors.green.shade300 : Colors.green.shade700),
+              Icon(
+                Icons.info_outline,
+                size: 18,
+                color: isDarkMode
+                    ? Colors.green.shade300
+                    : Colors.green.shade700,
+              ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   'سيتم احتساب المدة وعدد الدروس تلقائياً بناءً على الفيديوهات المضافة',
                   style: GoogleFonts.tajawal(
                     fontSize: 12,
-                    color: isDarkMode ? Colors.green.shade300 : Colors.green.shade700,
+                    color: isDarkMode
+                        ? Colors.green.shade300
+                        : Colors.green.shade700,
                   ),
                 ),
               ),
@@ -999,7 +1292,9 @@ class _AddCoursePageState extends State<AddCoursePage>
                     'اضغط لتغيير الصورة',
                     style: GoogleFonts.tajawal(
                       fontSize: 14,
-                      color: isDarkMode ? Colors.white60 : const Color(0xFF6B7280),
+                      color: isDarkMode
+                          ? Colors.white60
+                          : const Color(0xFF6B7280),
                     ),
                   ),
                 ] else ...[
@@ -1014,7 +1309,11 @@ class _AddCoursePageState extends State<AddCoursePage>
                           ),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Icon(Icons.image, color: Colors.white, size: 24),
+                        child: const Icon(
+                          Icons.image,
+                          color: Colors.white,
+                          size: 24,
+                        ),
                       ),
                       const SizedBox(width: 12),
                       Text(
@@ -1247,7 +1546,11 @@ class _AddCoursePageState extends State<AddCoursePage>
     );
   }
 
-  Widget _buildActionButtons(bool isDarkMode, {required VoidCallback onSave, required bool isLoading}) {
+  Widget _buildActionButtons(
+    bool isDarkMode, {
+    required VoidCallback onSave,
+    required bool isLoading,
+  }) {
     return Row(
       children: [
         Expanded(
@@ -1303,9 +1606,7 @@ class _AddCoursePageState extends State<AddCoursePage>
             onPressed: () => Navigator.pop(context),
             style: OutlinedButton.styleFrom(
               side: BorderSide(
-                color: isDarkMode
-                    ? Colors.white30
-                    : Colors.black26,
+                color: isDarkMode ? Colors.white30 : Colors.black26,
               ),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -1317,9 +1618,7 @@ class _AddCoursePageState extends State<AddCoursePage>
               style: GoogleFonts.tajawal(
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
-                color: isDarkMode
-                    ? Colors.white
-                    : const Color(0xFF1F2937),
+                color: isDarkMode ? Colors.white : const Color(0xFF1F2937),
               ),
             ),
           ),

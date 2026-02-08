@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:courses_app/config/api.dart';
 import 'package:courses_app/services/auth_service.dart';
@@ -11,13 +10,13 @@ class InstructorService {
   /// Test instructor API connectivity
   Future<Map<String, dynamic>> testInstructorApi() async {
     print('🔵 Testing instructor API connectivity...');
-    
+
     final token = await _auth.getToken();
     if (token == null) {
       return {
         'success': false,
         'message': 'No authentication token',
-        'error': 'Not authenticated'
+        'error': 'Not authenticated',
       };
     }
 
@@ -31,9 +30,9 @@ class InstructorService {
           'Accept': 'application/json',
         },
       );
-      
+
       print('🔵 Main API response status: ${mainResponse.statusCode}');
-      
+
       if (mainResponse.statusCode != 200) {
         return {
           'success': false,
@@ -41,7 +40,7 @@ class InstructorService {
           'error': 'Status: ${mainResponse.statusCode}',
         };
       }
-      
+
       // Now test instructor API
       print('🔵 Testing instructor API endpoint...');
       final response = await http.get(
@@ -51,10 +50,10 @@ class InstructorService {
           'Accept': 'application/json',
         },
       );
-      
+
       print('🔵 Test response status: ${response.statusCode}');
       print('🔵 Test response body: ${response.body}');
-      
+
       final data = response.body.isNotEmpty ? jsonDecode(response.body) : null;
 
       if (response.statusCode == 200) {
@@ -92,34 +91,38 @@ class InstructorService {
   }) async {
     print('🔵 Submitting instructor application...');
     print('🔵 Certificates: ${certificates?.length ?? 0} files');
-    
+
     final token = await _auth.getToken();
     print('🔵 Token: ${token?.substring(0, 20) ?? 'null'}...');
-    
+
     if (token == null) {
       return {
         'success': false,
         'message': 'No authentication token',
-        'error': 'Not authenticated'
+        'error': 'Not authenticated',
       };
     }
 
     try {
       final url = '${ApiConfig.baseUrl}/instructor-apply';
       print('🔵 Full URL: $url');
-      
+
       // If there are certificates, use multipart request
       if (certificates != null && certificates.isNotEmpty) {
-        print('🔵 Using multipart request with ${certificates.length} certificates');
-        
+        print(
+          '🔵 Using multipart request with ${certificates.length} certificates',
+        );
+
         final request = http.MultipartRequest('POST', Uri.parse(url));
         request.headers['Authorization'] = 'Bearer $token';
         request.headers['Accept'] = 'application/json';
-        
+
         // Add text fields
         request.fields['education_level'] = educationLevel;
         request.fields['department'] = department;
-        request.fields['years_of_experience'] = yearsOfExperience.toInt().toString();
+        request.fields['years_of_experience'] = yearsOfExperience
+            .toInt()
+            .toString();
         request.fields['experience_description'] = experienceDescription;
         request.fields['agreed_to_terms'] = 'true';
         if (linkedinUrl != null && linkedinUrl.isNotEmpty) {
@@ -128,39 +131,43 @@ class InstructorService {
         if (portfolioUrl != null && portfolioUrl.isNotEmpty) {
           request.fields['portfolio_url'] = portfolioUrl;
         }
-        
+
         // Add certificate files
         for (var i = 0; i < certificates.length; i++) {
           final file = certificates[i];
           final fileSize = await file.length();
-          print('🔵 Adding certificate $i: ${file.path} (${(fileSize / 1024 / 1024).toStringAsFixed(2)} MB)');
-          
+          print(
+            '🔵 Adding certificate $i: ${file.path} (${(fileSize / 1024 / 1024).toStringAsFixed(2)} MB)',
+          );
+
           if (fileSize > 15 * 1024 * 1024) {
             return {
               'success': false,
               'message': 'حجم الملف كبير جداً (الحد الأقصى 15MB)',
             };
           }
-          
-          request.files.add(await http.MultipartFile.fromPath(
-            'certificates[$i]',
-            file.path,
-          ));
+
+          request.files.add(
+            await http.MultipartFile.fromPath('certificates[$i]', file.path),
+          );
         }
-        
+
         print('🔵 Sending multipart request...');
         final streamedResponse = await request.send();
         final response = await http.Response.fromStream(streamedResponse);
-        
+
         print('🔵 Response status: ${response.statusCode}');
         print('🔵 Response body: ${response.body}');
-        
-        final data = response.body.isNotEmpty ? jsonDecode(response.body) : null;
-        
+
+        final data = response.body.isNotEmpty
+            ? jsonDecode(response.body)
+            : null;
+
         if (response.statusCode == 200 && data?['success'] == true) {
           return {
             'success': true,
-            'message': data?['message'] ?? 'Application submitted successfully!',
+            'message':
+                data?['message'] ?? 'Application submitted successfully!',
             'status': data?['status'] ?? 'instructor',
             'data': data,
           };
@@ -175,7 +182,7 @@ class InstructorService {
       } else {
         // No certificates - use simple JSON request
         print('🔵 Using JSON request without certificates');
-        
+
         final body = {
           'education_level': educationLevel,
           'department': department,
@@ -183,7 +190,7 @@ class InstructorService {
           'experience_description': experienceDescription,
           'agreed_to_terms': true,
         };
-        
+
         // Only add optional fields if they have values
         if (linkedinUrl != null && linkedinUrl.isNotEmpty) {
           body['linkedin_url'] = linkedinUrl;
@@ -191,7 +198,7 @@ class InstructorService {
         if (portfolioUrl != null && portfolioUrl.isNotEmpty) {
           body['portfolio_url'] = portfolioUrl;
         }
-        
+
         final response = await http.post(
           Uri.parse(url),
           headers: {
@@ -201,16 +208,19 @@ class InstructorService {
           },
           body: jsonEncode(body),
         );
-        
+
         print('🔵 Response status: ${response.statusCode}');
         print('🔵 Response body: ${response.body}');
 
-        final data = response.body.isNotEmpty ? jsonDecode(response.body) : null;
+        final data = response.body.isNotEmpty
+            ? jsonDecode(response.body)
+            : null;
 
         if (response.statusCode == 200 && data?['success'] == true) {
           return {
             'success': true,
-            'message': data?['message'] ?? 'Application submitted successfully!',
+            'message':
+                data?['message'] ?? 'Application submitted successfully!',
             'status': data?['status'] ?? 'instructor',
             'data': data,
           };
@@ -236,13 +246,13 @@ class InstructorService {
   /// Get current user's instructor application status
   Future<Map<String, dynamic>> getMyApplication() async {
     print('🔵 Getting instructor application status...');
-    
+
     final token = await _auth.getToken();
     if (token == null) {
       return {
         'success': false,
         'message': 'No authentication token',
-        'error': 'Not authenticated'
+        'error': 'Not authenticated',
       };
     }
 
@@ -288,13 +298,13 @@ class InstructorService {
   /// Cancel instructor application
   Future<Map<String, dynamic>> cancelApplication() async {
     print('🔵 Canceling instructor application...');
-    
+
     final token = await _auth.getToken();
     if (token == null) {
       return {
         'success': false,
         'message': 'No authentication token',
-        'error': 'Not authenticated'
+        'error': 'Not authenticated',
       };
     }
 
