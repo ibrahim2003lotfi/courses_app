@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../services/home_api.dart';
+import '../services/profile_service.dart';
 
 class HomeEvent {}
 
@@ -9,22 +10,30 @@ class LoadHomeEvent extends HomeEvent {}
 class HomeState {
   final bool isLoading;
   final Map<String, dynamic>? data;
+  final List<String> userInterests;
+  final List<Map<String, dynamic>> enrolledCourses;
   final String? error;
 
   const HomeState({
     required this.isLoading,
     this.data,
+    this.userInterests = const [],
+    this.enrolledCourses = const [],
     this.error,
   });
 
   HomeState copyWith({
     bool? isLoading,
     Map<String, dynamic>? data,
+    List<String>? userInterests,
+    List<Map<String, dynamic>>? enrolledCourses,
     String? error,
   }) {
     return HomeState(
       isLoading: isLoading ?? this.isLoading,
       data: data ?? this.data,
+      userInterests: userInterests ?? this.userInterests,
+      enrolledCourses: enrolledCourses ?? this.enrolledCourses,
       error: error,
     );
   }
@@ -32,9 +41,11 @@ class HomeState {
 
 class HomeBloc extends Bloc<HomeEvent, HomeState> {
   final HomeApi _api;
+  final ProfileService _profileService;
 
-  HomeBloc({HomeApi? api})
+  HomeBloc({HomeApi? api, ProfileService? profileService})
       : _api = api ?? HomeApi(),
+        _profileService = profileService ?? ProfileService(),
         super(const HomeState(isLoading: false)) {
     on<LoadHomeEvent>(_onLoadHome);
   }
@@ -45,19 +56,48 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
   ) async {
     emit(state.copyWith(isLoading: true, error: null));
     try {
-      final data = await _api.getHome();
-      emit(HomeState(isLoading: false, data: data));
+      // Fetch home data first (this is critical)
+      final homeData = await _api.getHome();
+      
+      // Fetch profile (optional)
+      List<String> interests = [];
+      try {
+        final profileResponse = await _profileService.getMe();
+        if (profileResponse['status'] == 200 && profileResponse['data'] != null) {
+          final userData = profileResponse['data']['user'] as Map<String, dynamic>?;
+          if (userData != null && userData['interests'] != null) {
+            interests = List<String>.from(userData['interests']);
+          }
+        }
+      } catch (e) {
+        print('⚠️ Profile fetch failed: $e');
+      }
+      
+      print('🎯 User interests loaded: $interests');
+      
+      // Skip enrolled courses API for now - it's causing server crashes
+      // Return empty list to show "no courses" message
+      
+      emit(HomeState(
+        isLoading: false,
+        data: homeData,
+        userInterests: interests,
+        enrolledCourses: [],
+      ));
     } catch (e) {
       emit(
         HomeState(
           isLoading: false,
           error: e.toString(),
           data: state.data,
+          userInterests: state.userInterests,
+          enrolledCourses: state.enrolledCourses,
         ),
       );
     }
   }
 }
+
 
 
 

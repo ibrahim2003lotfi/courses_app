@@ -40,7 +40,40 @@ class HomeApi {
       rethrow;
     }
   }
+
+  Future<Map<String, dynamic>> getEnrolledCourses() async {
+    print('📚📚 HOME API: Starting getEnrolledCourses() call');
+    
+    final token = await _auth.getToken();
+    print('📚📚 HOME API: Token retrieved: ${token != null ? "YES" : "NO"}');
+
+    final url = "${ApiConfig.baseUrl}/my/enrolled-courses";
+    print('📚📚 HOME API: About to call URL: $url');
+
+    try {
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {
+          if (token != null) "Authorization": "Bearer $token",
+          "Accept": "application/json",
+        },
+      );
+
+      print('📚📚 HOME API: Response received - Status: ${response.statusCode}');
+      print('📚📚 HOME API: Response body: ${response.body}');
+
+      final result = jsonDecode(response.body) as Map<String, dynamic>;
+      print('📚📚 HOME API: JSON decoded successfully');
+      
+      return result;
+    } catch (e, stackTrace) {
+      print('📚📚❌ HOME API ERROR: $e');
+      print('📚📚❌ HOME API STACK TRACE: $stackTrace');
+      rethrow;
+    }
+  }
 }
+
 
 
 

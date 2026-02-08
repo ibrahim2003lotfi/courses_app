@@ -1,7 +1,9 @@
 import 'package:courses_app/bloc/course_management_bloc.dart';
+import 'package:courses_app/services/review_service.dart';
 import 'package:courses_app/theme_cubit/theme_cubit.dart';
 import 'package:courses_app/theme_cubit/theme_state.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -378,6 +380,10 @@ class CourseInfoCard extends StatelessWidget {
   }
 
   Widget _buildInfoGrid(bool isDarkMode) {
+    // Get real duration and lessons from course data
+    final duration = course['duration'] ?? 0;
+    final lessons = course['lessons'] ?? 0;
+    
     return GridView.count(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -388,18 +394,18 @@ class CourseInfoCard extends StatelessWidget {
       children: [
         _buildInfoItem(
           Icons.schedule,
-          '${course['duration'] ?? 20} ساعة',
+          '$duration ساعة',
           isDarkMode,
         ),
         _buildInfoItem(
           Icons.video_library,
-          '${course['lessons'] ?? 30} محاضرة',
+          '$lessons محاضرة',
           isDarkMode,
         ),
         _buildInfoItem(Icons.bar_chart, course['level'] ?? 'متوسط', isDarkMode),
         _buildInfoItem(
           Icons.update,
-          'محدث ${course['lastUpdated'] ?? '2024'}',
+          'محدث ${course['lastUpdated'] ?? '2026'}',
           isDarkMode,
         ),
       ],
@@ -658,33 +664,24 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
       return;
     }
 
-    if (!_formKey.currentState!.validate()) return;
-
-    setState(() => _isLoading = true);
-
-    await Future.delayed(const Duration(seconds: 2));
-
-    setState(() => _isLoading = false);
-
-    if (mounted) {
-      Navigator.of(context).pop();
-      widget.onEnrollmentSuccess(); // Call the success callback
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'تمت عملية الدفع بنجاح! رقم الطلب: $_orderNumber',
-            style: GoogleFonts.tajawal(fontWeight: FontWeight.w600),
-            textAlign: TextAlign.center,
-          ),
-          backgroundColor: Colors.green,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
+    // For paid courses - show message that buying is not available yet
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'شراء الكورسات غير متاح حالياً، سيتم تفعيله قريباً',
+          style: GoogleFonts.tajawal(fontWeight: FontWeight.w600),
+          textAlign: TextAlign.center,
         ),
-      );
-    }
+        backgroundColor: Colors.orange,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+    );
+    
+    // Close the payment bottom sheet
+    Navigator.of(context).pop();
   }
 
   void _enrollFreeCourse() {
@@ -1382,6 +1379,41 @@ class CourseTabs extends StatefulWidget {
 
 class _CourseTabsState extends State<CourseTabs> {
   int _selectedTab = 0;
+  final ReviewService _reviewService = ReviewService();
+  Map<String, dynamic>? _ratingInfo;
+  bool _isLoadingRatings = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchRatingInfo();
+  }
+
+  Future<void> _fetchRatingInfo() async {
+    final courseId = widget.course['id']?.toString();
+    if (courseId == null || courseId.isEmpty) return;
+
+    setState(() {
+      _isLoadingRatings = true;
+    });
+
+    try {
+      final response = await _reviewService.getCourseRating(courseId);
+      if (mounted && response['rating_info'] != null) {
+        setState(() {
+          _ratingInfo = response['rating_info'] as Map<String, dynamic>;
+        });
+      }
+    } catch (e) {
+      print('Error fetching rating info: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoadingRatings = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1567,6 +1599,13 @@ class _CourseTabsState extends State<CourseTabs> {
   }
 
   Widget _buildDescription(bool isDarkMode, bool isMobile) {
+  // Get real description from course data
+  final description = widget.course['description']?.toString();
+  final hasDescription = description != null && description.isNotEmpty;
+  // Get category name for tag
+  final categoryName = widget.course['category']?.toString();
+  final hasCategory = categoryName != null && categoryName.isNotEmpty;
+  
   return Column(
     crossAxisAlignment: CrossAxisAlignment.end,
     children: [
@@ -1583,58 +1622,72 @@ class _CourseTabsState extends State<CourseTabs> {
         ),
       ),
       const SizedBox(height: 12),
-      Align(
-        alignment: Alignment.centerRight,
-        child: Text(
-          widget.course['description'] ??
-              'دورة تعليمية شاملة تغطي أهم المفاهيم والمهارات في هذا المجال. تم تصميم المحتوى بعناية لضمان أفضل تجربة تعلم.',
-          style: GoogleFonts.tajawal(
-            fontSize: isMobile ? 14 : 16,
-            fontWeight: FontWeight.w500,
-            color: isDarkMode ? Colors.white70 : const Color(0xFF6B7280),
-            height: 1.6,
+      if (hasDescription)
+        Align(
+          alignment: Alignment.centerRight,
+          child: Text(
+            description!,
+            style: GoogleFonts.tajawal(
+              fontSize: isMobile ? 14 : 16,
+              fontWeight: FontWeight.w500,
+              color: isDarkMode ? Colors.white70 : const Color(0xFF6B7280),
+              height: 1.6,
+            ),
+            textAlign: TextAlign.right,
           ),
-          textAlign: TextAlign.right,
         ),
-      ),
       const SizedBox(height: 16),
-      Align(
-        alignment: Alignment.centerRight,
-        child: Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          alignment: WrapAlignment.end,
-          textDirection: TextDirection.rtl,
-          children: List.generate(widget.course['tags']?.length ?? 3, (index) {
-            final tags = widget.course['tags'] ?? ['تعليم', 'تدريب', 'مهارات'];
-            final tag = index < tags.length ? tags[index] : 'تعليم';
-            return Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+      // Show category tag if available
+      if (hasCategory)
+        Align(
+          alignment: Alignment.centerRight,
+          child: Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            alignment: WrapAlignment.end,
+            textDirection: TextDirection.rtl,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(20),
                 ),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                tag,
-                style: GoogleFonts.tajawal(
-                  fontSize: isMobile ? 11 : 12,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
+                child: Text(
+                  categoryName!,
+                  style: GoogleFonts.tajawal(
+                    fontSize: isMobile ? 11 : 12,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
                 ),
               ),
-            );
-          }),
+            ],
+          ),
         ),
-      ),
     ],
   );
 }
 
 Widget _buildCurriculum(bool isDarkMode, bool isMobile) {
+  // Get real sections data from course
+  final sections = widget.course['sections'] as List? ?? [];
+  
+  // Debug logging
+  print('DEBUG - Course sections: ${sections.length}');
+  if (sections.isNotEmpty) {
+    print('DEBUG - First section: ${sections[0]}');
+    final lessons = sections[0]['lessons'] as List? ?? [];
+    print('DEBUG - First section lessons count: ${lessons.length}');
+    if (lessons.isNotEmpty) {
+      print('DEBUG - First lesson: ${lessons[0]}');
+    }
+  }
+  
   return Column(
     crossAxisAlignment: CrossAxisAlignment.end,
     children: [
@@ -1651,11 +1704,12 @@ Widget _buildCurriculum(bool isDarkMode, bool isMobile) {
         ),
       ),
       const SizedBox(height: 12),
-      ...List.generate(5, (index) {
-        return Align(
+      
+      // If no sections available, show placeholder
+      if (sections.isEmpty)
+        Align(
           alignment: Alignment.centerRight,
           child: Container(
-            margin: const EdgeInsets.only(bottom: 8),
             padding: EdgeInsets.all(isMobile ? 10 : 12),
             decoration: BoxDecoration(
               color: isDarkMode
@@ -1667,66 +1721,142 @@ Widget _buildCurriculum(bool isDarkMode, bool isMobile) {
               textDirection: TextDirection.rtl,
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                // Duration on the far right
-                Text(
-                  '${(index + 1) * 15} دقيقة',
-                  style: GoogleFonts.tajawal(
-                    fontSize: isMobile ? 11 : 12,
-                    fontWeight: FontWeight.w500,
-                    color: isDarkMode
-                        ? Colors.white70
-                        : const Color(0xFF6B7280),
-                  ),
-                ),
-                SizedBox(width: isMobile ? 8 : 12),
-                
-                // Lecture title in the middle
                 Expanded(
-                  child: Align(
-                    alignment: Alignment.centerRight,
-                    child: Text(
-                      'المحاضرة ${index + 1}: مقدمة في ${widget.course['category'] ?? 'الموضوع'}',
-                      style: GoogleFonts.tajawal(
-                        fontSize: isMobile ? 13 : 14,
-                        fontWeight: FontWeight.w600,
-                        color: isDarkMode
-                            ? Colors.white
-                            : const Color(0xFF374151),
-                      ),
-                      textAlign: TextAlign.right,
+                  child: Text(
+                    'لا يوجد محتوى متاح حالياً',
+                    style: GoogleFonts.tajawal(
+                      fontSize: isMobile ? 13 : 14,
+                      fontWeight: FontWeight.w600,
+                      color: isDarkMode
+                          ? Colors.white70
+                          : const Color(0xFF6B7280),
                     ),
-                  ),
-                ),
-                SizedBox(width: isMobile ? 8 : 12),
-                
-                // Lock icon on the left
-                Container(
-                  width: isMobile ? 28 : 32,
-                  height: isMobile ? 28 : 32,
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(
-                    Icons.lock_outline,
-                    color: Colors.white,
-                    size: isMobile ? 14 : 16,
+                    textAlign: TextAlign.right,
                   ),
                 ),
               ],
             ),
           ),
-        );
-      }),
+        )
+      else
+        // Build lessons list from all sections
+        ...sections.expand<Widget>((section) {
+          final sectionTitle = section['title'] ?? 'قسم';
+          final lessons = section['lessons'] as List? ?? [];
+          
+          return lessons.asMap().entries.map<Widget>((entry) {
+            final lessonIndex = entry.key;
+            final lesson = entry.value as Map<String, dynamic>;
+            final lessonTitle = lesson['title'] ?? lesson['name'] ?? 'محاضرة ${lessonIndex + 1}';
+            final lessonDescription = lesson['description']?.toString();
+            final duration = lesson['duration'] ?? 0;
+            final durationMinutes = duration > 0 ? (duration / 60).ceil() : 0;
+            
+            return Align(
+              alignment: Alignment.centerRight,
+              child: Container(
+                margin: const EdgeInsets.only(bottom: 8),
+                padding: EdgeInsets.all(isMobile ? 10 : 12),
+                decoration: BoxDecoration(
+                  color: isDarkMode
+                      ? const Color(0xFF2D2D2D)
+                      : const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Row(
+                      textDirection: TextDirection.rtl,
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        // Duration on the far right
+                        if (duration > 0)
+                          Text(
+                            '$durationMinutes دقيقة',
+                            style: GoogleFonts.tajawal(
+                              fontSize: isMobile ? 11 : 12,
+                              fontWeight: FontWeight.w500,
+                              color: isDarkMode
+                                  ? Colors.white70
+                                  : const Color(0xFF6B7280),
+                            ),
+                          ),
+                        if (duration > 0)
+                          SizedBox(width: isMobile ? 8 : 12),
+                        
+                        // Lecture title in the middle
+                        Expanded(
+                          child: Align(
+                            alignment: Alignment.centerRight,
+                            child: Text(
+                              lessonTitle,
+                              style: GoogleFonts.tajawal(
+                                fontSize: isMobile ? 13 : 14,
+                                fontWeight: FontWeight.w600,
+                                color: isDarkMode
+                                    ? Colors.white
+                                    : const Color(0xFF374151),
+                              ),
+                              textAlign: TextAlign.right,
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: isMobile ? 8 : 12),
+                        
+                        // Lock icon on the left
+                        Container(
+                          width: isMobile ? 28 : 32,
+                          height: isMobile ? 28 : 32,
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(
+                            Icons.lock_outline,
+                            color: Colors.white,
+                            size: isMobile ? 14 : 16,
+                          ),
+                        ),
+                      ],
+                    ),
+                    // Show description if available
+                    if (lessonDescription != null && lessonDescription.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8, right: 40),
+                        child: Text(
+                          lessonDescription,
+                          style: GoogleFonts.tajawal(
+                            fontSize: isMobile ? 11 : 12,
+                            fontWeight: FontWeight.w400,
+                            color: isDarkMode
+                                ? Colors.white60
+                                : const Color(0xFF6B7280),
+                            height: 1.4,
+                          ),
+                          textAlign: TextAlign.right,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            );
+          }).toList();
+        }).toList(),
     ],
   );
 }
 
 Widget _buildReviews(bool isDarkMode, bool isMobile) {
+  // Get real rating data
+  final avgRating = _ratingInfo?['average_rating'] ?? widget.course['rating'] ?? 0.0;
+  final totalRatings = _ratingInfo?['total_ratings'] ?? widget.course['reviews'] ?? 0;
+  final ratingBreakdown = _ratingInfo?['breakdown'] as Map<String, dynamic>? ?? {};
+  
   return Column(
     crossAxisAlignment: CrossAxisAlignment.end,
     children: [
@@ -1742,129 +1872,175 @@ Widget _buildReviews(bool isDarkMode, bool isMobile) {
           textAlign: TextAlign.right,
         ),
       ),
-      const SizedBox(height: 12),
-      ...List.generate(3, (index) {
-        return Align(
-          alignment: Alignment.centerRight,
-          child: Container(
-            margin: const EdgeInsets.only(bottom: 16),
-            padding: EdgeInsets.all(isMobile ? 12 : 16),
-            decoration: BoxDecoration(
-              color: isDarkMode
-                  ? const Color(0xFF2D2D2D)
-                  : const Color(0xFFF8FAFC),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
+      const SizedBox(height: 16),
+      
+      // Rating Summary Card
+      Container(
+        padding: EdgeInsets.all(isMobile ? 16 : 20),
+        decoration: BoxDecoration(
+          color: isDarkMode
+              ? const Color(0xFF2D2D2D)
+              : const Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          textDirection: TextDirection.rtl,
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            // Average Rating
+            Column(
               children: [
-                Row(
-                  textDirection: TextDirection.rtl,
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    // Date on the far right
-                    Text(
-                      'منذ ${index + 1} أيام',
-                      style: GoogleFonts.tajawal(
-                        fontSize: isMobile ? 11 : 12,
-                        color: isDarkMode
-                            ? Colors.white70
-                            : const Color(0xFF6B7280),
-                      ),
-                    ),
-                    const Spacer(),
-                    
-                    // Name and rating in the middle
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: Text(
-                              'محمد ${index + 1}',
-                              style: GoogleFonts.tajawal(
-                                fontSize: isMobile ? 13 : 14,
-                                fontWeight: FontWeight.w700,
-                                color: isDarkMode
-                                    ? Colors.white
-                                    : const Color(0xFF1F2937),
-                              ),
-                              textAlign: TextAlign.right,
-                            ),
-                          ),
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.end,
-                              textDirection: TextDirection.rtl,
-                              children: [
-                                Text(
-                                  '5.0',
-                                  style: GoogleFonts.tajawal(
-                                    fontSize: isMobile ? 11 : 12,
-                                    fontWeight: FontWeight.w600,
-                                    color: isDarkMode
-                                        ? Colors.white
-                                        : const Color(0xFF1F2937),
-                                  ),
-                                ),
-                                const SizedBox(width: 4),
-                                Icon(
-                                  Icons.star,
-                                  color: Colors.amber,
-                                  size: isMobile ? 14 : 16,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    SizedBox(width: isMobile ? 8 : 12),
-                    
-                    // Avatar on the left
-                    CircleAvatar(
-                      radius: isMobile ? 18 : 20,
-                      backgroundColor: isDarkMode
-                          ? Colors.grey[700]
-                          : Colors.grey[300],
-                      child: Text(
-                        'ط${index + 1}',
-                        style: TextStyle(
-                          fontSize: isMobile ? 10 : 12,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
+                Text(
+                  avgRating.toStringAsFixed(1),
+                  style: GoogleFonts.tajawal(
+                    fontSize: isMobile ? 36 : 42,
+                    fontWeight: FontWeight.w900,
+                    color: const Color(0xFFF59E0B),
+                  ),
                 ),
-                const SizedBox(height: 8),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: Text(
-                    'كورس رائع ومفيد جداً، الشرح واضح والمحتوى منظم بشكل ممتاز',
-                    style: GoogleFonts.tajawal(
-                      fontSize: isMobile ? 12 : 13,
-                      fontWeight: FontWeight.w500,
-                      color: isDarkMode
-                          ? Colors.white70
-                          : const Color(0xFF6B7280),
-                      height: 1.5,
-                    ),
-                    textAlign: TextAlign.right,
+                Row(
+                  children: List.generate(5, (index) {
+                    return Icon(
+                      index < avgRating.round()
+                          ? Icons.star
+                          : Icons.star_border,
+                      color: Colors.amber,
+                      size: isMobile ? 16 : 18,
+                    );
+                  }),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '$totalRatings تقييم',
+                  style: GoogleFonts.tajawal(
+                    fontSize: isMobile ? 12 : 13,
+                    color: isDarkMode
+                        ? Colors.white70
+                        : const Color(0xFF6B7280),
                   ),
                 ),
               ],
             ),
+            
+            // Rating Breakdown
+            if (ratingBreakdown.isNotEmpty)
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.only(right: 20),
+                  child: Column(
+                    children: [5, 4, 3, 2, 1].map((star) {
+                      final count = ratingBreakdown[star.toString()] ?? 0;
+                      final percentage = totalRatings > 0
+                          ? (count / totalRatings * 100).toInt()
+                          : 0;
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 2),
+                        child: Row(
+                          textDirection: TextDirection.rtl,
+                          children: [
+                            Text(
+                              '$star',
+                              style: GoogleFonts.tajawal(
+                                fontSize: isMobile ? 11 : 12,
+                                fontWeight: FontWeight.w600,
+                                color: isDarkMode
+                                    ? Colors.white70
+                                    : const Color(0xFF6B7280),
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Icon(
+                              Icons.star,
+                              size: isMobile ? 12 : 14,
+                              color: Colors.amber,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: LinearProgressIndicator(
+                                value: totalRatings > 0 ? count / totalRatings : 0,
+                                backgroundColor: isDarkMode
+                                    ? Colors.grey[700]
+                                    : Colors.grey[300],
+                                valueColor: const AlwaysStoppedAnimation<Color>(
+                                  Color(0xFFF59E0B),
+                                ),
+                                minHeight: 6,
+                                borderRadius: BorderRadius.circular(3),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              '$percentage%',
+                              style: GoogleFonts.tajawal(
+                                fontSize: isMobile ? 10 : 11,
+                                color: isDarkMode
+                                    ? Colors.white60
+                                    : const Color(0xFF6B7280),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+      
+      const SizedBox(height: 20),
+      
+      // Show message when no reviews or just the count
+      if (_isLoadingRatings)
+        const Center(
+          child: CircularProgressIndicator(),
+        )
+      else if (totalRatings == 0)
+        Center(
+          child: Text(
+            'لا توجد تقييمات بعد. كن أول من يقيم هذه الدورة!',
+            style: GoogleFonts.tajawal(
+              fontSize: isMobile ? 14 : 16,
+              color: isDarkMode
+                  ? Colors.white70
+                  : const Color(0xFF6B7280),
+            ),
+            textAlign: TextAlign.center,
           ),
-        );
-      }),
+        )
+      else
+        // Show only the total count message
+        Center(
+          child: Text(
+            'عدد التقييمات: $totalRatings',
+            style: GoogleFonts.tajawal(
+              fontSize: isMobile ? 14 : 16,
+              fontWeight: FontWeight.w600,
+              color: isDarkMode
+                  ? Colors.white70
+                  : const Color(0xFF6B7280),
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ),
     ],
   );
 }
 
 Widget _buildInstructor(bool isDarkMode, bool isMobile) {
+  // Get real instructor data from course
+  final instructor = widget.course['instructor'] as Map<String, dynamic>?;
+  final instructorName = widget.course['teacher']?.toString() ?? instructor?['name']?.toString() ?? 'مدرب';
+  final instructorBio = instructor?['bio']?.toString() ?? instructor?['description']?.toString();
+  final instructorCoursesCount = instructor?['courses_count']?.toString() ?? widget.course['instructor_courses_count']?.toString() ?? '0';
+  final instructorRating = instructor?['average_rating'] ?? widget.course['instructor_rating'] ?? widget.course['rating'] ?? 0.0;
+  
+  // Use passed instructor stats if available, otherwise use defaults
+  final totalStudents = widget.course['students']?.toString() ?? '0';
+  final coursesCount = instructorCoursesCount != '0' ? instructorCoursesCount : '1';
+  final avgRating = (instructorRating is num) ? instructorRating.toStringAsFixed(1) : '0.0';
+  
   return Column(
     crossAxisAlignment: CrossAxisAlignment.end,
     children: [
@@ -1895,7 +2071,7 @@ Widget _buildInstructor(bool isDarkMode, bool isMobile) {
                   Align(
                     alignment: Alignment.centerRight,
                     child: Text(
-                      widget.course['teacher']?.toString() ?? 'مدرب',
+                      instructorName,
                       style: GoogleFonts.tajawal(
                         fontSize: isMobile ? 18 : 20,
                         fontWeight: FontWeight.w800,
@@ -1907,20 +2083,22 @@ Widget _buildInstructor(bool isDarkMode, bool isMobile) {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: Text(
-                      'خبير في ${widget.course['category']?.toString() ?? 'التخصص'}',
-                      style: GoogleFonts.tajawal(
-                        fontSize: isMobile ? 14 : 16,
-                        fontWeight: FontWeight.w500,
-                        color: isDarkMode
-                            ? Colors.white70
-                            : const Color(0xFF6B7280),
+                  // Only show subtitle if instructor bio is not available
+                  if (instructorBio == null || instructorBio.isEmpty)
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: Text(
+                        widget.course['category']?.toString() ?? '',
+                        style: GoogleFonts.tajawal(
+                          fontSize: isMobile ? 14 : 16,
+                          fontWeight: FontWeight.w500,
+                          color: isDarkMode
+                              ? Colors.white70
+                              : const Color(0xFF6B7280),
+                        ),
+                        textAlign: TextAlign.right,
                       ),
-                      textAlign: TextAlign.right,
                     ),
-                  ),
                   const SizedBox(height: 8),
                   Align(
                     alignment: Alignment.centerRight,
@@ -1928,17 +2106,17 @@ Widget _buildInstructor(bool isDarkMode, bool isMobile) {
                       mainAxisAlignment: MainAxisAlignment.end,
                       textDirection: TextDirection.rtl,
                       children: [
-                        _buildInstructorStat('15', 'كورس', isDarkMode, isMobile),
+                        _buildInstructorStat(coursesCount, 'كورس', isDarkMode, isMobile),
                         SizedBox(width: isMobile ? 12 : 16),
                         _buildInstructorStat(
-                          widget.course['students']?.toString() ?? '1000',
+                          totalStudents,
                           'طالب',
                           isDarkMode,
                           isMobile,
                         ),
                         SizedBox(width: isMobile ? 12 : 16),
                         _buildInstructorStat(
-                          '5.0',
+                          avgRating,
                           'التقييم',
                           isDarkMode,
                           isMobile,
@@ -1965,33 +2143,39 @@ Widget _buildInstructor(bool isDarkMode, bool isMobile) {
               ),
               child: CircleAvatar(
                 radius: isMobile ? 33 : 38,
+                backgroundImage: instructor?['avatar'] != null
+                    ? NetworkImage(instructor!['avatar'].toString())
+                    : null,
                 backgroundColor: isDarkMode
                     ? Colors.grey[700]
                     : Colors.grey[300],
-                child: Icon(
-                  Icons.person,
-                  size: isMobile ? 35 : 40,
-                  color: Colors.white,
-                ),
+                child: instructor?['avatar'] == null
+                    ? Icon(
+                        Icons.person,
+                        size: isMobile ? 35 : 40,
+                        color: Colors.white,
+                      )
+                    : null,
               ),
             ),
           ],
         ),
       ),
       const SizedBox(height: 16),
-      Align(
-        alignment: Alignment.centerRight,
-        child: Text(
-          'مدرب محترف بخبرة تزيد عن 5 سنوات في المجال. حاصل على شهادات متقدمة ويتمتع بأسلوب شرح مبسط وسهل الفهم.',
-          style: GoogleFonts.tajawal(
-            fontSize: isMobile ? 14 : 16,
-            fontWeight: FontWeight.w500,
-            color: isDarkMode ? Colors.white70 : const Color(0xFF6B7280),
-            height: 1.6,
+      if (instructorBio != null && instructorBio.isNotEmpty)
+        Align(
+          alignment: Alignment.centerRight,
+          child: Text(
+            instructorBio,
+            style: GoogleFonts.tajawal(
+              fontSize: isMobile ? 14 : 16,
+              fontWeight: FontWeight.w500,
+              color: isDarkMode ? Colors.white70 : const Color(0xFF6B7280),
+              height: 1.6,
+            ),
+            textAlign: TextAlign.right,
           ),
-          textAlign: TextAlign.right,
         ),
-      ),
     ],
   );
 }

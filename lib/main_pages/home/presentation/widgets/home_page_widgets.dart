@@ -6,6 +6,7 @@ import 'package:courses_app/main_pages/home/presentation/side%20pages/category_p
 import 'package:courses_app/main_pages/home/presentation/side%20pages/university_pages/univiersities_page.dart';
 import 'package:courses_app/main_pages/home/presentation/widgets/notifications_page.dart';
 import 'package:courses_app/main_pages/search/presentation/pages/search_page.dart';
+import 'package:courses_app/services/course_api.dart';
 import 'package:courses_app/theme_cubit/theme_cubit.dart';
 import 'package:courses_app/theme_cubit/theme_state.dart';
 import 'package:flutter/material.dart';
@@ -627,10 +628,132 @@ class CategoriesGrid extends StatelessWidget {
   }
 }
 
-class RecommendedCourses extends StatelessWidget {
+class RecommendedCourses extends StatefulWidget {
   final List<Map<String, dynamic>> recommended;
 
   const RecommendedCourses({super.key, required this.recommended});
+
+  @override
+  State<RecommendedCourses> createState() => _RecommendedCoursesState();
+}
+
+class _RecommendedCoursesState extends State<RecommendedCourses> {
+  final CourseApi _courseApi = CourseApi();
+  bool _isLoading = false;
+
+  Future<void> _navigateToCourseDetails(
+    BuildContext context,
+    Map<String, dynamic> course,
+  ) async {
+    try {
+      setState(() {
+        _isLoading = true;
+      });
+
+      // Show loading indicator
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+
+      // Fetch full course details with sections and lessons
+      Map<String, dynamic> fullCourseData = {};
+      int totalDuration = 0;
+      int totalLessons = 0;
+
+      // Try to fetch course details using the course slug or id
+      final slug = (course['slug']?.toString().isNotEmpty == true) 
+          ? course['slug'] 
+          : course['id'];
+      print('DEBUG - Recommended Course slug/id: $slug');
+      
+      if (slug != null && slug.toString().isNotEmpty) {
+        try {
+          final response = await _courseApi.getCourseDetails(slug.toString());
+          print('DEBUG - Recommended API Response: $response');
+          
+          // Handle different response formats
+          if (response['course'] != null) {
+            fullCourseData = response['course'] as Map<String, dynamic>;
+          } else if (response['data'] != null) {
+            fullCourseData = response['data'] as Map<String, dynamic>;
+          } else if (response['id'] != null) {
+            fullCourseData = response;
+          }
+
+          // Calculate total duration and lessons from sections
+          final sections = fullCourseData['sections'] as List? ?? [];
+          for (final section in sections) {
+            final lessons = section['lessons'] as List? ?? [];
+            totalLessons += lessons.length;
+            for (final lesson in lessons) {
+              final duration = lesson['duration'] as int? ?? 0;
+              totalDuration += duration;
+            }
+          }
+        } catch (e) {
+          print('Error fetching recommended course details: $e');
+        }
+      }
+
+      // Close loading dialog
+      if (context.mounted) {
+        Navigator.of(context).pop();
+      }
+
+      // Convert duration from seconds to hours (round up)
+      final durationHours = totalDuration > 0 ? (totalDuration / 3600).ceil() : 0;
+
+      Map<String, dynamic> enhancedCourse = {
+        'id': course['id'] ?? fullCourseData['id'] ?? '',
+        'slug': course['slug'] ?? fullCourseData['slug'] ?? '',
+        'title': course['title'] ?? fullCourseData['title'] ?? 'دورة تعليمية',
+        'image': course['image'] ?? fullCourseData['course_image_url'] ?? 'https://picsum.photos/400/300',
+        'teacher': course['teacher'] ?? fullCourseData['instructor']?['name'] ?? 'مدرس متخصص',
+        'instructor': course['instructor'] ?? fullCourseData['instructor'],
+        'category': course['category'] ?? fullCourseData['category']?['name'] ?? 'برمجة',
+        'rating': course['rating'] ?? (fullCourseData['rating'] ?? 4.5).toDouble(),
+        'reviews': fullCourseData['total_ratings'] ?? 0,
+        'students': course['students']?.toString() ?? (fullCourseData['total_students'] ?? 0).toString(),
+        'duration': durationHours > 0 ? durationHours : (fullCourseData['duration_hours'] ?? 0),
+        'lessons': totalLessons > 0 ? totalLessons : (fullCourseData['lessons_count'] ?? 0),
+        'level': fullCourseData['level'] ?? course['level'] ?? 'متوسط',
+        'lastUpdated': '2026',
+        'price': course['price'] ?? fullCourseData['price']?.toString() ?? '',
+        'description': fullCourseData['description'] ?? course['description'] ?? '',
+        'tags': fullCourseData['category']?['name'] != null ? [fullCourseData['category']['name']] : (course['tags'] ?? []),
+        'instructorImage': fullCourseData['instructor']?['avatar'] ?? course['instructorImage'] ?? 'https://picsum.photos/200/200',
+        'sections': fullCourseData['sections'] ?? [],
+        'category_id': fullCourseData['category_id'] ?? course['category_id'],
+      };
+
+      setState(() {
+        _isLoading = false;
+      });
+
+      if (context.mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => CourseDetailsPage(course: enhancedCourse),
+          ),
+        );
+      }
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      print('Navigation error: $e');
+      if (context.mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('حدث خطأ في فتح تفاصيل الدورة')));
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -668,11 +791,11 @@ class RecommendedCourses extends StatelessWidget {
                   child: ListView.separated(
                     scrollDirection: Axis.horizontal,
                     padding: const EdgeInsets.symmetric(horizontal: 20),
-                    itemCount: recommended.length,
+                    itemCount: widget.recommended.length,
                     separatorBuilder: (context, index) =>
                         const SizedBox(width: 16),
                     itemBuilder: (context, index) {
-                      final item = recommended[index];
+                      final item = widget.recommended[index];
                       final cardWidth = _calculateCardWidth(context);
 
                       return SizedBox(
@@ -873,33 +996,9 @@ class RecommendedCourses extends StatelessWidget {
                       : null,
                 ),
                 child: InkWell(
-                  onTap: () {
-                    Map<String, dynamic> enhancedCourse = {
-                      ...item,
-                      'category': item['category'] ?? 'برمجة',
-                      'reviews': item['reviews'] ?? 100,
-                      'duration': item['duration'] ?? 20,
-                      'lessons': item['lessons'] ?? 30,
-                      'level': item['level'] ?? 'متوسط',
-                      'lastUpdated': item['lastUpdated'] ?? '2024',
-                      'price': item['price'] ?? '200,000 S.P',
-                      'description':
-                          item['description'] ??
-                          'دورة تعليمية شاملة تغطي أهم المفاهيم والمهارات في هذا المجال.',
-                      'tags': item['tags'] ?? ['تعليم', 'تدريب', 'مهارات'],
-                      'instructorImage':
-                          item['instructorImage'] ??
-                          'https://picsum.photos/seed/instructor/200/200',
-                    };
-
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            CourseDetailsPage(course: enhancedCourse),
-                      ),
-                    );
-                  },
+                  onTap: _isLoading
+                      ? null
+                      : () => _navigateToCourseDetails(context, item),
                   borderRadius: BorderRadius.circular(8),
                   child: Center(
                     child: Text(
@@ -968,48 +1067,164 @@ class RecommendedCourses extends StatelessWidget {
   }
 }
 
-class TrendingCourses extends StatelessWidget {
+class TrendingCourses extends StatefulWidget {
   final List<Map<String, dynamic>> trending;
 
   const TrendingCourses({super.key, required this.trending});
 
-  void _navigateToCourseDetails(
+  @override
+  State<TrendingCourses> createState() => _TrendingCoursesState();
+}
+
+class _TrendingCoursesState extends State<TrendingCourses> {
+  final CourseApi _courseApi = CourseApi();
+  bool _isLoading = false;
+
+  String? _extractYear(dynamic dateValue) {
+    if (dateValue == null) return null;
+    try {
+      final dateStr = dateValue.toString();
+      // Try to extract year from ISO date format (2024-01-15T10:30:00.000000Z)
+      if (dateStr.contains('T')) {
+        return dateStr.split('T')[0].split('-')[0];
+      }
+      // Try to extract year from date format (2024-01-15)
+      if (dateStr.contains('-')) {
+        return dateStr.split('-')[0];
+      }
+      return dateStr;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  Future<void> _navigateToCourseDetails(
     BuildContext context,
     Map<String, dynamic> course,
-  ) {
+  ) async {
     try {
-      Map<String, dynamic> enhancedCourse = {
-        'title': course['title'] ?? 'دورة تعليمية',
-        'image': course['image'] ?? 'https://picsum.photos/400/300',
-        'teacher': course['teacher'] ?? 'مدرس متخصص',
-        'category': course['category'] ?? 'برمجة',
-        'rating': course['rating'] ?? 4.5,
-        'reviews': course['reviews'] ?? 100,
-        'students': course['students']?.toString() ?? '1,000',
-        'duration': course['duration'] ?? 20,
-        'lessons': course['lessons'] ?? 30,
-        'level': course['level'] ?? 'متوسط',
-        'lastUpdated': course['lastUpdated'] ?? '2024',
-        'price': course['price'] ?? '',
-        'description':
-            course['description'] ??
-            'دورة تعليمية شاملة تغطي أهم المفاهيم والمهارات في هذا المجال.',
-        'tags': course['tags'] ?? ['تعليم', 'تدريب', 'مهارات'],
-        'instructorImage':
-            course['instructorImage'] ?? 'https://picsum.photos/200/200',
-      };
+      setState(() {
+        _isLoading = true;
+      });
 
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => CourseDetailsPage(course: enhancedCourse),
+      // Show loading indicator
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: CircularProgressIndicator(),
         ),
       );
+
+      // Fetch full course details with sections and lessons
+      Map<String, dynamic> fullCourseData = {};
+      int totalDuration = 0;
+      int totalLessons = 0;
+
+      // Try to fetch course details using the course slug or id
+      // Use slug if available and not empty, otherwise fall back to id
+      final slug = (course['slug']?.toString().isNotEmpty == true) 
+          ? course['slug'] 
+          : course['id'];
+      print('DEBUG - Course slug/id: $slug');
+      print('DEBUG - Original course data: $course');
+      
+      if (slug != null && slug.toString().isNotEmpty) {
+        try {
+          final response = await _courseApi.getCourseDetails(slug.toString());
+          print('DEBUG - API Response: $response');
+          print('DEBUG - Response keys: ${response.keys.toList()}');
+          
+          // Handle different response formats
+          // Backend returns: { 'course': {...}, 'rating_info': {...}, 'message': '...' }
+          if (response['course'] != null) {
+            // Response wrapped in 'course' key (standard backend format)
+            fullCourseData = response['course'] as Map<String, dynamic>;
+          } else if (response['data'] != null) {
+            // Response wrapped in 'data' key
+            fullCourseData = response['data'] as Map<String, dynamic>;
+          } else if (response['id'] != null) {
+            // Response is the course object directly
+            fullCourseData = response;
+          }
+
+          // Calculate total duration and lessons from sections
+          final sections = fullCourseData['sections'] as List? ?? [];
+          for (final section in sections) {
+            final lessons = section['lessons'] as List? ?? [];
+            totalLessons += lessons.length;
+            for (final lesson in lessons) {
+              final duration = lesson['duration'] as int? ?? 0;
+              totalDuration += duration;
+            }
+          }
+        } catch (e) {
+          print('Error fetching course details: $e');
+        }
+      }
+
+      // Close loading dialog
+      if (context.mounted) {
+        Navigator.of(context).pop();
+      }
+
+      // Convert duration from seconds to hours (round up)
+      final durationHours = totalDuration > 0 ? (totalDuration / 3600).ceil() : 0;
+
+      Map<String, dynamic> enhancedCourse = {
+        'id': course['id'] ?? fullCourseData['id'] ?? '',
+        'slug': course['slug'] ?? fullCourseData['slug'] ?? '',
+        'title': course['title'] ?? fullCourseData['title'] ?? 'دورة تعليمية',
+        'image': course['image'] ?? fullCourseData['course_image_url'] ?? 'https://picsum.photos/400/300',
+        'teacher': course['teacher'] ?? fullCourseData['instructor']?['name'] ?? 'مدرس متخصص',
+        'instructor': course['instructor'] ?? fullCourseData['instructor'],
+        'category': course['category'] ?? fullCourseData['category']?['name'] ?? 'برمجة',
+        'rating': course['rating'] ?? (fullCourseData['rating'] ?? 4.5).toDouble(),
+        'reviews': fullCourseData['total_ratings'] ?? 0,
+        'students': course['students']?.toString() ?? (fullCourseData['total_students'] ?? 0).toString(),
+        'duration': durationHours > 0 ? durationHours : (fullCourseData['duration_hours'] ?? 0),
+        'lessons': totalLessons > 0 ? totalLessons : (fullCourseData['lessons_count'] ?? 0),
+        'level': fullCourseData['level'] ?? course['level'] ?? 'متوسط',
+        'lastUpdated': '2026',
+        'price': course['price'] ?? fullCourseData['price']?.toString() ?? '',
+        'description': fullCourseData['description'] ?? course['description'] ?? '',
+        'tags': fullCourseData['category']?['name'] != null ? [fullCourseData['category']['name']] : (course['tags'] ?? []),
+        'instructorImage': fullCourseData['instructor']?['avatar'] ?? course['instructorImage'] ?? 'https://picsum.photos/200/200',
+        'sections': fullCourseData['sections'] ?? [],
+        'category_id': fullCourseData['category_id'] ?? course['category_id'],
+      };
+
+      // Debug logging
+      print('DEBUG - Full course data from API: $fullCourseData');
+      print('DEBUG - Level from API: ${fullCourseData['level']}');
+      print('DEBUG - Updated at from API: ${fullCourseData['updated_at']}');
+      print('DEBUG - Sections from API: ${fullCourseData['sections']}');
+      print('DEBUG - Enhanced course level: ${enhancedCourse['level']}');
+      print('DEBUG - Enhanced course lastUpdated: ${enhancedCourse['lastUpdated']}');
+      print('DEBUG - Enhanced course sections count: ${(enhancedCourse['sections'] as List?)?.length ?? 0}');
+
+      setState(() {
+        _isLoading = false;
+      });
+
+      if (context.mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => CourseDetailsPage(course: enhancedCourse),
+          ),
+        );
+      }
     } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
       print('Navigation error: $e');
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('حدث خطأ في فتح تفاصيل الدورة')));
+      if (context.mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('حدث خطأ في فتح تفاصيل الدورة')));
+      }
     }
   }
 
@@ -1022,7 +1237,7 @@ class TrendingCourses extends StatelessWidget {
             ? ThemeManager.darkTheme
             : ThemeManager.lightTheme;
 
-        final safeTrending = trending;
+        final safeTrending = widget.trending;
         if (safeTrending.isEmpty) {
           return Directionality(
             textDirection: TextDirection.rtl,
@@ -1104,8 +1319,9 @@ class TrendingCourses extends StatelessWidget {
                     return Container(
                       margin: const EdgeInsets.only(bottom: 12),
                       child: InkWell(
-                        onTap: () =>
-                            _navigateToCourseDetails(context, safeCourse),
+                        onTap: _isLoading
+                            ? null
+                            : () => _navigateToCourseDetails(context, safeCourse),
                         borderRadius: BorderRadius.circular(16),
                         child: _buildVerticalCourseCard(
                           context,
@@ -1279,6 +1495,378 @@ class TrendingCourses extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
         ),
       ],
+    );
+  }
+}
+
+class ContinueLearning extends StatefulWidget {
+  final List<Map<String, dynamic>> courses;
+
+  const ContinueLearning({super.key, required this.courses});
+
+  @override
+  State<ContinueLearning> createState() => _ContinueLearningState();
+}
+
+class _ContinueLearningState extends State<ContinueLearning> {
+  final CourseApi _courseApi = CourseApi();
+  bool _isLoading = false;
+
+  Future<void> _navigateToCourseDetails(
+    BuildContext context,
+    Map<String, dynamic> course,
+  ) async {
+    try {
+      setState(() {
+        _isLoading = true;
+      });
+
+      // Show loading indicator
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+
+      // Fetch full course details with sections and lessons
+      Map<String, dynamic> fullCourseData = {};
+      int totalDuration = 0;
+      int totalLessons = 0;
+
+      // Try to fetch course details using the course slug or id
+      final slug = (course['slug']?.toString().isNotEmpty == true) 
+          ? course['slug'] 
+          : course['id'];
+      print('DEBUG - Continue Learning Course slug/id: $slug');
+      
+      if (slug != null && slug.toString().isNotEmpty) {
+        try {
+          final response = await _courseApi.getCourseDetails(slug.toString());
+          print('DEBUG - Continue Learning API Response: $response');
+          
+          // Handle different response formats
+          if (response['course'] != null) {
+            fullCourseData = response['course'] as Map<String, dynamic>;
+          } else if (response['data'] != null) {
+            fullCourseData = response['data'] as Map<String, dynamic>;
+          } else if (response['id'] != null) {
+            fullCourseData = response;
+          }
+
+          // Calculate total duration and lessons from sections
+          final sections = fullCourseData['sections'] as List? ?? [];
+          for (final section in sections) {
+            final lessons = section['lessons'] as List? ?? [];
+            totalLessons += lessons.length;
+            for (final lesson in lessons) {
+              final duration = lesson['duration'] as int? ?? 0;
+              totalDuration += duration;
+            }
+          }
+        } catch (e) {
+          print('Error fetching continue learning course details: $e');
+        }
+      }
+
+      // Close loading dialog
+      if (context.mounted) {
+        Navigator.of(context).pop();
+      }
+
+      // Convert duration from seconds to hours (round up)
+      final durationHours = totalDuration > 0 ? (totalDuration / 3600).ceil() : 0;
+
+      Map<String, dynamic> enhancedCourse = {
+        'id': course['id'] ?? fullCourseData['id'] ?? '',
+        'slug': course['slug'] ?? fullCourseData['slug'] ?? '',
+        'title': course['title'] ?? fullCourseData['title'] ?? 'دورة تعليمية',
+        'image': course['course_image_url'] ?? fullCourseData['course_image_url'] ?? 'https://picsum.photos/400/300',
+        'teacher': course['instructor']?['name'] ?? fullCourseData['instructor']?['name'] ?? 'مدرس متخصص',
+        'instructor': course['instructor'] ?? fullCourseData['instructor'],
+        'category': course['category']?['name'] ?? fullCourseData['category']?['name'] ?? 'برمجة',
+        'rating': course['rating'] ?? (fullCourseData['rating'] ?? 4.5).toDouble(),
+        'reviews': fullCourseData['total_ratings'] ?? 0,
+        'students': course['students']?.toString() ?? (fullCourseData['total_students'] ?? 0).toString(),
+        'duration': durationHours > 0 ? durationHours : (fullCourseData['duration_hours'] ?? 0),
+        'lessons': totalLessons > 0 ? totalLessons : (fullCourseData['lessons_count'] ?? 0),
+        'level': fullCourseData['level'] ?? course['level'] ?? 'متوسط',
+        'lastUpdated': '2026',
+        'price': course['price'] ?? fullCourseData['price']?.toString() ?? '',
+        'description': fullCourseData['description'] ?? course['description'] ?? '',
+        'tags': fullCourseData['category']?['name'] != null ? [fullCourseData['category']['name']] : (course['tags'] ?? []),
+        'instructorImage': fullCourseData['instructor']?['avatar'] ?? course['instructorImage'] ?? 'https://picsum.photos/200/200',
+        'sections': fullCourseData['sections'] ?? [],
+        'category_id': fullCourseData['category_id'] ?? course['category_id'],
+      };
+
+      setState(() {
+        _isLoading = false;
+      });
+
+      if (context.mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => CourseDetailsPage(course: enhancedCourse),
+          ),
+        );
+      }
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      print('Navigation error: $e');
+      if (context.mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('حدث خطأ في فتح تفاصيل الدورة')));
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<ThemeCubit, ThemeState>(
+      builder: (context, themeState) {
+        final bool isDarkMode = themeState.isDarkMode;
+
+        return Directionality(
+          textDirection: TextDirection.rtl,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Title with horizontal padding
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'أكمل التعلم',
+                        style: Theme.of(context).textTheme.titleLarge!.copyWith(
+                          fontWeight: FontWeight.w800,
+                          color: isDarkMode ? Colors.white : null,
+                        ),
+                      ),
+                      Icon(
+                        Icons.play_circle_fill,
+                        color: const Color(0xFF667EEA),
+                        size: 28,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                // ListView with enrolled courses or empty message
+                widget.courses.isEmpty
+                    ? Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: Container(
+                          height: 100,
+                          decoration: BoxDecoration(
+                            color: isDarkMode ? const Color(0xFF1E1E1E) : Colors.grey[100],
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: isDarkMode ? Colors.grey[700]! : Colors.grey[300]!,
+                            ),
+                          ),
+                          child: Center(
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.school_outlined,
+                                  color: isDarkMode ? Colors.grey[500] : Colors.grey[600],
+                                  size: 24,
+                                ),
+                                const SizedBox(width: 12),
+                                Text(
+                                  'لا توجد كورسات مسجلة',
+                                  style: GoogleFonts.tajawal(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      )
+                    : SizedBox(
+                        height: 180,
+                        child: ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          itemCount: widget.courses.length,
+                          separatorBuilder: (context, index) =>
+                              const SizedBox(width: 16),
+                          itemBuilder: (context, index) {
+                            final course = widget.courses[index];
+                            return _buildCourseCard(context, course, isDarkMode);
+                          },
+                        ),
+                      ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildCourseCard(
+    BuildContext context,
+    Map<String, dynamic> course,
+    bool isDarkMode,
+  ) {
+    final imageUrl = course['course_image_url'] ?? '';
+    final hasValidImage = imageUrl.isNotEmpty && imageUrl.startsWith('http');
+    
+    return SizedBox(
+      width: 280,
+      child: GestureDetector(
+        onTap: _isLoading ? null : () => _navigateToCourseDetails(context, course),
+        child: Container(
+          decoration: BoxDecoration(
+            color: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(isDarkMode ? 0.1 : 0.05),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: Stack(
+              children: [
+                // Background Image
+                if (hasValidImage)
+                  Positioned.fill(
+                    child: Image.network(
+                      imageUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          color: isDarkMode ? Colors.grey[800] : Colors.grey[200],
+                          child: Icon(
+                            Icons.image_not_supported,
+                            color: isDarkMode ? Colors.grey[600] : Colors.grey[400],
+                            size: 40,
+                          ),
+                        );
+                      },
+                    ),
+                  )
+                else
+                  Positioned.fill(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                      ),
+                    ),
+                  ),
+                // Gradient overlay for text readability
+                Positioned.fill(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          Colors.black.withOpacity(0.7),
+                          Colors.black.withOpacity(0.3),
+                        ],
+                        begin: Alignment.bottomCenter,
+                        end: Alignment.topCenter,
+                      ),
+                    ),
+                  ),
+                ),
+                // Content
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Text(
+                        course['title'] ?? 'دورة تعليمية',
+                        style: GoogleFonts.tajawal(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.person,
+                            size: 14,
+                            color: Colors.white70,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            course['instructor']?['name'] ?? 'مدرس متخصص',
+                            style: GoogleFonts.tajawal(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.white70,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      // Continue button
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF667EEA),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.play_arrow,
+                              size: 16,
+                              color: Colors.white,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              'أكمل المشاهدة',
+                              style: GoogleFonts.tajawal(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

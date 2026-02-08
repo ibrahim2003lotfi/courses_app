@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../services/course_management_api.dart';
 
 // Events
 abstract class CourseManagementEvent {}
@@ -68,6 +69,8 @@ class CourseManagementState {
 
 // BLoC
 class CourseManagementBloc extends Bloc<CourseManagementEvent, CourseManagementState> {
+  final CourseManagementApi _api = CourseManagementApi();
+
   CourseManagementBloc()
       : super(CourseManagementState(
           enrolledCourses: [],
@@ -98,12 +101,27 @@ class CourseManagementBloc extends Bloc<CourseManagementEvent, CourseManagementS
   }
 
   void _onEnrollCourse(EnrollCourseEvent event, Emitter<CourseManagementState> emit) async {
-    emit(state.copyWith(isLoading: true));
+    emit(state.copyWith(isLoading: true, error: null));
     
-    // Simulate API call delay
-    await Future.delayed(const Duration(seconds: 1));
+    // Call backend API to enroll
+    final courseId = event.course['id']?.toString() ?? '';
+    if (courseId.isNotEmpty) {
+      final result = await _api.enrollInCourse(courseId);
+      
+      if (!result['success']) {
+        // If already enrolled, we can continue locally
+        // If other error, show it
+        if (result['message'] != 'Already enrolled in this course') {
+          emit(state.copyWith(
+            isLoading: false,
+            error: result['message'],
+          ));
+          return;
+        }
+      }
+    }
     
-    // Check if already enrolled
+    // Check if already enrolled locally
     if (state.enrolledCourses.any((course) => course['id'] == event.course['id'])) {
       emit(state.copyWith(
         isLoading: false,
@@ -154,15 +172,12 @@ class CourseManagementBloc extends Bloc<CourseManagementEvent, CourseManagementS
     LoadUserCoursesEvent event,
     Emitter<CourseManagementState> emit,
   ) async {
-    // In a real app, you would load from shared preferences or API
-    // For now, we'll simulate loading some initial data
     emit(state.copyWith(isLoading: true));
 
-    // Simulate loading delay (and await it to avoid emit after completion)
-    await Future.delayed(const Duration(milliseconds: 500));
-
-    if (emit.isDone) return;
-
+    // Skip backend API call for now - server crashes when fetching enrolled courses
+    // Just use local state
+    await Future.delayed(const Duration(milliseconds: 300));
+    
     emit(state.copyWith(isLoading: false));
   }
 

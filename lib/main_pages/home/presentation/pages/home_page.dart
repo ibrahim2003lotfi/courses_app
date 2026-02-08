@@ -29,7 +29,12 @@ class _HomePageBody extends StatelessWidget {
     ];
   }
 
-  List<Map<String, dynamic>> _buildCategories(Map<String, dynamic>? data) {
+  List<Map<String, dynamic>> _buildCategories(Map<String, dynamic>? data, bool isLoading) {
+    // While loading, return empty list (don't show static fallback)
+    if (isLoading) {
+      return [];
+    }
+
     final backendCategories = (data?['categories'] as List?) ?? [];
 
     // Define colorful gradients - 8 UNIQUE colors
@@ -238,26 +243,74 @@ class _HomePageBody extends StatelessWidget {
     return mappedCategories.take(8).toList();
   }
 
-  List<Map<String, dynamic>> _buildRecommended(Map<String, dynamic>? data) {
+  List<Map<String, dynamic>> _buildRecommended(Map<String, dynamic>? data, List<String> userInterests) {
     final sections = (data?['sections'] as List?) ?? [];
-    final recommendedSection = sections
-        .cast<Map<String, dynamic>?>()
-        .firstWhere((s) => s?['type'] == 'recommended', orElse: () => null);
-
-    final courses =
-        (recommendedSection?['courses'] as List?)
-            ?.cast<Map<String, dynamic>>() ??
-        [];
-
-    return courses
+    
+    // Get all courses from trending and other sections
+    final allCourses = <Map<String, dynamic>>[];
+    for (final section in sections) {
+      final sectionCourses = (section['courses'] as List?)?.cast<Map<String, dynamic>>() ?? [];
+      allCourses.addAll(sectionCourses);
+    }
+    
+    // If user has interests, filter courses that match those interests
+    List<Map<String, dynamic>> filteredCourses;
+    if (userInterests.isNotEmpty) {
+      // Map interest IDs to category names
+      final interestToCategoryMap = {
+        'programming': 'برمجة',
+        'design': 'تصميم',
+        'business': 'أعمال',
+        'marketing': 'تسويق',
+        'language': 'لغات',
+        'science': 'علوم',
+        'art': 'فن',
+        'music': 'موسيقى',
+        'sports': 'رياضة',
+        'technology': 'تكنولوجيا',
+        'health': 'صحة',
+        'education': 'تعليم',
+      };
+      
+      // Get category names from user interests
+      final targetCategories = userInterests
+          .map((interest) => interestToCategoryMap[interest] ?? interest)
+          .toSet();
+      
+      print('🎯 Filtering courses for categories: $targetCategories');
+      
+      // Filter courses that match user interests
+      filteredCourses = allCourses.where((course) {
+        final categoryName = course['category']?['name']?.toString() ?? '';
+        return targetCategories.any((interest) => 
+          categoryName.toLowerCase().contains(interest.toLowerCase())
+        );
+      }).toList();
+      
+      print('🎯 Found ${filteredCourses.length} matching courses');
+    } else {
+      // No interests, use trending courses as fallback
+      filteredCourses = allCourses;
+    }
+    
+    // Map to the format needed for RecommendedCourses widget
+    return filteredCourses
         .map(
           (c) => {
+            'id': c['id'] ?? '',
+            'slug': c['slug'] ?? '',
             'title': c['title'] ?? '',
             'teacher': c['instructor']?['name'] ?? '',
+            'instructor': c['instructor'],
+            'category': c['category']?['name'] ?? 'برمجة',
+            'category_id': c['category_id'],
             'rating': (c['rating'] ?? 0).toDouble(),
             'students': (c['total_students'] ?? 0).toString(),
             'image':
-                'https://picsum.photos/seed/${c['id'] ?? 'course'}/200/120', // placeholder
+                'https://picsum.photos/seed/${c['id'] ?? 'course'}/200/120',
+            'price': c['price']?.toString() ?? '0',
+            'level': c['level'] ?? 'متوسط',
+            'description': c['description'] ?? '',
           },
         )
         .toList();
@@ -289,11 +342,19 @@ class _HomePageBody extends StatelessWidget {
       }
 
       return {
+        'id': c['id'] ?? '',
+        'slug': c['slug'] ?? '',
         'title': c['title'] ?? '',
         'image': imageUrl,
         'rating': (c['rating'] ?? 0).toDouble(),
         'students': (c['total_students'] ?? 0).toString(),
         'teacher': c['instructor']?['name'] ?? '',
+        'instructor': c['instructor'],
+        'category': c['category']?['name'] ?? 'برمجة',
+        'category_id': c['category_id'],
+        'price': c['price']?.toString() ?? '0',
+        'level': c['level'] ?? 'متوسط',
+        'description': c['description'] ?? '',
       };
     }).toList();
 
@@ -310,8 +371,8 @@ class _HomePageBody extends StatelessWidget {
           builder: (context, state) {
             final data = state.data;
             final heroImages = _buildHeroImages(data);
-            final categories = _buildCategories(data);
-            final recommended = _buildRecommended(data);
+            final categories = _buildCategories(data, state.isLoading);
+            final recommended = _buildRecommended(data, state.userInterests);
             final trending = _buildTrending(data);
 
             return CustomScrollView(
@@ -362,6 +423,9 @@ class _HomePageBody extends StatelessWidget {
                         ),
                 ),
                 SliverToBoxAdapter(child: TrendingCourses(trending: trending)),
+                SliverToBoxAdapter(
+                  child: ContinueLearning(courses: state.enrolledCourses),
+                ),
                 const SliverToBoxAdapter(child: ExtrasSection()),
                 const SliverToBoxAdapter(child: SizedBox(height: 20)),
                 const SliverToBoxAdapter(child: Footer()),
