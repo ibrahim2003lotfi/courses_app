@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:courses_app/services/course_api.dart';
+import 'package:courses_app/services/home_api.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -53,6 +54,7 @@ class _AddCoursePageState extends State<AddCoursePage>
 
   late TabController _tabController;
   final ImagePicker _imagePicker = ImagePicker();
+  final HomeApi _homeApi = HomeApi();
 
   // Controllers for Educational Course
   final _titleController = TextEditingController();
@@ -88,17 +90,10 @@ class _AddCoursePageState extends State<AddCoursePage>
   bool _uniIsFree = false;
 
   bool _isLoading = false;
-
-  final List<String> _categories = [
-    'برمجة',
-    'تصميم',
-    'تسويق',
-    'أعمال',
-    'تطوير شخصي',
-    'لغات',
-    'علوم',
-    'رياضيات',
-  ];
+  bool _isLoadingCategories = true;
+  
+  // Categories from backend
+  List<Map<String, dynamic>> _categories = [];
 
   final List<String> _levels = ['مبتدئ', 'متوسط', 'متقدم'];
 
@@ -106,6 +101,7 @@ class _AddCoursePageState extends State<AddCoursePage>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _loadCategories();
 
     // Prefill fields when editing an existing course (educational tab)
     if (widget.isEditing) {
@@ -137,6 +133,31 @@ class _AddCoursePageState extends State<AddCoursePage>
         }
       }
     }
+  }
+
+  Future<void> _loadCategories() async {
+    try {
+      final response = await _homeApi.getHome();
+      if (mounted) {
+        final categories = (response['categories'] as List<dynamic>?) ?? [];
+        setState(() {
+          _categories = categories.map((c) => c as Map<String, dynamic>).toList();
+          _isLoadingCategories = false;
+        });
+      }
+    } catch (e) {
+      print('Error loading categories: $e');
+      if (mounted) {
+        setState(() {
+          _isLoadingCategories = false;
+        });
+      }
+    }
+  }
+
+  // Get category names for dropdown
+  List<String> get _categoryNames {
+    return _categories.map((c) => c['name']?.toString() ?? '').where((name) => name.isNotEmpty).toList();
   }
 
   @override
@@ -1135,7 +1156,7 @@ class _AddCoursePageState extends State<AddCoursePage>
         _buildDropdownField(
           label: 'الفئة',
           value: selectedCategory,
-          items: _categories,
+          items: _categoryNames,
           isDarkMode: isDarkMode,
           onChanged: (value) {
             setState(() {

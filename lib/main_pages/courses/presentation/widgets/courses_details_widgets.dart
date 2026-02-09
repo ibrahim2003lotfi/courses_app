@@ -94,7 +94,7 @@ class CourseHeader extends StatelessWidget {
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
-                            course['category'] ?? 'برمجة',
+                            course['category'] ?? 'عام',
                             style: GoogleFonts.tajawal(
                               color: Colors.white,
                               fontSize: 12,

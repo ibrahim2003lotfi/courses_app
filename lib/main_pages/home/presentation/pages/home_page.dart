@@ -219,7 +219,8 @@ class _HomePageBody extends StatelessWidget {
       }
 
       return {
-        'name': displayName, // Use Arabic display name
+        'id': c['id']?.toString() ?? '',
+        'name': displayName,
         'icon': categoryIcon,
         'color': colorScheme['color'],
         'gradient': colorScheme['gradient'],
@@ -296,7 +297,20 @@ class _HomePageBody extends StatelessWidget {
     // Map to the format needed for RecommendedCourses widget
     return filteredCourses
         .map(
-          (c) => {
+          (c) {
+            // Handle course image URL like in _buildTrending
+            final rawImage = (c['course_image_url'] ?? '').toString();
+            String imageUrl = '';
+            if (rawImage.isNotEmpty) {
+              if (rawImage.startsWith('http')) {
+                imageUrl = rawImage;
+              } else {
+                // If relative path like /storage/...., add baseUrl without /api
+                imageUrl = '${ApiConfig.baseUrlNoApi}$rawImage';
+              }
+            }
+            
+            return {
             'id': c['id'] ?? '',
             'slug': c['slug'] ?? '',
             'title': c['title'] ?? '',
@@ -306,11 +320,11 @@ class _HomePageBody extends StatelessWidget {
             'category_id': c['category_id'],
             'rating': (c['rating'] ?? 0).toDouble(),
             'students': (c['total_students'] ?? 0).toString(),
-            'image':
-                'https://picsum.photos/seed/${c['id'] ?? 'course'}/200/120',
+            'image': imageUrl.isNotEmpty ? imageUrl : 'https://picsum.photos/seed/${c['id'] ?? 'course'}/200/120',
             'price': c['price']?.toString() ?? '0',
             'level': c['level'] ?? 'متوسط',
             'description': c['description'] ?? '',
+          };
           },
         )
         .toList();
@@ -369,6 +383,26 @@ class _HomePageBody extends StatelessWidget {
       body: SafeArea(
         child: BlocBuilder<HomeBloc, HomeState>(
           builder: (context, state) {
+            // Show loading indicator while data is loading
+            if (state.isLoading) {
+              return const Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    CircularProgressIndicator(),
+                    SizedBox(height: 16),
+                    Text(
+                      'جاري تحميل البيانات...',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }
+
             final data = state.data;
             final heroImages = _buildHeroImages(data);
             final categories = _buildCategories(data, state.isLoading);

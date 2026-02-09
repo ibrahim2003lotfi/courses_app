@@ -1,6 +1,8 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:courses_app/core/utils/theme_manager.dart';
 import 'package:courses_app/main_pages/courses/presentation/pages/course_details_page.dart';
+import 'package:courses_app/services/course_api.dart';
+import 'package:courses_app/services/home_api.dart';
 import 'package:courses_app/theme_cubit/theme_cubit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -17,185 +19,20 @@ class CategoryDetailPage extends StatefulWidget {
 
 class _CategoryDetailPageState extends State<CategoryDetailPage> {
   final ScrollController _scrollController = ScrollController();
+  final CourseApi _courseApi = CourseApi();
+  final HomeApi _homeApi = HomeApi();
   bool _showAppBarTitle = false;
+  bool _isLoading = true;
 
-  // Sample data for different sections
-  List<Map<String, dynamic>> beginnerCourses = [
-    {
-      'id': '1',
-      'title': 'مقدمة في البرمجة - الأساسيات',
-      'image': 'https://picsum.photos/seed/beginner1/400/300',
-      'teacher': 'أحمد محمد',
-      'rating': 4.8,
-      'students': 2547,
-      'price': '155,000 S.P',
-      'level': 'مبتدئ',
-      'duration': 12,
-      'lessons': 25,
-    },
-    {
-      'id': '2',
-      'title': 'أساسيات الخوارزميات والهياكل',
-      'image': 'https://picsum.photos/seed/beginner2/400/300',
-      'teacher': 'فاطمة أحمد',
-      'rating': 4.7,
-      'students': 1834,
-      'price': '250,000 S.P',
-      'level': 'مبتدئ',
-      'duration': 16,
-      'lessons': 30,
-    },
-    {
-      'id': '3',
-      'title': 'تعلم أول لغة برمجة',
-      'image': 'https://picsum.photos/seed/beginner3/400/300',
-      'teacher': 'محمد علي',
-      'rating': 4.6,
-      'students': 3421,
-      'price': '125,000 S.P',
-      'level': 'مبتدئ',
-      'duration': 10,
-      'lessons': 20,
-    },
-  ];
+  // All categories from backend
+  List<Map<String, dynamic>> _allCategories = [];
+  Map<String, dynamic>? _currentCategory;
+  List<Map<String, dynamic>> _otherCategories = [];
 
-  List<Map<String, dynamic>> featuredCourses = [
-    {
-      'id': '4',
-      'title': 'تطوير تطبيقات الويب الحديثة',
-      'image': 'https://picsum.photos/seed/featured1/400/300',
-      'teacher': 'سارة محمود',
-      'rating': 4.9,
-      'students': 5632,
-      'price': '285,000 S.P',
-      'level': 'متقدم',
-      'duration': 35,
-      'lessons': 60,
-      'badge': 'الأكثر مبيعاً',
-    },
-    {
-      'id': '5',
-      'title': 'إتقان قواعد البيانات المتقدمة',
-      'image': 'https://picsum.photos/seed/featured2/400/300',
-      'teacher': 'خالد أحمد',
-      'rating': 4.8,
-      'students': 4123,
-      'price': '700,000 S.P',
-      'level': 'متقدم',
-      'duration': 28,
-      'lessons': 45,
-      'badge': 'حديث',
-    },
-    {
-      'id': '6',
-      'title': 'أمان المعلومات والشبكات',
-      'image': 'https://picsum.photos/seed/featured3/400/300',
-      'teacher': 'نور الدين',
-      'rating': 4.7,
-      'students': 2987,
-      'price': '1,500,000 S.P',
-      'level': 'متقدم',
-      'duration': 42,
-      'lessons': 70,
-      'badge': 'مميز',
-    },
-  ];
-
-  List<Map<String, dynamic>> subcategories = [
-    {
-      'id': 'sub1',
-      'name': 'تطوير الويب',
-      'icon': Icons.web,
-      'gradient': [Color(0xFF667EEA), Color(0xFF764BA2)],
-      'courseCount': 45,
-    },
-    {
-      'id': 'sub2',
-      'name': 'تطوير التطبيقات',
-      'icon': Icons.phone_android,
-      'gradient': [Color(0xFF2196F3), Color(0xFF21CBF3)],
-      'courseCount': 32,
-    },
-    {
-      'id': 'sub3',
-      'name': 'قواعد البيانات',
-      'icon': Icons.storage,
-      'gradient': [Color(0xFF11998E), Color(0xFF38EF7D)],
-      'courseCount': 28,
-    },
-    {
-      'id': 'sub4',
-      'name': 'أمان المعلومات',
-      'icon': Icons.security,
-      'gradient': [Color(0xFFFF6B6B), Color(0xFFFFE66D)],
-      'courseCount': 19,
-    },
-    {
-      'id': 'sub5',
-      'name': 'الذكاء الاصطناعي',
-      'icon': Icons.psychology,
-      'gradient': [Color(0xFF9C27B0), Color(0xFFE91E63)],
-      'courseCount': 24,
-    },
-    {
-      'id': 'sub6',
-      'name': 'علوم البيانات',
-      'icon': Icons.analytics,
-      'gradient': [Color(0xFFFF9800), Color(0xFFFF5722)],
-      'courseCount': 36,
-    },
-  ];
-
-  List<Map<String, dynamic>> allCourses = [
-    {
-      'id': '7',
-      'title': 'دورة شاملة في Python للمبتدئين والمحترفين',
-      'image': 'https://picsum.photos/seed/all1/400/300',
-      'teacher': 'د. أحمد علي',
-      'rating': 4.8,
-      'students': 8765,
-      'price': '190,000 S.P',
-      'level': 'جميع المستويات',
-      'duration': 25,
-      'lessons': 40,
-    },
-    {
-      'id': '8',
-      'title': 'تعلم JavaScript من الصفر إلى الاحتراف',
-      'image': 'https://picsum.photos/seed/all2/400/300',
-      'teacher': 'مريم محمد',
-      'rating': 4.7,
-      'students': 6543,
-      'price': '255,000 S.P',
-      'level': 'متوسط',
-      'duration': 30,
-      'lessons': 50,
-    },
-    {
-      'id': '9',
-      'title': 'إدارة المشاريع التقنية الاحترافية',
-      'image': 'https://picsum.photos/seed/all3/400/300',
-      'teacher': 'خالد محمود',
-      'rating': 4.6,
-      'students': 4321,
-      'price': '185,000 S.P',
-      'level': 'متقدم',
-      'duration': 18,
-      'lessons': 35,
-    },
-    {
-      'id': '10',
-      'title': 'تصميم واجهات المستخدم المتقدمة',
-      'image': 'https://picsum.photos/seed/all4/400/300',
-      'teacher': 'نادية أحمد',
-      'rating': 4.9,
-      'students': 5432,
-      'price': '300,000 S.P',
-      'level': 'متوسط',
-      'duration': 22,
-      'lessons': 38,
-    },
-  ];
+  // Course lists from backend
+  List<Map<String, dynamic>> beginnerCourses = [];
+  List<Map<String, dynamic>> featuredCourses = [];
+  List<Map<String, dynamic>> allCourses = [];
 
   @override
   void initState() {
@@ -211,6 +48,194 @@ class _CategoryDetailPageState extends State<CategoryDetailPage> {
         });
       }
     });
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    final clickedCategoryId = widget.category['id']?.toString();
+    if (clickedCategoryId == null || clickedCategoryId.isEmpty) {
+      setState(() => _isLoading = false);
+      return;
+    }
+
+    try {
+      // Fetch all categories from home API
+      final homeResponse = await _homeApi.getHome();
+      final categories = (homeResponse['categories'] as List<dynamic>?) ?? [];
+
+      // Separate current category from others
+      Map<String, dynamic>? current;
+      List<Map<String, dynamic>> others = [];
+      
+      for (var cat in categories) {
+        final catId = cat['id']?.toString();
+        if (catId == clickedCategoryId) {
+          current = cat as Map<String, dynamic>;
+        } else {
+          others.add(cat as Map<String, dynamic>);
+        }
+      }
+
+      // If not found in backend, use the passed category
+      current ??= widget.category;
+
+      // Fetch courses for the current category
+      final allResponse = await _courseApi.getPublicCourses(
+        categoryId: clickedCategoryId,
+        perPage: 100,
+      );
+      
+      final beginnerResponse = await _courseApi.getPublicCourses(
+        categoryId: clickedCategoryId,
+        level: 'beginner',
+        perPage: 10,
+      );
+
+      final advancedResponse = await _courseApi.getPublicCourses(
+        categoryId: clickedCategoryId,
+        level: 'advanced',
+        perPage: 10,
+      );
+
+      if (mounted) {
+        setState(() {
+          _allCategories = categories.map((c) => c as Map<String, dynamic>).toList();
+          _currentCategory = current;
+          // Use related categories algorithm instead of all others
+          _otherCategories = _getRelatedCategories(
+            categories.map((c) => c as Map<String, dynamic>).toList(),
+            current!,
+          );
+          allCourses = _mapCourses(allResponse['data'] ?? []);
+          beginnerCourses = _mapCourses(beginnerResponse['data'] ?? []);
+          featuredCourses = _mapCourses(advancedResponse['data'] ?? []);
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      print('Error loading category data: $e');
+      if (mounted) {
+        setState(() {
+          _currentCategory = widget.category;
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  List<Map<String, dynamic>> _getRelatedCategories(
+    List<Map<String, dynamic>> allCategories,
+    Map<String, dynamic> currentCategory,
+  ) {
+    final currentId = currentCategory['id']?.toString();
+    final currentName = currentCategory['name']?.toString().toLowerCase() ?? '';
+    
+    // Define related categories mapping
+    final Map<String, List<String>> relatedMap = {
+      'ai': ['برمجة', 'علوم البيانات', 'بايثون', 'تعلم الآلة', 'التعلم العميق', 'الشبكات العصبية'],
+      'artificial intelligence': ['برمجة', 'علوم البيانات', 'بايثون', 'تعلم الآلة', 'التعلم العميق', 'الشبكات العصبية'],
+      'data science': ['ai', 'تحليل البيانات', 'إحصاء', 'برمجة', 'بايثون', 'آر'],
+      'programming': ['تطوير الويب', 'تطوير التطبيقات', 'قواعد البيانات', 'الأمن السيبراني', 'الذكاء الاصطناعي', 'علوم البيانات'],
+      'web development': ['javascript', 'html', 'css', 'react', 'node.js', 'قواعد البيانات'],
+      'mobile development': ['flutter', 'android', 'ios', 'dart', 'kotlin', 'swift'],
+      'design': ['ui/ux', 'جرافيك ديزاين', 'تصميم المواقع', 'فوتوشوب', 'الموشن جرافيك', 'التصوير'],
+      'business': ['إدارة الأعمال', 'التسويق', 'ريادة الأعمال', 'المبيعات', 'القيادة', 'المالية'],
+      'marketing': ['التسويق الرقمي', 'سوشل ميديا', 'seo', 'الإعلانات', 'المحتوى', 'العلامة التجارية'],
+      'language': ['الإنجليزية', 'الفرنسية', 'الألمانية', 'الإسبانية', 'الصينية', 'العربية'],
+    };
+    
+    // Find related category names for current category
+    List<String> relatedNames = [];
+    for (var entry in relatedMap.entries) {
+      if (currentName.contains(entry.key) || entry.key.contains(currentName)) {
+        relatedNames = entry.value;
+        break;
+      }
+    }
+    
+    // Score categories based on relation
+    List<Map<String, dynamic>> scoredCategories = [];
+    for (var cat in allCategories) {
+      final catId = cat['id']?.toString();
+      if (catId == currentId) continue; // Skip current category
+      
+      final catName = cat['name']?.toString().toLowerCase() ?? '';
+      int score = 0;
+      
+      // Check if category name matches related names
+      for (var related in relatedNames) {
+        if (catName.contains(related.toLowerCase()) || 
+            related.toLowerCase().contains(catName)) {
+          score += 10;
+        }
+      }
+      
+      // Add some randomness for variety (0-5 points)
+      score += (catName.length % 6);
+      
+      scoredCategories.add({...cat, 'score': score});
+    }
+    
+    // Sort by score descending
+    scoredCategories.sort((a, b) => (b['score'] as int).compareTo(a['score'] as int));
+    
+    // Return top 6 (or all if less than 6)
+    return scoredCategories.take(6).map((c) {
+      final Map<String, dynamic> result = Map<String, dynamic>.from(c);
+      result.remove('score');
+      return result;
+    }).toList();
+  }
+
+  List<Map<String, dynamic>> _mapCourses(List<dynamic> courses) {
+    return courses.map<Map<String, dynamic>>((c) {
+      final rawImage = (c['course_image_url'] ?? '').toString();
+      String imageUrl = '';
+      if (rawImage.isNotEmpty) {
+        if (rawImage.startsWith('http')) {
+          imageUrl = rawImage;
+        } else {
+          imageUrl = 'http://192.168.1.5:8000$rawImage';
+        }
+      }
+
+      return {
+        'id': c['id']?.toString() ?? '',
+        'title': c['title']?.toString() ?? 'دورة تعليمية',
+        'image': imageUrl.isNotEmpty ? imageUrl : 'https://picsum.photos/seed/${c['id'] ?? 'course'}/400/300',
+        'teacher': c['instructor']?['name']?.toString() ?? 'مدرس متخصص',
+        'rating': (c['rating'] ?? 0).toDouble(),
+        'students': (c['total_students'] ?? 0).toString(),
+        'price': c['price']?.toString() ?? '0',
+        'level': c['level']?.toString() ?? 'متوسط',
+        'duration': c['duration_hours'] ?? 0,
+        'lessons': c['lessons_count'] ?? 0,
+        'badge': c['badge']?.toString(),
+      };
+    }).toList();
+  }
+
+  List<Map<String, dynamic>> _extractSubcategories(
+    Map<String, dynamic> response,
+    String currentCategoryId,
+  ) {
+    final courses = (response['data'] as List<dynamic>?) ?? [];
+    final categoriesMap = <String, Map<String, dynamic>>{};
+
+    for (final course in courses) {
+      final category = course['category'];
+      if (category != null) {
+        final id = category['id']?.toString() ?? '';
+        if (id.isNotEmpty && id != currentCategoryId && !categoriesMap.containsKey(id)) {
+          categoriesMap[id] = {
+            'id': id,
+            'name': category['name']?.toString() ?? 'عام',
+          };
+        }
+      }
+    }
+
+    return categoriesMap.values.take(6).toList();
   }
 
   @override
@@ -386,19 +411,32 @@ class _CategoryDetailPageState extends State<CategoryDetailPage> {
           ),
         ),
         const SizedBox(height: 16),
-        SizedBox(
-          height: 200,
-          child: ListView.separated(
+        if (beginnerCourses.isEmpty)
+          Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
-            scrollDirection: Axis.horizontal,
-            itemCount: beginnerCourses.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 16),
-            itemBuilder: (context, index) {
-              final course = beginnerCourses[index];
-              return _buildHorizontalCourseCard(course, themeData, isDarkMode);
-            },
+            child: Text(
+              'لا توجد كورسات للبدء في هذا القسم',
+              style: GoogleFonts.tajawal(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
+              ),
+            ),
+          )
+        else
+          SizedBox(
+            height: 200,
+            child: ListView.separated(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              scrollDirection: Axis.horizontal,
+              itemCount: beginnerCourses.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 16),
+              itemBuilder: (context, index) {
+                final course = beginnerCourses[index];
+                return _buildHorizontalCourseCard(course, themeData, isDarkMode);
+              },
+            ),
           ),
-        ),
       ],
     );
   }
@@ -434,7 +472,20 @@ class _CategoryDetailPageState extends State<CategoryDetailPage> {
           ),
         ),
         const SizedBox(height: 16),
-        LayoutBuilder(
+        if (featuredCourses.isEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Text(
+              'لا توجد كورسات مميزة في هذا القسم',
+              style: GoogleFonts.tajawal(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
+              ),
+            ),
+          )
+        else
+          LayoutBuilder(
           builder: (context, constraints) {
             if (constraints.maxWidth > 800) {
               // Desktop/Tablet Grid
@@ -505,7 +556,20 @@ class _CategoryDetailPageState extends State<CategoryDetailPage> {
           ),
         ),
         const SizedBox(height: 16),
-        LayoutBuilder(
+        if (_otherCategories.isEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Text(
+              'لا توجد فئات فرعية متاحة',
+              style: GoogleFonts.tajawal(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
+              ),
+            ),
+          )
+        else
+          LayoutBuilder(
           builder: (context, constraints) {
             final crossAxisCount = constraints.maxWidth > 600 ? 3 : 2;
             return Padding(
@@ -519,13 +583,14 @@ class _CategoryDetailPageState extends State<CategoryDetailPage> {
                   crossAxisSpacing: 12,
                   mainAxisSpacing: 12,
                 ),
-                itemCount: subcategories.length,
+                itemCount: _otherCategories.length,
                 itemBuilder: (context, index) {
-                  final subcategory = subcategories[index];
+                  final subcategory = _otherCategories[index];
                   return _buildSubcategoryCard(
                     subcategory,
                     themeData,
                     isDarkMode,
+                    index,
                   );
                 },
               ),
@@ -552,7 +617,20 @@ class _CategoryDetailPageState extends State<CategoryDetailPage> {
           ),
         ),
         const SizedBox(height: 16),
-        LayoutBuilder(
+        if (allCourses.isEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Text(
+              'لا توجد كورسات في هذا القسم',
+              style: GoogleFonts.tajawal(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
+              ),
+            ),
+          )
+        else
+          LayoutBuilder(
           builder: (context, constraints) {
             if (constraints.maxWidth > 600) {
               // Desktop/Tablet Grid (responsive aspect ratio to avoid overflows)
@@ -864,22 +942,49 @@ class _CategoryDetailPageState extends State<CategoryDetailPage> {
     );
   }
 
+  // Define color schemes for subcategories
+  final List<List<Color>> _subcategoryGradients = const [
+    [Color(0xFF667EEA), Color(0xFF764BA2)],
+    [Color(0xFF2196F3), Color(0xFF21CBF3)],
+    [Color(0xFF11998E), Color(0xFF38EF7D)],
+    [Color(0xFFFF6B6B), Color(0xFFFFE66D)],
+    [Color(0xFF9C27B0), Color(0xFFE91E63)],
+    [Color(0xFFFF9800), Color(0xFFFF5722)],
+    [Color(0xFF2563EB), Color(0xFF1D4ED8)],
+    [Color(0xFF7C3AED), Color(0xFF6D28D9)],
+  ];
+
+  final List<IconData> _subcategoryIcons = const [
+    Icons.web,
+    Icons.phone_android,
+    Icons.storage,
+    Icons.security,
+    Icons.psychology,
+    Icons.analytics,
+    Icons.code,
+    Icons.design_services,
+  ];
+
   Widget _buildSubcategoryCard(
     Map<String, dynamic> subcategory,
     ThemeData themeData,
     bool isDarkMode,
+    int index,
   ) {
+    final gradient = _subcategoryGradients[index % _subcategoryGradients.length];
+    final icon = _subcategoryIcons[index % _subcategoryIcons.length];
+    
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: subcategory['gradient'],
+          colors: gradient,
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: subcategory['gradient'][1].withOpacity(
+            color: gradient[1].withOpacity(
               isDarkMode ? 0.4 : 0.3,
             ),
             blurRadius: 8,
@@ -891,6 +996,16 @@ class _CategoryDetailPageState extends State<CategoryDetailPage> {
         borderRadius: BorderRadius.circular(16),
         onTap: () {
           // Navigate to subcategory
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => CategoryDetailPage(category: {
+                ...subcategory,
+                'gradient': gradient,
+                'icon': icon,
+              }),
+            ),
+          );
         },
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -905,28 +1020,18 @@ class _CategoryDetailPageState extends State<CategoryDetailPage> {
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
-                    subcategory['icon'],
+                    icon,
                     color: Colors.white,
                     size: 32,
                   ),
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  subcategory['name'],
+                  subcategory['name'] ?? 'عام',
                   style: GoogleFonts.tajawal(
                     color: Colors.white,
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '${subcategory['courseCount']} كورس',
-                  style: GoogleFonts.tajawal(
-                    color: Colors.white.withOpacity(0.9),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -1275,62 +1380,93 @@ class _CategoryDetailPageState extends State<CategoryDetailPage> {
     );
   }
 
-  void _navigateToCourseDetails(Map<String, dynamic> course) {
-    // Ensure all fields are properly formatted and have fallbacks
-    Map<String, dynamic> enhancedCourse = {
-      ...course,
-      'id': course['id']?.toString() ?? '1',
-      'title': course['title']?.toString() ?? 'دورة تعليمية',
-      'teacher': course['teacher']?.toString() ?? 'مدرب',
-      'category': widget.category['name']?.toString() ?? 'البرمجة',
-      'image': course['image']?.toString() ?? 'https://picsum.photos/400/300',
-      'rating': course['rating'] is double
-          ? course['rating']
-          : course['rating'] is int
-          ? course['rating'].toDouble()
-          : double.tryParse(course['rating']?.toString() ?? '4.5') ?? 4.5,
-      'students': course['students'] is int
-          ? course['students']
-          : int.tryParse(course['students']?.toString() ?? '1000') ?? 1000,
-      'price': course['price']?.toString() ?? '190,000 S.P',
-      'level': course['level']?.toString() ?? 'متوسط',
-      'duration': course['duration'] is int
-          ? course['duration']
-          : int.tryParse(course['duration']?.toString() ?? '20') ?? 20,
-      'lessons': course['lessons'] is int
-          ? course['lessons']
-          : int.tryParse(course['lessons']?.toString() ?? '30') ?? 30,
-      'reviews': course['reviews'] is int
-          ? course['reviews']
-          : int.tryParse(course['reviews']?.toString() ?? '125') ?? 125,
-      'lastUpdated': course['lastUpdated']?.toString() ?? 'ديسمبر 2024',
-      'description':
-          course['description']?.toString() ??
-          'دورة تعليمية شاملة تغطي أهم المفاهيم والمهارات في مجال ${widget.category['name']}. تم تصميم هذه الدورة بعناية لتوفر للطلاب التعليم النظري والتطبيق العملي.',
-      'tags': course['tags'] is List
-          ? course['tags']
-          : [
-              widget.category['name']?.toString() ?? 'البرمجة',
-              'تعليم',
-              'تدريب',
-              'مهارات',
-            ],
-      'instructorImage':
-          course['instructorImage']?.toString() ??
-          'https://picsum.photos/seed/instructor${course['id'] ?? '1'}/200/200',
-    };
-
-    // Print for debugging
-    print('Enhanced course data:');
-    enhancedCourse.forEach((key, value) {
-      print('$key: $value (${value.runtimeType})');
-    });
-
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => CourseDetailsPage(course: enhancedCourse),
+  Future<void> _navigateToCourseDetails(Map<String, dynamic> course) async {
+    // Show loading indicator
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(),
       ),
     );
+
+    // Fetch full course details with sections and lessons
+    Map<String, dynamic> fullCourseData = {};
+    int totalDuration = 0;
+    int totalLessons = 0;
+
+    // Try to fetch course details using the course slug or id
+    final slug = (course['slug']?.toString().isNotEmpty == true) 
+        ? course['slug'] 
+        : course['id'];
+    
+    if (slug != null && slug.toString().isNotEmpty) {
+      try {
+        final response = await _courseApi.getCourseDetails(slug.toString());
+        
+        // Handle different response formats
+        if (response['course'] != null) {
+          fullCourseData = response['course'] as Map<String, dynamic>;
+        } else if (response['data'] != null) {
+          fullCourseData = response['data'] as Map<String, dynamic>;
+        } else if (response['id'] != null) {
+          fullCourseData = response;
+        }
+
+        // Calculate total duration and lessons from sections
+        final sections = fullCourseData['sections'] as List? ?? [];
+        for (final section in sections) {
+          final lessons = section['lessons'] as List? ?? [];
+          totalLessons += lessons.length;
+          for (final lesson in lessons) {
+            final duration = lesson['duration'] as int? ?? 0;
+            totalDuration += duration;
+          }
+        }
+      } catch (e) {
+        print('Error fetching course details from category page: $e');
+      }
+    }
+
+    // Close loading dialog
+    if (context.mounted) {
+      Navigator.of(context).pop();
+    }
+
+    // Convert duration from seconds to hours (round up)
+    final durationHours = totalDuration > 0 ? (totalDuration / 3600).ceil() : 0;
+
+    // Build enhanced course data from API response
+    Map<String, dynamic> enhancedCourse = {
+      'id': fullCourseData['id'] ?? course['id'] ?? '',
+      'slug': fullCourseData['slug'] ?? course['slug'] ?? '',
+      'title': fullCourseData['title'] ?? course['title'] ?? 'دورة تعليمية',
+      'image': fullCourseData['course_image_url'] ?? course['image'] ?? 'https://picsum.photos/400/300',
+      'teacher': fullCourseData['instructor']?['name'] ?? course['teacher'] ?? 'مدرس متخصص',
+      'instructor': fullCourseData['instructor'] ?? course['instructor'],
+      'category': fullCourseData['category']?['name'] ?? course['category'] ?? 'عام',
+      'rating': (fullCourseData['rating'] ?? course['rating'] ?? 4.5).toDouble(),
+      'reviews': fullCourseData['total_ratings'] ?? course['reviews'] ?? 0,
+      'students': (fullCourseData['total_students'] ?? course['students'] ?? 0).toString(),
+      'duration': durationHours > 0 ? durationHours : (fullCourseData['duration_hours'] ?? course['duration'] ?? 0),
+      'lessons': totalLessons > 0 ? totalLessons : (fullCourseData['lessons_count'] ?? course['lessons'] ?? 0),
+      'level': fullCourseData['level'] ?? course['level'] ?? 'متوسط',
+      'lastUpdated': fullCourseData['updated_at']?.toString().substring(0, 4) ?? course['lastUpdated']?.toString().substring(0, 4) ?? '2026',
+      'price': fullCourseData['price']?.toString() ?? course['price']?.toString() ?? '0',
+      'description': fullCourseData['description'] ?? course['description'] ?? '',
+      'tags': fullCourseData['category']?['name'] != null ? [fullCourseData['category']['name']] : (course['tags'] ?? []),
+      'instructorImage': fullCourseData['instructor']?['avatar'] ?? course['instructorImage'] ?? 'https://picsum.photos/200/200',
+      'sections': fullCourseData['sections'] ?? course['sections'] ?? [],
+      'category_id': fullCourseData['category_id'] ?? course['category_id'],
+    };
+
+    if (context.mounted) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => CourseDetailsPage(course: enhancedCourse),
+        ),
+      );
+    }
   }
 }
