@@ -1,5 +1,6 @@
 import 'package:courses_app/main_pages/home/presentation/widgets/home_page_widgets.dart';
 import 'package:courses_app/config/api.dart';
+import 'package:courses_app/presentation/widgets/skeleton_widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -29,7 +30,10 @@ class _HomePageBody extends StatelessWidget {
     ];
   }
 
-  List<Map<String, dynamic>> _buildCategories(Map<String, dynamic>? data, bool isLoading) {
+  List<Map<String, dynamic>> _buildCategories(
+    Map<String, dynamic>? data,
+    bool isLoading,
+  ) {
     // While loading, return empty list (don't show static fallback)
     if (isLoading) {
       return [];
@@ -244,16 +248,20 @@ class _HomePageBody extends StatelessWidget {
     return mappedCategories.take(8).toList();
   }
 
-  List<Map<String, dynamic>> _buildRecommended(Map<String, dynamic>? data, List<String> userInterests) {
+  List<Map<String, dynamic>> _buildRecommended(
+    Map<String, dynamic>? data,
+    List<String> userInterests,
+  ) {
     final sections = (data?['sections'] as List?) ?? [];
-    
+
     // Get all courses from trending and other sections
     final allCourses = <Map<String, dynamic>>[];
     for (final section in sections) {
-      final sectionCourses = (section['courses'] as List?)?.cast<Map<String, dynamic>>() ?? [];
+      final sectionCourses =
+          (section['courses'] as List?)?.cast<Map<String, dynamic>>() ?? [];
       allCourses.addAll(sectionCourses);
     }
-    
+
     // If user has interests, filter courses that match those interests
     List<Map<String, dynamic>> filteredCourses;
     if (userInterests.isNotEmpty) {
@@ -272,62 +280,61 @@ class _HomePageBody extends StatelessWidget {
         'health': 'صحة',
         'education': 'تعليم',
       };
-      
+
       // Get category names from user interests
       final targetCategories = userInterests
           .map((interest) => interestToCategoryMap[interest] ?? interest)
           .toSet();
-      
+
       print('🎯 Filtering courses for categories: $targetCategories');
-      
+
       // Filter courses that match user interests
       filteredCourses = allCourses.where((course) {
         final categoryName = course['category']?['name']?.toString() ?? '';
-        return targetCategories.any((interest) => 
-          categoryName.toLowerCase().contains(interest.toLowerCase())
+        return targetCategories.any(
+          (interest) =>
+              categoryName.toLowerCase().contains(interest.toLowerCase()),
         );
       }).toList();
-      
+
       print('🎯 Found ${filteredCourses.length} matching courses');
     } else {
       // No interests, use trending courses as fallback
       filteredCourses = allCourses;
     }
-    
+
     // Map to the format needed for RecommendedCourses widget
-    return filteredCourses
-        .map(
-          (c) {
-            // Handle course image URL like in _buildTrending
-            final rawImage = (c['course_image_url'] ?? '').toString();
-            String imageUrl = '';
-            if (rawImage.isNotEmpty) {
-              if (rawImage.startsWith('http')) {
-                imageUrl = rawImage;
-              } else {
-                // If relative path like /storage/...., add baseUrl without /api
-                imageUrl = '${ApiConfig.baseUrlNoApi}$rawImage';
-              }
-            }
-            
-            return {
-            'id': c['id'] ?? '',
-            'slug': c['slug'] ?? '',
-            'title': c['title'] ?? '',
-            'teacher': c['instructor']?['name'] ?? '',
-            'instructor': c['instructor'],
-            'category': c['category']?['name'] ?? 'برمجة',
-            'category_id': c['category_id'],
-            'rating': (c['rating'] ?? 0).toDouble(),
-            'students': (c['total_students'] ?? 0).toString(),
-            'image': imageUrl.isNotEmpty ? imageUrl : 'https://picsum.photos/seed/${c['id'] ?? 'course'}/200/120',
-            'price': c['price']?.toString() ?? '0',
-            'level': c['level'] ?? 'متوسط',
-            'description': c['description'] ?? '',
-          };
-          },
-        )
-        .toList();
+    return filteredCourses.map((c) {
+      // Handle course image URL like in _buildTrending
+      final rawImage = (c['course_image_url'] ?? '').toString();
+      String imageUrl = '';
+      if (rawImage.isNotEmpty) {
+        if (rawImage.startsWith('http')) {
+          imageUrl = rawImage;
+        } else {
+          // If relative path like /storage/...., add baseUrl without /api
+          imageUrl = '${ApiConfig.baseUrlNoApi}$rawImage';
+        }
+      }
+
+      return {
+        'id': c['id'] ?? '',
+        'slug': c['slug'] ?? '',
+        'title': c['title'] ?? '',
+        'teacher': c['instructor']?['name'] ?? '',
+        'instructor': c['instructor'],
+        'category': c['category']?['name'] ?? 'برمجة',
+        'category_id': c['category_id'],
+        'rating': (c['rating'] ?? 0).toDouble(),
+        'students': (c['total_students'] ?? 0).toString(),
+        'image': imageUrl.isNotEmpty
+            ? imageUrl
+            : 'https://picsum.photos/seed/${c['id'] ?? 'course'}/200/120',
+        'price': c['price']?.toString() ?? '0',
+        'level': c['level'] ?? 'متوسط',
+        'description': c['description'] ?? '',
+      };
+    }).toList();
   }
 
   List<Map<String, dynamic>> _buildTrending(Map<String, dynamic>? data) {
@@ -376,6 +383,143 @@ class _HomePageBody extends StatelessWidget {
     return mapped.take(5).toList();
   }
 
+  Widget _HomeSkeletonLoading(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    return CustomScrollView(
+      slivers: [
+        // Search skeleton
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: SkeletonContainer(
+              width: double.infinity,
+              height: 50,
+              borderRadius: 12,
+              isLoading: true,
+            ),
+          ),
+        ),
+        // Hero carousel skeleton
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: SkeletonContainer(
+              width: double.infinity,
+              height: 180,
+              borderRadius: 16,
+              isLoading: true,
+            ),
+          ),
+        ),
+        // Categories title skeleton
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 24, 20, 12),
+            child: SkeletonContainer(
+              width: 150,
+              height: 24,
+              borderRadius: 4,
+              isLoading: true,
+            ),
+          ),
+        ),
+        // Categories grid skeleton
+        SliverToBoxAdapter(
+          child: GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 4,
+              childAspectRatio: 0.8,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+            ),
+            itemCount: 8,
+            itemBuilder: (context, index) {
+              return Column(
+                children: [
+                  SkeletonContainer(
+                    width: 60,
+                    height: 60,
+                    borderRadius: 30,
+                    isLoading: true,
+                  ),
+                  const SizedBox(height: 8),
+                  SkeletonContainer(
+                    width: 50,
+                    height: 12,
+                    borderRadius: 4,
+                    isLoading: true,
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+        // Recommended section skeleton
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 24, 20, 12),
+            child: SkeletonContainer(
+              width: 150,
+              height: 24,
+              borderRadius: 4,
+              isLoading: true,
+            ),
+          ),
+        ),
+        // Recommended courses skeleton
+        SliverToBoxAdapter(
+          child: SizedBox(
+            height: 220,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: 3,
+              itemBuilder: (context, index) {
+                return Padding(
+                  padding: const EdgeInsets.only(right: 12),
+                  child: SkeletonCourseCard(isDarkMode: isDarkMode),
+                );
+              },
+            ),
+          ),
+        ),
+        // Trending section skeleton
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 24, 20, 12),
+            child: SkeletonContainer(
+              width: 180,
+              height: 24,
+              borderRadius: 4,
+              isLoading: true,
+            ),
+          ),
+        ),
+        // Trending courses skeleton
+        SliverToBoxAdapter(
+          child: SizedBox(
+            height: 220,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: 3,
+              itemBuilder: (context, index) {
+                return Padding(
+                  padding: const EdgeInsets.only(right: 12),
+                  child: SkeletonCourseCard(isDarkMode: isDarkMode),
+                );
+              },
+            ),
+          ),
+        ),
+        const SliverToBoxAdapter(child: SizedBox(height: 20)),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -383,24 +527,9 @@ class _HomePageBody extends StatelessWidget {
       body: SafeArea(
         child: BlocBuilder<HomeBloc, HomeState>(
           builder: (context, state) {
-            // Show loading indicator while data is loading
+            // Show skeleton loading while data is loading
             if (state.isLoading) {
-              return const Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    CircularProgressIndicator(),
-                    SizedBox(height: 16),
-                    Text(
-                      'جاري تحميل البيانات...',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              );
+              return _HomeSkeletonLoading(context);
             }
 
             final data = state.data;

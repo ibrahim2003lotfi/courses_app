@@ -654,9 +654,7 @@ class _RecommendedCoursesState extends State<RecommendedCourses> {
       showDialog(
         context: context,
         barrierDismissible: false,
-        builder: (context) => const Center(
-          child: CircularProgressIndicator(),
-        ),
+        builder: (context) => const Center(child: CircularProgressIndicator()),
       );
 
       // Fetch full course details with sections and lessons
@@ -665,16 +663,16 @@ class _RecommendedCoursesState extends State<RecommendedCourses> {
       int totalLessons = 0;
 
       // Try to fetch course details using the course slug or id
-      final slug = (course['slug']?.toString().isNotEmpty == true) 
-          ? course['slug'] 
+      final slug = (course['slug']?.toString().isNotEmpty == true)
+          ? course['slug']
           : course['id'];
       print('DEBUG - Recommended Course slug/id: $slug');
-      
+
       if (slug != null && slug.toString().isNotEmpty) {
         try {
           final response = await _courseApi.getCourseDetails(slug.toString());
           print('DEBUG - Recommended API Response: $response');
-          
+
           // Handle different response formats
           if (response['course'] != null) {
             fullCourseData = response['course'] as Map<String, dynamic>;
@@ -705,27 +703,50 @@ class _RecommendedCoursesState extends State<RecommendedCourses> {
       }
 
       // Convert duration from seconds to hours (round up)
-      final durationHours = totalDuration > 0 ? (totalDuration / 3600).ceil() : 0;
+      final durationHours = totalDuration > 0
+          ? (totalDuration / 3600).ceil()
+          : 0;
 
       Map<String, dynamic> enhancedCourse = {
         'id': course['id'] ?? fullCourseData['id'] ?? '',
         'slug': course['slug'] ?? fullCourseData['slug'] ?? '',
         'title': course['title'] ?? fullCourseData['title'] ?? 'دورة تعليمية',
-        'image': course['image'] ?? fullCourseData['course_image_url'] ?? 'https://picsum.photos/400/300',
-        'teacher': course['teacher'] ?? fullCourseData['instructor']?['name'] ?? 'مدرس متخصص',
+        'image':
+            course['image'] ??
+            fullCourseData['course_image_url'] ??
+            'https://picsum.photos/400/300',
+        'teacher':
+            course['teacher'] ??
+            fullCourseData['instructor']?['name'] ??
+            'مدرس متخصص',
         'instructor': course['instructor'] ?? fullCourseData['instructor'],
-        'category': fullCourseData['category']?['name'] ?? course['category'] ?? 'عام',
-        'rating': course['rating'] ?? (fullCourseData['rating'] ?? 4.5).toDouble(),
+        'category':
+            fullCourseData['category']?['name'] ?? course['category'] ?? 'عام',
+        'rating':
+            course['rating'] ?? (fullCourseData['rating'] ?? 4.5).toDouble(),
         'reviews': fullCourseData['total_ratings'] ?? 0,
-        'students': course['students']?.toString() ?? (fullCourseData['total_students'] ?? 0).toString(),
-        'duration': durationHours > 0 ? durationHours : (fullCourseData['duration_hours'] ?? 0),
-        'lessons': totalLessons > 0 ? totalLessons : (fullCourseData['lessons_count'] ?? 0),
+        'students':
+            course['students']?.toString() ??
+            (fullCourseData['total_students'] ?? 0).toString(),
+        'duration': durationHours > 0
+            ? durationHours
+            : (fullCourseData['duration_hours'] ?? 0),
+        'lessons': totalLessons > 0
+            ? totalLessons
+            : (fullCourseData['lessons_count'] ?? 0),
         'level': fullCourseData['level'] ?? course['level'] ?? 'متوسط',
-        'lastUpdated': fullCourseData['updated_at']?.toString().substring(0, 4) ?? '2026',
+        'lastUpdated':
+            fullCourseData['updated_at']?.toString().substring(0, 4) ?? '2026',
         'price': course['price'] ?? fullCourseData['price']?.toString() ?? '',
-        'description': fullCourseData['description'] ?? course['description'] ?? '',
-        'tags': fullCourseData['category']?['name'] != null ? [fullCourseData['category']['name']] : (course['tags'] ?? []),
-        'instructorImage': fullCourseData['instructor']?['avatar'] ?? course['instructorImage'] ?? 'https://picsum.photos/200/200',
+        'description':
+            fullCourseData['description'] ?? course['description'] ?? '',
+        'tags': fullCourseData['category']?['name'] != null
+            ? [fullCourseData['category']['name']]
+            : (course['tags'] ?? []),
+        'instructorImage':
+            fullCourseData['instructor']?['avatar'] ??
+            course['instructorImage'] ??
+            'https://picsum.photos/200/200',
         'sections': fullCourseData['sections'] ?? [],
         'category_id': fullCourseData['category_id'] ?? course['category_id'],
       };
@@ -1111,9 +1132,7 @@ class _TrendingCoursesState extends State<TrendingCourses> {
       showDialog(
         context: context,
         barrierDismissible: false,
-        builder: (context) => const Center(
-          child: CircularProgressIndicator(),
-        ),
+        builder: (context) => const Center(child: CircularProgressIndicator()),
       );
 
       // Fetch full course details with sections and lessons
@@ -1123,18 +1142,18 @@ class _TrendingCoursesState extends State<TrendingCourses> {
 
       // Try to fetch course details using the course slug or id
       // Use slug if available and not empty, otherwise fall back to id
-      final slug = (course['slug']?.toString().isNotEmpty == true) 
-          ? course['slug'] 
+      final slug = (course['slug']?.toString().isNotEmpty == true)
+          ? course['slug']
           : course['id'];
       print('DEBUG - Course slug/id: $slug');
       print('DEBUG - Original course data: $course');
-      
+
       if (slug != null && slug.toString().isNotEmpty) {
         try {
           final response = await _courseApi.getCourseDetails(slug.toString());
           print('DEBUG - API Response: $response');
           print('DEBUG - Response keys: ${response.keys.toList()}');
-          
+
           // Handle different response formats
           // Backend returns: { 'course': {...}, 'rating_info': {...}, 'message': '...' }
           if (response['course'] != null) {
@@ -1169,27 +1188,50 @@ class _TrendingCoursesState extends State<TrendingCourses> {
       }
 
       // Convert duration from seconds to hours (round up)
-      final durationHours = totalDuration > 0 ? (totalDuration / 3600).ceil() : 0;
+      final durationHours = totalDuration > 0
+          ? (totalDuration / 3600).ceil()
+          : 0;
 
       Map<String, dynamic> enhancedCourse = {
         'id': course['id'] ?? fullCourseData['id'] ?? '',
         'slug': course['slug'] ?? fullCourseData['slug'] ?? '',
         'title': course['title'] ?? fullCourseData['title'] ?? 'دورة تعليمية',
-        'image': course['image'] ?? fullCourseData['course_image_url'] ?? 'https://picsum.photos/400/300',
-        'teacher': course['teacher'] ?? fullCourseData['instructor']?['name'] ?? 'مدرس متخصص',
+        'image':
+            course['image'] ??
+            fullCourseData['course_image_url'] ??
+            'https://picsum.photos/400/300',
+        'teacher':
+            course['teacher'] ??
+            fullCourseData['instructor']?['name'] ??
+            'مدرس متخصص',
         'instructor': course['instructor'] ?? fullCourseData['instructor'],
-        'category': fullCourseData['category']?['name'] ?? course['category'] ?? 'عام',
-        'rating': course['rating'] ?? (fullCourseData['rating'] ?? 4.5).toDouble(),
+        'category':
+            fullCourseData['category']?['name'] ?? course['category'] ?? 'عام',
+        'rating':
+            course['rating'] ?? (fullCourseData['rating'] ?? 4.5).toDouble(),
         'reviews': fullCourseData['total_ratings'] ?? 0,
-        'students': course['students']?.toString() ?? (fullCourseData['total_students'] ?? 0).toString(),
-        'duration': durationHours > 0 ? durationHours : (fullCourseData['duration_hours'] ?? 0),
-        'lessons': totalLessons > 0 ? totalLessons : (fullCourseData['lessons_count'] ?? 0),
+        'students':
+            course['students']?.toString() ??
+            (fullCourseData['total_students'] ?? 0).toString(),
+        'duration': durationHours > 0
+            ? durationHours
+            : (fullCourseData['duration_hours'] ?? 0),
+        'lessons': totalLessons > 0
+            ? totalLessons
+            : (fullCourseData['lessons_count'] ?? 0),
         'level': fullCourseData['level'] ?? course['level'] ?? 'متوسط',
-        'lastUpdated': fullCourseData['updated_at']?.toString().substring(0, 4) ?? '2026',
+        'lastUpdated':
+            fullCourseData['updated_at']?.toString().substring(0, 4) ?? '2026',
         'price': course['price'] ?? fullCourseData['price']?.toString() ?? '',
-        'description': fullCourseData['description'] ?? course['description'] ?? '',
-        'tags': fullCourseData['category']?['name'] != null ? [fullCourseData['category']['name']] : (course['tags'] ?? []),
-        'instructorImage': fullCourseData['instructor']?['avatar'] ?? course['instructorImage'] ?? 'https://picsum.photos/200/200',
+        'description':
+            fullCourseData['description'] ?? course['description'] ?? '',
+        'tags': fullCourseData['category']?['name'] != null
+            ? [fullCourseData['category']['name']]
+            : (course['tags'] ?? []),
+        'instructorImage':
+            fullCourseData['instructor']?['avatar'] ??
+            course['instructorImage'] ??
+            'https://picsum.photos/200/200',
         'sections': fullCourseData['sections'] ?? [],
         'category_id': fullCourseData['category_id'] ?? course['category_id'],
       };
@@ -1200,8 +1242,12 @@ class _TrendingCoursesState extends State<TrendingCourses> {
       print('DEBUG - Updated at from API: ${fullCourseData['updated_at']}');
       print('DEBUG - Sections from API: ${fullCourseData['sections']}');
       print('DEBUG - Enhanced course level: ${enhancedCourse['level']}');
-      print('DEBUG - Enhanced course lastUpdated: ${enhancedCourse['lastUpdated']}');
-      print('DEBUG - Enhanced course sections count: ${(enhancedCourse['sections'] as List?)?.length ?? 0}');
+      print(
+        'DEBUG - Enhanced course lastUpdated: ${enhancedCourse['lastUpdated']}',
+      );
+      print(
+        'DEBUG - Enhanced course sections count: ${(enhancedCourse['sections'] as List?)?.length ?? 0}',
+      );
 
       setState(() {
         _isLoading = false;
@@ -1321,7 +1367,8 @@ class _TrendingCoursesState extends State<TrendingCourses> {
                       child: InkWell(
                         onTap: _isLoading
                             ? null
-                            : () => _navigateToCourseDetails(context, safeCourse),
+                            : () =>
+                                  _navigateToCourseDetails(context, safeCourse),
                         borderRadius: BorderRadius.circular(16),
                         child: _buildVerticalCourseCard(
                           context,
@@ -1525,9 +1572,7 @@ class _ContinueLearningState extends State<ContinueLearning> {
       showDialog(
         context: context,
         barrierDismissible: false,
-        builder: (context) => const Center(
-          child: CircularProgressIndicator(),
-        ),
+        builder: (context) => const Center(child: CircularProgressIndicator()),
       );
 
       // Fetch full course details with sections and lessons
@@ -1536,16 +1581,16 @@ class _ContinueLearningState extends State<ContinueLearning> {
       int totalLessons = 0;
 
       // Try to fetch course details using the course slug or id
-      final slug = (course['slug']?.toString().isNotEmpty == true) 
-          ? course['slug'] 
+      final slug = (course['slug']?.toString().isNotEmpty == true)
+          ? course['slug']
           : course['id'];
       print('DEBUG - Continue Learning Course slug/id: $slug');
-      
+
       if (slug != null && slug.toString().isNotEmpty) {
         try {
           final response = await _courseApi.getCourseDetails(slug.toString());
           print('DEBUG - Continue Learning API Response: $response');
-          
+
           // Handle different response formats
           if (response['course'] != null) {
             fullCourseData = response['course'] as Map<String, dynamic>;
@@ -1576,27 +1621,52 @@ class _ContinueLearningState extends State<ContinueLearning> {
       }
 
       // Convert duration from seconds to hours (round up)
-      final durationHours = totalDuration > 0 ? (totalDuration / 3600).ceil() : 0;
+      final durationHours = totalDuration > 0
+          ? (totalDuration / 3600).ceil()
+          : 0;
 
       Map<String, dynamic> enhancedCourse = {
         'id': course['id'] ?? fullCourseData['id'] ?? '',
         'slug': course['slug'] ?? fullCourseData['slug'] ?? '',
         'title': course['title'] ?? fullCourseData['title'] ?? 'دورة تعليمية',
-        'image': course['course_image_url'] ?? fullCourseData['course_image_url'] ?? 'https://picsum.photos/400/300',
-        'teacher': course['instructor']?['name'] ?? fullCourseData['instructor']?['name'] ?? 'مدرس متخصص',
+        'image':
+            course['course_image_url'] ??
+            fullCourseData['course_image_url'] ??
+            'https://picsum.photos/400/300',
+        'teacher':
+            course['instructor']?['name'] ??
+            fullCourseData['instructor']?['name'] ??
+            'مدرس متخصص',
         'instructor': course['instructor'] ?? fullCourseData['instructor'],
-        'category': fullCourseData['category']?['name'] ?? course['category']?['name'] ?? 'عام',
-        'rating': course['rating'] ?? (fullCourseData['rating'] ?? 4.5).toDouble(),
+        'category':
+            fullCourseData['category']?['name'] ??
+            course['category']?['name'] ??
+            'عام',
+        'rating':
+            course['rating'] ?? (fullCourseData['rating'] ?? 4.5).toDouble(),
         'reviews': fullCourseData['total_ratings'] ?? 0,
-        'students': course['students']?.toString() ?? (fullCourseData['total_students'] ?? 0).toString(),
-        'duration': durationHours > 0 ? durationHours : (fullCourseData['duration_hours'] ?? 0),
-        'lessons': totalLessons > 0 ? totalLessons : (fullCourseData['lessons_count'] ?? 0),
+        'students':
+            course['students']?.toString() ??
+            (fullCourseData['total_students'] ?? 0).toString(),
+        'duration': durationHours > 0
+            ? durationHours
+            : (fullCourseData['duration_hours'] ?? 0),
+        'lessons': totalLessons > 0
+            ? totalLessons
+            : (fullCourseData['lessons_count'] ?? 0),
         'level': fullCourseData['level'] ?? course['level'] ?? 'متوسط',
-        'lastUpdated': fullCourseData['updated_at']?.toString().substring(0, 4) ?? '2026',
+        'lastUpdated':
+            fullCourseData['updated_at']?.toString().substring(0, 4) ?? '2026',
         'price': course['price'] ?? fullCourseData['price']?.toString() ?? '',
-        'description': fullCourseData['description'] ?? course['description'] ?? '',
-        'tags': fullCourseData['category']?['name'] != null ? [fullCourseData['category']['name']] : (course['tags'] ?? []),
-        'instructorImage': fullCourseData['instructor']?['avatar'] ?? course['instructorImage'] ?? 'https://picsum.photos/200/200',
+        'description':
+            fullCourseData['description'] ?? course['description'] ?? '',
+        'tags': fullCourseData['category']?['name'] != null
+            ? [fullCourseData['category']['name']]
+            : (course['tags'] ?? []),
+        'instructorImage':
+            fullCourseData['instructor']?['avatar'] ??
+            course['instructorImage'] ??
+            'https://picsum.photos/200/200',
         'sections': fullCourseData['sections'] ?? [],
         'category_id': fullCourseData['category_id'] ?? course['category_id'],
       };
@@ -1668,10 +1738,14 @@ class _ContinueLearningState extends State<ContinueLearning> {
                         child: Container(
                           height: 100,
                           decoration: BoxDecoration(
-                            color: isDarkMode ? const Color(0xFF1E1E1E) : Colors.grey[100],
+                            color: isDarkMode
+                                ? const Color(0xFF1E1E1E)
+                                : Colors.grey[100],
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                              color: isDarkMode ? Colors.grey[700]! : Colors.grey[300]!,
+                              color: isDarkMode
+                                  ? Colors.grey[700]!
+                                  : Colors.grey[300]!,
                             ),
                           ),
                           child: Center(
@@ -1680,7 +1754,9 @@ class _ContinueLearningState extends State<ContinueLearning> {
                               children: [
                                 Icon(
                                   Icons.school_outlined,
-                                  color: isDarkMode ? Colors.grey[500] : Colors.grey[600],
+                                  color: isDarkMode
+                                      ? Colors.grey[500]
+                                      : Colors.grey[600],
                                   size: 24,
                                 ),
                                 const SizedBox(width: 12),
@@ -1689,7 +1765,9 @@ class _ContinueLearningState extends State<ContinueLearning> {
                                   style: GoogleFonts.tajawal(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w600,
-                                    color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
+                                    color: isDarkMode
+                                        ? Colors.grey[400]
+                                        : Colors.grey[600],
                                   ),
                                 ),
                               ],
@@ -1707,7 +1785,11 @@ class _ContinueLearningState extends State<ContinueLearning> {
                               const SizedBox(width: 16),
                           itemBuilder: (context, index) {
                             final course = widget.courses[index];
-                            return _buildCourseCard(context, course, isDarkMode);
+                            return _buildCourseCard(
+                              context,
+                              course,
+                              isDarkMode,
+                            );
                           },
                         ),
                       ),
@@ -1726,11 +1808,13 @@ class _ContinueLearningState extends State<ContinueLearning> {
   ) {
     final imageUrl = course['course_image_url'] ?? '';
     final hasValidImage = imageUrl.isNotEmpty && imageUrl.startsWith('http');
-    
+
     return SizedBox(
       width: 280,
       child: GestureDetector(
-        onTap: _isLoading ? null : () => _navigateToCourseDetails(context, course),
+        onTap: _isLoading
+            ? null
+            : () => _navigateToCourseDetails(context, course),
         child: Container(
           decoration: BoxDecoration(
             color: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
@@ -1755,10 +1839,14 @@ class _ContinueLearningState extends State<ContinueLearning> {
                       fit: BoxFit.cover,
                       errorBuilder: (context, error, stackTrace) {
                         return Container(
-                          color: isDarkMode ? Colors.grey[800] : Colors.grey[200],
+                          color: isDarkMode
+                              ? Colors.grey[800]
+                              : Colors.grey[200],
                           child: Icon(
                             Icons.image_not_supported,
-                            color: isDarkMode ? Colors.grey[600] : Colors.grey[400],
+                            color: isDarkMode
+                                ? Colors.grey[600]
+                                : Colors.grey[400],
                             size: 40,
                           ),
                         );

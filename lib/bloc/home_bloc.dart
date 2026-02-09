@@ -44,27 +44,26 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
   final ProfileService _profileService;
 
   HomeBloc({HomeApi? api, ProfileService? profileService})
-      : _api = api ?? HomeApi(),
-        _profileService = profileService ?? ProfileService(),
-        super(const HomeState(isLoading: false)) {
+    : _api = api ?? HomeApi(),
+      _profileService = profileService ?? ProfileService(),
+      super(const HomeState(isLoading: false)) {
     on<LoadHomeEvent>(_onLoadHome);
   }
 
-  Future<void> _onLoadHome(
-    LoadHomeEvent event,
-    Emitter<HomeState> emit,
-  ) async {
+  Future<void> _onLoadHome(LoadHomeEvent event, Emitter<HomeState> emit) async {
     emit(state.copyWith(isLoading: true, error: null));
     try {
       // Fetch home data first (this is critical)
       final homeData = await _api.getHome();
-      
+
       // Fetch profile (optional)
       List<String> interests = [];
       try {
         final profileResponse = await _profileService.getMe();
-        if (profileResponse['status'] == 200 && profileResponse['data'] != null) {
-          final userData = profileResponse['data']['user'] as Map<String, dynamic>?;
+        if (profileResponse['status'] == 200 &&
+            profileResponse['data'] != null) {
+          final userData =
+              profileResponse['data']['user'] as Map<String, dynamic>?;
           if (userData != null && userData['interests'] != null) {
             interests = List<String>.from(userData['interests']);
           }
@@ -72,18 +71,20 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       } catch (e) {
         print('⚠️ Profile fetch failed: $e');
       }
-      
+
       print('🎯 User interests loaded: $interests');
-      
+
       // Skip enrolled courses API for now - it's causing server crashes
       // Return empty list to show "no courses" message
-      
-      emit(HomeState(
-        isLoading: false,
-        data: homeData,
-        userInterests: interests,
-        enrolledCourses: [],
-      ));
+
+      emit(
+        HomeState(
+          isLoading: false,
+          data: homeData,
+          userInterests: interests,
+          enrolledCourses: [],
+        ),
+      );
     } catch (e) {
       emit(
         HomeState(
@@ -97,19 +98,3 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     }
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

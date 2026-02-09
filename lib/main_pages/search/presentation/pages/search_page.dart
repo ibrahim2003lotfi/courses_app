@@ -1,6 +1,7 @@
 import 'package:courses_app/core/utils/theme_manager.dart';
 import 'package:courses_app/main_pages/home/presentation/side%20pages/category_datail_page.dart';
 import 'package:courses_app/main_pages/courses/presentation/pages/course_details_page.dart';
+import 'package:courses_app/presentation/widgets/skeleton_widgets.dart';
 import 'package:courses_app/services/course_api.dart';
 import 'package:courses_app/services/home_api.dart';
 import 'package:courses_app/theme_cubit/theme_cubit.dart';
@@ -21,50 +22,47 @@ class _SearchPageState extends State<SearchPage> {
   final CourseApi _courseApi = CourseApi();
   final HomeApi _homeApi = HomeApi();
   final TextEditingController _searchController = TextEditingController();
-  
+
   // Data from backend
   List<Map<String, dynamic>> _categories = [];
   List<Map<String, dynamic>> _suggestedCourses = [];
   List<Map<String, dynamic>> _searchResults = [];
-  
+
   bool _isLoadingCategories = true;
   bool _isLoadingCourses = true;
   bool _isSearching = false;
   bool _hasSearched = false;
-  
+
   @override
   void initState() {
     super.initState();
     _loadData();
   }
-  
+
   @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
   }
-  
+
   Future<void> _loadData() async {
-    await Future.wait([
-      _loadCategories(),
-      _loadSuggestedCourses(),
-    ]);
+    await Future.wait([_loadCategories(), _loadSuggestedCourses()]);
   }
-  
+
   Future<void> _loadCategories() async {
     try {
       final response = await _homeApi.getHome();
       final categories = (response['categories'] as List<dynamic>?) ?? [];
-      
+
       List<Map<String, dynamic>> selectedCategories = categories
           .map((c) => c as Map<String, dynamic>)
           .toList();
-      
+
       if (selectedCategories.length > 5) {
         selectedCategories.shuffle();
         selectedCategories = selectedCategories.take(5).toList();
       }
-      
+
       if (mounted) {
         setState(() {
           _categories = selectedCategories;
@@ -78,21 +76,21 @@ class _SearchPageState extends State<SearchPage> {
       }
     }
   }
-  
+
   Future<void> _loadSuggestedCourses() async {
     try {
       final response = await _courseApi.getPublicCourses(perPage: 100);
       final courses = (response['data'] as List<dynamic>?) ?? [];
-      
+
       List<Map<String, dynamic>> shuffledCourses = courses
           .map((c) => _mapCourse(c as Map<String, dynamic>))
           .toList();
-      
+
       if (shuffledCourses.length > 10) {
         shuffledCourses.shuffle(Random());
         shuffledCourses = shuffledCourses.take(10).toList();
       }
-      
+
       if (mounted) {
         setState(() {
           _suggestedCourses = shuffledCourses;
@@ -106,7 +104,7 @@ class _SearchPageState extends State<SearchPage> {
       }
     }
   }
-  
+
   Future<void> _performSearch(String query) async {
     if (query.isEmpty) {
       setState(() {
@@ -115,23 +113,23 @@ class _SearchPageState extends State<SearchPage> {
       });
       return;
     }
-    
+
     setState(() {
       _isSearching = true;
       _hasSearched = true;
     });
-    
+
     try {
       final response = await _courseApi.getPublicCourses(
         search: query,
         perPage: 50,
       );
       final courses = (response['data'] as List<dynamic>?) ?? [];
-      
+
       List<Map<String, dynamic>> results = courses
           .map((c) => _mapCourse(c as Map<String, dynamic>))
           .toList();
-      
+
       if (mounted) {
         setState(() {
           _searchResults = results;
@@ -145,7 +143,7 @@ class _SearchPageState extends State<SearchPage> {
       }
     }
   }
-  
+
   Map<String, dynamic> _mapCourse(Map<String, dynamic> c) {
     final rawImage = (c['course_image_url'] ?? '').toString();
     String imageUrl = '';
@@ -156,12 +154,14 @@ class _SearchPageState extends State<SearchPage> {
         imageUrl = 'http://192.168.1.5:8000$rawImage';
       }
     }
-    
+
     return {
       'id': c['id']?.toString() ?? '',
       'slug': c['slug']?.toString() ?? '',
       'title': c['title']?.toString() ?? 'دورة تعليمية',
-      'image': imageUrl.isNotEmpty ? imageUrl : 'https://picsum.photos/seed/${c['id'] ?? 'course'}/400/300',
+      'image': imageUrl.isNotEmpty
+          ? imageUrl
+          : 'https://picsum.photos/seed/${c['id'] ?? 'course'}/400/300',
       'teacher': c['instructor']?['name']?.toString() ?? 'مدرس متخصص',
       'instructor': c['instructor'],
       'category': c['category']?['name']?.toString() ?? 'عام',
@@ -174,7 +174,7 @@ class _SearchPageState extends State<SearchPage> {
       'description': c['description']?.toString() ?? '',
     };
   }
-  
+
   void _navigateToCategory(Map<String, dynamic> category) {
     Navigator.push(
       context,
@@ -183,21 +183,21 @@ class _SearchPageState extends State<SearchPage> {
       ),
     );
   }
-  
+
   Future<void> _navigateToCourseDetails(Map<String, dynamic> course) async {
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) => const Center(child: CircularProgressIndicator()),
     );
-    
+
     try {
-      final slug = course['slug']?.toString().isNotEmpty == true 
-          ? course['slug'] 
+      final slug = course['slug']?.toString().isNotEmpty == true
+          ? course['slug']
           : course['id'];
-      
+
       Map<String, dynamic> fullCourseData = {};
-      
+
       if (slug != null && slug.toString().isNotEmpty) {
         final response = await _courseApi.getCourseDetails(slug.toString());
         if (response['course'] != null) {
@@ -206,32 +206,45 @@ class _SearchPageState extends State<SearchPage> {
           fullCourseData = response['data'] as Map<String, dynamic>;
         }
       }
-      
+
       if (context.mounted) {
         Navigator.of(context).pop();
       }
-      
+
       Map<String, dynamic> enhancedCourse = {
         'id': course['id'] ?? fullCourseData['id'] ?? '',
         'slug': course['slug'] ?? fullCourseData['slug'] ?? '',
         'title': course['title'] ?? fullCourseData['title'] ?? 'دورة تعليمية',
-        'image': fullCourseData['course_image_url'] ?? course['image'] ?? 'https://picsum.photos/400/300',
-        'teacher': fullCourseData['instructor']?['name'] ?? course['teacher'] ?? 'مدرس متخصص',
+        'image':
+            fullCourseData['course_image_url'] ??
+            course['image'] ??
+            'https://picsum.photos/400/300',
+        'teacher':
+            fullCourseData['instructor']?['name'] ??
+            course['teacher'] ??
+            'مدرس متخصص',
         'instructor': fullCourseData['instructor'] ?? course['instructor'],
-        'category': fullCourseData['category']?['name'] ?? course['category'] ?? 'عام',
-        'rating': (fullCourseData['rating'] ?? course['rating'] ?? 4.5).toDouble(),
+        'category':
+            fullCourseData['category']?['name'] ?? course['category'] ?? 'عام',
+        'rating': (fullCourseData['rating'] ?? course['rating'] ?? 4.5)
+            .toDouble(),
         'reviews': fullCourseData['total_ratings'] ?? 0,
         'students': (fullCourseData['total_students'] ?? 0).toString(),
         'duration': fullCourseData['duration_hours'] ?? course['duration'] ?? 0,
         'lessons': fullCourseData['lessons_count'] ?? course['lessons'] ?? 0,
         'level': fullCourseData['level'] ?? course['level'] ?? 'متوسط',
-        'lastUpdated': fullCourseData['updated_at']?.toString().substring(0, 4) ?? '2026',
-        'price': fullCourseData['price']?.toString() ?? course['price']?.toString() ?? '0',
-        'description': fullCourseData['description'] ?? course['description'] ?? '',
+        'lastUpdated':
+            fullCourseData['updated_at']?.toString().substring(0, 4) ?? '2026',
+        'price':
+            fullCourseData['price']?.toString() ??
+            course['price']?.toString() ??
+            '0',
+        'description':
+            fullCourseData['description'] ?? course['description'] ?? '',
         'sections': fullCourseData['sections'] ?? [],
         'category_id': fullCourseData['category_id'] ?? course['category_id'],
       };
-      
+
       if (context.mounted) {
         Navigator.push(
           context,
@@ -253,7 +266,9 @@ class _SearchPageState extends State<SearchPage> {
     return BlocBuilder<ThemeCubit, ThemeState>(
       builder: (context, themeState) {
         final bool isDarkMode = themeState.isDarkMode;
-        final theme = isDarkMode ? ThemeManager.darkTheme : ThemeManager.lightTheme;
+        final theme = isDarkMode
+            ? ThemeManager.darkTheme
+            : ThemeManager.lightTheme;
 
         return Scaffold(
           backgroundColor: theme.scaffoldBackgroundColor,
@@ -271,7 +286,9 @@ class _SearchPageState extends State<SearchPage> {
                     color: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(isDarkMode ? 0.1 : 0.05),
+                        color: Colors.black.withOpacity(
+                          isDarkMode ? 0.1 : 0.05,
+                        ),
                         blurRadius: 8,
                         offset: const Offset(0, 2),
                       ),
@@ -286,7 +303,8 @@ class _SearchPageState extends State<SearchPage> {
                           'assets/images/logo_ed.png',
                           width: 43,
                           height: 43,
-                          errorBuilder: (_, __, ___) => const Icon(Icons.school, size: 40),
+                          errorBuilder: (_, __, ___) =>
+                              const Icon(Icons.school, size: 40),
                         ),
                         const SizedBox(width: 12),
                         // App Name
@@ -296,7 +314,9 @@ class _SearchPageState extends State<SearchPage> {
                             style: GoogleFonts.tajawal(
                               fontSize: 24,
                               fontWeight: FontWeight.w900,
-                              color: isDarkMode ? Colors.white : const Color(0xFF1D4ED8),
+                              color: isDarkMode
+                                  ? Colors.white
+                                  : const Color(0xFF1D4ED8),
                             ),
                           ),
                         ),
@@ -313,18 +333,18 @@ class _SearchPageState extends State<SearchPage> {
                   children: [
                     // Functional Search Field
                     _buildSearchField(theme, isDarkMode),
-                    
+
                     // Search Results or Default Content
                     if (_hasSearched)
                       _buildSearchResults(theme, isDarkMode)
                     else ...[
                       // Categories Section (5 categories from backend)
                       _buildCategoriesSection(theme, isDarkMode),
-                      
+
                       // Suggested Courses Section (10 random courses)
                       _buildSuggestedCoursesSection(theme, isDarkMode),
                     ],
-                    
+
                     const SizedBox(height: 40),
                   ],
                 ),
@@ -335,7 +355,7 @@ class _SearchPageState extends State<SearchPage> {
       },
     );
   }
-  
+
   Widget _buildSearchField(ThemeData theme, bool isDarkMode) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -386,7 +406,9 @@ class _SearchPageState extends State<SearchPage> {
                 ? IconButton(
                     icon: Icon(
                       Icons.clear,
-                      color: isDarkMode ? Colors.grey[400] : const Color(0xFF6B7280),
+                      color: isDarkMode
+                          ? Colors.grey[400]
+                          : const Color(0xFF6B7280),
                     ),
                     onPressed: () {
                       _searchController.clear();
@@ -408,19 +430,16 @@ class _SearchPageState extends State<SearchPage> {
       ),
     );
   }
-  
+
   Widget _buildCategoriesSection(ThemeData theme, bool isDarkMode) {
     if (_isLoadingCategories) {
-      return const Padding(
-        padding: EdgeInsets.all(20),
-        child: Center(child: CircularProgressIndicator()),
-      );
+      return _buildSkeletonCategories(isDarkMode);
     }
-    
+
     if (_categories.isEmpty) {
       return const SizedBox.shrink();
     }
-    
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       child: Column(
@@ -443,7 +462,7 @@ class _SearchPageState extends State<SearchPage> {
               ],
             ),
           ),
-          
+
           // Categories List
           Column(
             children: _categories.map((category) {
@@ -458,10 +477,7 @@ class _SearchPageState extends State<SearchPage> {
                       borderRadius: BorderRadius.circular(8),
                       border: isDarkMode
                           ? null
-                          : Border.all(
-                              color: Colors.grey.shade200,
-                              width: 1,
-                            ),
+                          : Border.all(color: Colors.grey.shade200, width: 1),
                     ),
                     child: ListTile(
                       dense: true,
@@ -470,10 +486,7 @@ class _SearchPageState extends State<SearchPage> {
                         height: 40,
                         decoration: BoxDecoration(
                           gradient: const LinearGradient(
-                            colors: [
-                              Color(0xFF667EEA),
-                              Color(0xFF764BA2),
-                            ],
+                            colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                           ),
@@ -515,19 +528,16 @@ class _SearchPageState extends State<SearchPage> {
       ),
     );
   }
-  
+
   Widget _buildSuggestedCoursesSection(ThemeData theme, bool isDarkMode) {
     if (_isLoadingCourses) {
-      return const Padding(
-        padding: EdgeInsets.all(20),
-        child: Center(child: CircularProgressIndicator()),
-      );
+      return _buildSkeletonCourses(isDarkMode);
     }
-    
+
     if (_suggestedCourses.isEmpty) {
       return const SizedBox.shrink();
     }
-    
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
       child: Column(
@@ -545,7 +555,7 @@ class _SearchPageState extends State<SearchPage> {
               ),
             ),
           ),
-          
+
           // Courses List
           ListView.separated(
             shrinkWrap: true,
@@ -561,8 +571,12 @@ class _SearchPageState extends State<SearchPage> {
       ),
     );
   }
-  
-  Widget _buildCourseCard(Map<String, dynamic> course, ThemeData theme, bool isDarkMode) {
+
+  Widget _buildCourseCard(
+    Map<String, dynamic> course,
+    ThemeData theme,
+    bool isDarkMode,
+  ) {
     return Material(
       elevation: 2,
       borderRadius: BorderRadius.circular(12),
@@ -578,7 +592,9 @@ class _SearchPageState extends State<SearchPage> {
             children: [
               // Course Image
               ClipRRect(
-                borderRadius: const BorderRadius.horizontal(right: Radius.circular(12)),
+                borderRadius: const BorderRadius.horizontal(
+                  right: Radius.circular(12),
+                ),
                 child: Image.network(
                   course['image'],
                   width: 100,
@@ -588,11 +604,14 @@ class _SearchPageState extends State<SearchPage> {
                     width: 100,
                     height: 80,
                     color: isDarkMode ? Colors.grey[700] : Colors.grey[300],
-                    child: Icon(Icons.image_not_supported, color: isDarkMode ? Colors.grey[500] : Colors.grey[600]),
+                    child: Icon(
+                      Icons.image_not_supported,
+                      color: isDarkMode ? Colors.grey[500] : Colors.grey[600],
+                    ),
                   ),
                 ),
               ),
-              
+
               // Course Info
               Expanded(
                 child: Padding(
@@ -616,7 +635,9 @@ class _SearchPageState extends State<SearchPage> {
                         style: GoogleFonts.tajawal(
                           fontWeight: FontWeight.w500,
                           fontSize: 12,
-                          color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
+                          color: isDarkMode
+                              ? Colors.grey[400]
+                              : Colors.grey[600],
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -638,7 +659,9 @@ class _SearchPageState extends State<SearchPage> {
                             style: GoogleFonts.tajawal(
                               fontWeight: FontWeight.w500,
                               fontSize: 12,
-                              color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
+                              color: isDarkMode
+                                  ? Colors.grey[400]
+                                  : Colors.grey[600],
                             ),
                           ),
                         ],
@@ -647,7 +670,7 @@ class _SearchPageState extends State<SearchPage> {
                   ),
                 ),
               ),
-              
+
               // Price
               Padding(
                 padding: const EdgeInsets.only(left: 12),
@@ -666,15 +689,12 @@ class _SearchPageState extends State<SearchPage> {
       ),
     );
   }
-  
+
   Widget _buildSearchResults(ThemeData theme, bool isDarkMode) {
     if (_isSearching) {
-      return const Padding(
-        padding: EdgeInsets.all(40),
-        child: Center(child: CircularProgressIndicator()),
-      );
+      return _buildSkeletonCourses(isDarkMode);
     }
-    
+
     if (_searchResults.isEmpty) {
       return Padding(
         padding: const EdgeInsets.all(40),
@@ -700,7 +720,7 @@ class _SearchPageState extends State<SearchPage> {
         ),
       );
     }
-    
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       child: Column(
@@ -718,7 +738,7 @@ class _SearchPageState extends State<SearchPage> {
               ),
             ),
           ),
-          
+
           // Results List
           ListView.separated(
             shrinkWrap: true,
@@ -729,6 +749,126 @@ class _SearchPageState extends State<SearchPage> {
               final course = _searchResults[index];
               return _buildCourseCard(course, theme, isDarkMode);
             },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSkeletonCategories(bool isDarkMode) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header skeleton
+          SkeletonContainer(
+            width: 120,
+            height: 20,
+            borderRadius: 4,
+            isLoading: true,
+          ),
+          const SizedBox(height: 16),
+          // Category items skeleton
+          ...List.generate(
+            5,
+            (index) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                children: [
+                  SkeletonContainer(
+                    width: 40,
+                    height: 40,
+                    borderRadius: 8,
+                    isLoading: true,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: SkeletonContainer(
+                      width: double.infinity,
+                      height: 16,
+                      borderRadius: 4,
+                      isLoading: true,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSkeletonCourses(bool isDarkMode) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header skeleton
+          SkeletonContainer(
+            width: 150,
+            height: 20,
+            borderRadius: 4,
+            isLoading: true,
+          ),
+          const SizedBox(height: 16),
+          // Course cards skeleton
+          ...List.generate(
+            4,
+            (index) => Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Row(
+                children: [
+                  SkeletonContainer(
+                    width: 100,
+                    height: 80,
+                    borderRadius: 12,
+                    isLoading: true,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SkeletonContainer(
+                          width: double.infinity,
+                          height: 16,
+                          borderRadius: 4,
+                          isLoading: true,
+                        ),
+                        const SizedBox(height: 8),
+                        SkeletonContainer(
+                          width: 100,
+                          height: 12,
+                          borderRadius: 4,
+                          isLoading: true,
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            SkeletonContainer(
+                              width: 60,
+                              height: 12,
+                              borderRadius: 4,
+                              isLoading: true,
+                            ),
+                            const SizedBox(width: 12),
+                            SkeletonContainer(
+                              width: 50,
+                              height: 12,
+                              borderRadius: 4,
+                              isLoading: true,
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ],
       ),

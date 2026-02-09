@@ -134,9 +134,9 @@ class CourseApi {
   Future<Map<String, dynamic>> getCourseDetails(String slug) async {
     final url = "/courses/$slug";
     print('DEBUG - Calling API: GET $url');
-    
+
     final response = await _client.get(url);
-    
+
     print('DEBUG - Response status: ${response.statusCode}');
     print('DEBUG - Response body: ${response.body}');
     print('DEBUG - Slug used: $slug');
@@ -157,7 +157,7 @@ class CourseApi {
   }) async {
     // Get the current user's ID for instructor_id
     final instructorId = await _auth.getUserId();
-    
+
     final fields = {
       "title": title,
       if (description != null) "description": description,
@@ -203,30 +203,39 @@ class CourseApi {
     }
   }
 
-  /// Create university course with file uploads
+  /// Create university course with file uploads - uses same endpoint as educational courses
   Future<Map<String, dynamic>> createUniversityCourse({
     required String title,
     String? description,
     required num price,
     String? level,
+    required String universityId,
     required String universityName,
+    required String facultyId,
     required String facultyName,
     String? categoryId,
     String? categoryName,
     File? thumbnailImage,
     List<Map<String, dynamic>>? lessons,
   }) async {
+    // Get the current user's ID for instructor_id (same as educational courses)
+    final instructorId = await _auth.getUserId();
+
     final fields = {
       "title": title,
       if (description != null) "description": description,
       "price": price.toString(),
       if (level != null) "level": level,
+      "university_id": universityId,
       "university_name": universityName,
+      "faculty_id": facultyId,
       "faculty_name": facultyName,
       if (categoryId != null) "category_id": categoryId,
       if (categoryName != null) "category_name": categoryName,
       "type": "university",
+      "is_university_course": "true",
       if (lessons != null) "lessons_json": jsonEncode(lessons),
+      if (instructorId != null) "instructor_id": instructorId,
     };
 
     final files = <String, File>{};
@@ -234,13 +243,14 @@ class CourseApi {
       files['thumbnail_image'] = thumbnailImage;
     }
 
+    // Use same endpoint as educational courses
     final response = await _client.postMultipart(
-      "/instructor/courses",
+      "/instructor/courses-db",
       fields: fields,
       files: files.isNotEmpty ? files : null,
     );
 
-    // Handle empty or invalid response
+    // Handle empty or invalid response (same as educational courses)
     if (response.body.isEmpty) {
       return {
         'success': false,
@@ -252,7 +262,7 @@ class CourseApi {
     try {
       return jsonDecode(response.body) as Map<String, dynamic>;
     } catch (e) {
-      // If JSON parsing fails, return error with raw response
+      // If JSON parsing fails, return error with raw response (same as educational)
       return {
         'success': false,
         'error': 'invalid_response',
@@ -416,12 +426,12 @@ class CourseApi {
     try {
       // Get the current user's ID
       final instructorId = await _auth.getUserId();
-      
+
       // Build URL with instructor_id query parameter if available
-      final endpoint = instructorId != null 
+      final endpoint = instructorId != null
           ? "/instructor/my-courses-db?instructor_id=$instructorId"
           : "/instructor/my-courses-db";
-      
+
       // Use the DB-backed endpoint for instructor courses
       final response = await _client.get(endpoint);
 

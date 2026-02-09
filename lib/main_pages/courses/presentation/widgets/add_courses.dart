@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:courses_app/services/course_api.dart';
 import 'package:courses_app/services/home_api.dart';
+import 'package:courses_app/services/university_api.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -66,10 +67,15 @@ class _AddCoursePageState extends State<AddCoursePage>
   final _uniDescriptionController = TextEditingController();
   final _uniPriceController = TextEditingController();
 
-  // University-specific fields (first 3 fields)
-  final _universityNameController = TextEditingController();
-  final _facultyController = TextEditingController();
-  final _lectureNameController = TextEditingController();
+  // University-specific fields (using dropdowns)
+  String? _selectedUniversityId;
+  String? _selectedUniversityName;
+  String? _selectedFacultyId;
+  String? _selectedFacultyName;
+  List<Map<String, dynamic>> _universities = [];
+  List<Map<String, dynamic>> _faculties = [];
+  bool _isLoadingUniversities = true;
+  bool _isLoadingFaculties = false;
 
   // Course image files (file picker instead of URL)
   File? _courseImageFile;
@@ -91,7 +97,7 @@ class _AddCoursePageState extends State<AddCoursePage>
 
   bool _isLoading = false;
   bool _isLoadingCategories = true;
-  
+
   // Categories from backend
   List<Map<String, dynamic>> _categories = [];
 
@@ -102,6 +108,7 @@ class _AddCoursePageState extends State<AddCoursePage>
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     _loadCategories();
+    _loadUniversities();
 
     // Prefill fields when editing an existing course (educational tab)
     if (widget.isEditing) {
@@ -135,13 +142,62 @@ class _AddCoursePageState extends State<AddCoursePage>
     }
   }
 
+  Future<void> _loadUniversities() async {
+    try {
+      final api = UniversityApi();
+      final list = await api.getUniversities();
+      if (mounted) {
+        setState(() {
+          _universities = list.map((u) => u as Map<String, dynamic>).toList();
+          _isLoadingUniversities = false;
+        });
+      }
+    } catch (e) {
+      print('Error loading universities: $e');
+      if (mounted) {
+        setState(() {
+          _isLoadingUniversities = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _loadFaculties(String universityId) async {
+    if (universityId.isEmpty) return;
+    setState(() {
+      _isLoadingFaculties = true;
+      _faculties = [];
+      _selectedFacultyId = null;
+      _selectedFacultyName = null;
+    });
+    try {
+      final api = UniversityApi();
+      final list = await api.getFaculties(universityId);
+      if (mounted) {
+        setState(() {
+          _faculties = list.map((f) => f as Map<String, dynamic>).toList();
+          _isLoadingFaculties = false;
+        });
+      }
+    } catch (e) {
+      print('Error loading faculties: $e');
+      if (mounted) {
+        setState(() {
+          _isLoadingFaculties = false;
+        });
+      }
+    }
+  }
+
   Future<void> _loadCategories() async {
     try {
       final response = await _homeApi.getHome();
       if (mounted) {
         final categories = (response['categories'] as List<dynamic>?) ?? [];
         setState(() {
-          _categories = categories.map((c) => c as Map<String, dynamic>).toList();
+          _categories = categories
+              .map((c) => c as Map<String, dynamic>)
+              .toList();
           _isLoadingCategories = false;
         });
       }
@@ -157,7 +213,10 @@ class _AddCoursePageState extends State<AddCoursePage>
 
   // Get category names for dropdown
   List<String> get _categoryNames {
-    return _categories.map((c) => c['name']?.toString() ?? '').where((name) => name.isNotEmpty).toList();
+    return _categories
+        .map((c) => c['name']?.toString() ?? '')
+        .where((name) => name.isNotEmpty)
+        .toList();
   }
 
   @override
@@ -169,9 +228,6 @@ class _AddCoursePageState extends State<AddCoursePage>
     _uniTitleController.dispose();
     _uniDescriptionController.dispose();
     _uniPriceController.dispose();
-    _universityNameController.dispose();
-    _facultyController.dispose();
-    _lectureNameController.dispose();
     super.dispose();
   }
 
@@ -402,7 +458,7 @@ class _AddCoursePageState extends State<AddCoursePage>
 
       final api = CourseApi();
       final response = await api.createUniversityCourse(
-        title: _lectureNameController.text.trim(),
+        title: _uniTitleController.text.trim(),
         description: _uniDescriptionController.text.trim().isEmpty
             ? null
             : _uniDescriptionController.text.trim(),
@@ -410,8 +466,18 @@ class _AddCoursePageState extends State<AddCoursePage>
             ? 0
             : num.tryParse(_uniPriceController.text.trim()) ?? 0,
         level: _mapLevelToBackend(_uniSelectedLevel),
-        universityName: _universityNameController.text.trim(),
-        facultyName: _facultyController.text.trim(),
+        universityId: (_selectedUniversityId?.isNotEmpty ?? false)
+            ? _selectedUniversityId!
+            : 'unknown',
+        universityName: (_selectedUniversityName?.isNotEmpty ?? false)
+            ? _selectedUniversityName!
+            : 'Unknown University',
+        facultyId: (_selectedFacultyId?.isNotEmpty ?? false)
+            ? _selectedFacultyId!
+            : 'unknown',
+        facultyName: (_selectedFacultyName?.isNotEmpty ?? false)
+            ? _selectedFacultyName!
+            : 'Unknown Faculty',
         categoryName: _uniSelectedCategory,
         thumbnailImage: _universityCourseImageFile,
         lessons: lessons,
@@ -1044,47 +1110,92 @@ class _AddCoursePageState extends State<AddCoursePage>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // University-specific first 3 fields
+            // University-specific dropdown fields
             _buildSectionTitle('معلومات الجامعة', isDarkMode),
             const SizedBox(height: 16),
-            _buildTextField(
-              controller: _universityNameController,
-              label: 'اسم الجامعة',
-              hint: 'أدخل اسم الجامعة',
-              isDarkMode: isDarkMode,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'الرجاء إدخال اسم الجامعة';
-                }
-                return null;
-              },
-            ),
+
+            // University dropdown
+            if (_isLoadingUniversities)
+              Center(
+                child: Column(
+                  children: [
+                    CircularProgressIndicator(),
+                    const SizedBox(height: 8),
+                    Text(
+                      'جاري تحميل الجامعات...',
+                      style: GoogleFonts.tajawal(
+                        color: isDarkMode
+                            ? Colors.white60
+                            : Colors.black.withOpacity(0.6),
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            else if (_universities.isEmpty)
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: isDarkMode
+                      ? const Color(0xFF2D2D2D)
+                      : const Color(0xFFF3F4F6),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  'لا توجد جامعات متاحة',
+                  style: GoogleFonts.tajawal(
+                    color: isDarkMode
+                        ? Colors.white60
+                        : Colors.black.withOpacity(0.6),
+                  ),
+                ),
+              )
+            else
+              _buildUniversityDropdown(isDarkMode),
+
             const SizedBox(height: 16),
-            _buildTextField(
-              controller: _facultyController,
-              label: 'اسم الكلية',
-              hint: 'أدخل اسم الكلية',
-              isDarkMode: isDarkMode,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'الرجاء إدخال اسم الكلية';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-            _buildTextField(
-              controller: _lectureNameController,
-              label: 'اسم المحاضرة',
-              hint: 'أدخل اسم المحاضرة',
-              isDarkMode: isDarkMode,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'الرجاء إدخال اسم المحاضرة';
-                }
-                return null;
-              },
-            ),
+
+            // Faculty dropdown (only show when university is selected)
+            if (_selectedUniversityId != null) ...[
+              if (_isLoadingFaculties)
+                Center(
+                  child: Column(
+                    children: [
+                      CircularProgressIndicator(),
+                      const SizedBox(height: 8),
+                      Text(
+                        'جاري تحميل الكليات...',
+                        style: GoogleFonts.tajawal(
+                          color: isDarkMode
+                              ? Colors.white60
+                              : Colors.black.withOpacity(0.6),
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              else if (_faculties.isEmpty)
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: isDarkMode
+                        ? const Color(0xFF2D2D2D)
+                        : const Color(0xFFF3F4F6),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    'لا توجد كليات متاحة لهذه الجامعة',
+                    style: GoogleFonts.tajawal(
+                      color: isDarkMode
+                          ? Colors.white60
+                          : Colors.black.withOpacity(0.6),
+                    ),
+                  ),
+                )
+              else
+                _buildFacultyDropdown(isDarkMode),
+            ],
+
             const SizedBox(height: 24),
 
             // Rest same as educational
@@ -1099,6 +1210,153 @@ class _AddCoursePageState extends State<AddCoursePage>
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildUniversityDropdown(bool isDarkMode) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'الجامعة',
+          style: GoogleFonts.tajawal(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: isDarkMode ? Colors.white : const Color(0xFF1F2937),
+          ),
+        ),
+        const SizedBox(height: 8),
+        DropdownButtonFormField<String>(
+          value: _selectedUniversityId,
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: isDarkMode ? Colors.white10 : Colors.black12,
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFF667EEA), width: 2),
+            ),
+            contentPadding: const EdgeInsets.all(16),
+          ),
+          dropdownColor: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
+          style: GoogleFonts.tajawal(
+            color: isDarkMode ? Colors.white : const Color(0xFF1F2937),
+          ),
+          hint: Text(
+            'اختر الجامعة',
+            style: GoogleFonts.tajawal(
+              color: isDarkMode ? Colors.white30 : const Color(0xFF9CA3AF),
+            ),
+          ),
+          items: _universities.map((uni) {
+            return DropdownMenuItem<String>(
+              value: uni['id']?.toString() ?? '',
+              child: Text(uni['name']?.toString() ?? ''),
+            );
+          }).toList(),
+          onChanged: (value) {
+            if (value != null) {
+              final selectedUni = _universities.firstWhere(
+                (u) => u['id']?.toString() == value,
+                orElse: () => {},
+              );
+              setState(() {
+                _selectedUniversityId = value;
+                _selectedUniversityName = selectedUni['name']?.toString() ?? '';
+              });
+              _loadFaculties(value);
+            }
+          },
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'الرجاء اختيار الجامعة';
+            }
+            return null;
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFacultyDropdown(bool isDarkMode) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'الكلية',
+          style: GoogleFonts.tajawal(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: isDarkMode ? Colors.white : const Color(0xFF1F2937),
+          ),
+        ),
+        const SizedBox(height: 8),
+        DropdownButtonFormField<String>(
+          value: _selectedFacultyId,
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: isDarkMode ? Colors.white10 : Colors.black12,
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFF667EEA), width: 2),
+            ),
+            contentPadding: const EdgeInsets.all(16),
+          ),
+          dropdownColor: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
+          style: GoogleFonts.tajawal(
+            color: isDarkMode ? Colors.white : const Color(0xFF1F2937),
+          ),
+          hint: Text(
+            'اختر الكلية',
+            style: GoogleFonts.tajawal(
+              color: isDarkMode ? Colors.white30 : const Color(0xFF9CA3AF),
+            ),
+          ),
+          items: _faculties.map((fac) {
+            return DropdownMenuItem<String>(
+              value: fac['id']?.toString() ?? '',
+              child: Text(fac['name']?.toString() ?? ''),
+            );
+          }).toList(),
+          onChanged: (value) {
+            if (value != null) {
+              final selectedFac = _faculties.firstWhere(
+                (f) => f['id']?.toString() == value,
+                orElse: () => {},
+              );
+              setState(() {
+                _selectedFacultyId = value;
+                _selectedFacultyName = selectedFac['name']?.toString() ?? '';
+              });
+            }
+          },
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'الرجاء اختيار الكلية';
+            }
+            return null;
+          },
+        ),
+      ],
     );
   }
 

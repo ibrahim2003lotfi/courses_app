@@ -6,6 +6,7 @@ import 'package:courses_app/main_pages/auth/presentation/pages/login_page.dart';
 import 'package:courses_app/main_pages/instructor/presentation/pages/instructor_registration_page.dart';
 import 'package:courses_app/main_pages/profile/presentation/edit_profile.dart';
 import 'package:courses_app/main_pages/profile/presentation/pages/settings_page.dart';
+import 'package:courses_app/presentation/widgets/skeleton_widgets.dart';
 import 'package:courses_app/services/auth_service.dart';
 import 'package:courses_app/services/profile_service.dart';
 import 'package:courses_app/theme_cubit/theme_cubit.dart';
@@ -36,17 +37,19 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   void initState() {
     super.initState();
-    
+
     // Debug: Check authentication status
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final authService = AuthService();
       final token = await authService.getToken();
       print('🔵 ProfilePage init - Token exists: ${token != null}');
       if (token != null) {
-        print('🔵 Token preview: ${token.substring(0, min(20, token.length))}...');
+        print(
+          '🔵 Token preview: ${token.substring(0, min(20, token.length))}...',
+        );
       }
     });
-    
+
     // Load profile data when page is initialized
     _loadProfile();
   }
@@ -60,7 +63,7 @@ class _ProfilePageState extends State<ProfilePage> {
     print('🔵 Loading profile data...');
     try {
       final result = await _profileService.getMe();
-      
+
       if (!mounted) return;
 
       print('🔵 Profile load result status: ${result['status']}');
@@ -68,11 +71,11 @@ class _ProfilePageState extends State<ProfilePage> {
 
       if (result['status'] == 200 && result['data'] != null) {
         final data = result['data'] as Map<String, dynamic>;
-        
+
         // Debug: Print the exact structure
         if (data['user'] != null) {
           print('🔵 User data: ${data['user']}');
-          
+
           // Update UserRoleBloc based on role from API
           final userRole = data['user']['role']?.toString().toLowerCase();
           print('🔵 User role from API: $userRole');
@@ -87,41 +90,40 @@ class _ProfilePageState extends State<ProfilePage> {
         } else {
           print('⚠️ No user data in response');
         }
-        
+
         if (data['profile'] != null) {
           print('🔵 Profile data: ${data['profile']}');
         } else {
           print('⚠️ No profile data in response');
         }
-        
+
         if (data['certificates'] != null) {
           print('🔵 Certificates data: ${data['certificates']}');
         } else {
           print('⚠️ No certificates data in response');
         }
-        
+
         setState(() {
           _user = data['user'] as Map<String, dynamic>?;
           _profile = (data['profile'] as Map<String, dynamic>?) ?? {};
-          _stats = (data['stats'] as Map<String, dynamic>?) ?? {
-            'enrolled': 0,
-            'completed': 0,
-            'certificates': 0,
-          };
+          _stats =
+              (data['stats'] as Map<String, dynamic>?) ??
+              {'enrolled': 0, 'completed': 0, 'certificates': 0};
           _certificates = (data['certificates'] as List<dynamic>?)
               ?.map((cert) => cert as Map<String, dynamic>)
               .toList();
           _isLoading = false;
         });
       } else {
-        final errorMessage = result['message']?.toString() ?? 'حدث خطأ غير معروف';
+        final errorMessage =
+            result['message']?.toString() ?? 'حدث خطأ غير معروف';
         print('❌ Error loading profile: $errorMessage');
-        
+
         setState(() {
           _errorMessage = errorMessage;
           _isLoading = false;
         });
-        
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -134,22 +136,19 @@ class _ProfilePageState extends State<ProfilePage> {
     } catch (e) {
       print('❌ Exception in _loadProfile: $e');
       final errorMessage = 'حدث خطأ في تحميل البيانات: ${e.toString()}';
-      
+
       setState(() {
         _errorMessage = errorMessage;
         _isLoading = false;
       });
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(errorMessage),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text(errorMessage), backgroundColor: Colors.red),
         );
       }
     }
-}
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -160,23 +159,27 @@ class _ProfilePageState extends State<ProfilePage> {
         // بيانات المستخدم من الـ API مع قيم افتراضية للحفاظ على نفس التصميم
         final String name = _user?['name'] ?? 'المستخدم';
         final String email = _user?['email'] ?? 'example@email.com';
-       // final String username =
-            //_profile?['username'] ?? (_user != null ? '@${_user!['id']}' : '@user');
-            final String username =
-    _profile?['username'] ?? (_user != null ? '@${_user!['id']}' : '@user');
+        // final String username =
+        //_profile?['username'] ?? (_user != null ? '@${_user!['id']}' : '@user');
+        final String username =
+            _profile?['username'] ??
+            (_user != null ? '@${_user!['id']}' : '@user');
 
-        final String bio = _profile?['bio'] ??
+        final String bio =
+            _profile?['bio'] ??
             (isTeacher
                 ? 'مدرس متخصص في تطوير التطبيقات وتقنية المعلومات.'
                 : 'مطور تطبيقات محمول ومهتم بالتعلم المستمر في مجال التكنولوجيا والبرمجة.');
         final String joinDateText = _user?['created_at'] != null
             ? 'انضم في ${_user!['created_at'].toString().split(' ').first}'
             : 'انضم حديثًا';
-        final String avatarUrl = _profile?['avatar_url'] ??
+        final String avatarUrl =
+            _profile?['avatar_url'] ??
             'https://picsum.photos/seed/profile/200/200';
-        final String coverUrl = _profile?['cover_url'] ??
+        final String coverUrl =
+            _profile?['cover_url'] ??
             'https://picsum.photos/seed/cover/800/300';
-        
+
         print('🔵 Build method - Avatar URL: $avatarUrl');
         print('🔵 Build method - Cover URL: $coverUrl');
 
@@ -208,9 +211,7 @@ class _ProfilePageState extends State<ProfilePage> {
             if (_isLoading) {
               return Scaffold(
                 backgroundColor: _getBackgroundColor(isDarkMode),
-                body: const Center(
-                  child: CircularProgressIndicator(),
-                ),
+                body: SkeletonProfile(isDarkMode: isDarkMode),
               );
             }
 
@@ -254,7 +255,11 @@ class _ProfilePageState extends State<ProfilePage> {
                     slivers: [
                       // Header with Cover and Profile Image
                       SliverToBoxAdapter(
-                        child: _buildProfileHeader(isDarkMode, avatarUrl, coverUrl),
+                        child: _buildProfileHeader(
+                          isDarkMode,
+                          avatarUrl,
+                          coverUrl,
+                        ),
                       ),
 
                       // User Info Section
@@ -342,7 +347,11 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
-  Widget _buildProfileHeader(bool isDarkMode, String avatarUrl, String coverUrl) {
+  Widget _buildProfileHeader(
+    bool isDarkMode,
+    String avatarUrl,
+    String coverUrl,
+  ) {
     return Container(
       height: 280,
       child: Stack(
@@ -736,14 +745,20 @@ class _ProfilePageState extends State<ProfilePage> {
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             colors: [
-                              _hexToColor(certificate['color'] ?? '#3B82F6').withOpacity(0.2),
-                              _hexToColor(certificate['color'] ?? '#3B82F6').withOpacity(0.1),
+                              _hexToColor(
+                                certificate['color'] ?? '#3B82F6',
+                              ).withOpacity(0.2),
+                              _hexToColor(
+                                certificate['color'] ?? '#3B82F6',
+                              ).withOpacity(0.1),
                             ],
                           ),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
-                          _getIconFromString(certificate['icon'] ?? 'workspace_premium'),
+                          _getIconFromString(
+                            certificate['icon'] ?? 'workspace_premium',
+                          ),
                           color: _hexToColor(certificate['color'] ?? '#3B82F6'),
                           size: 24,
                         ),
@@ -1027,7 +1042,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Future<void> _performDeleteAccount() async {
     final scaffoldMessenger = ScaffoldMessenger.of(context);
-    
+
     // Show loading indicator
     showDialog(
       context: context,
@@ -1042,7 +1057,7 @@ class _ProfilePageState extends State<ProfilePage> {
         ),
       ),
     );
-    
+
     try {
       final result = await _profileService.deleteAccount();
 
@@ -1074,10 +1089,10 @@ class _ProfilePageState extends State<ProfilePage> {
       }
     } catch (e) {
       if (!mounted) return;
-      
+
       // Close loading dialog
       Navigator.pop(context);
-      
+
       scaffoldMessenger.showSnackBar(
         SnackBar(
           content: Text('حدث خطأ: ${e.toString()}'),

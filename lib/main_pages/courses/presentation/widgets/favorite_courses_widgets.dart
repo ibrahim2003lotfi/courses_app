@@ -3,9 +3,8 @@ import 'package:courses_app/core/utils/theme_manager.dart';
 import 'package:courses_app/main_pages/courses/presentation/pages/course_details_page.dart';
 import 'package:courses_app/main_pages/courses/presentation/widgets/add_courses.dart';
 import 'package:courses_app/services/course_api.dart';
-
+import 'package:courses_app/presentation/widgets/skeleton_widgets.dart';
 import 'package:flutter/material.dart';
-
 import 'package:google_fonts/google_fonts.dart';
 
 // New Published Courses Tab Widget
@@ -281,7 +280,7 @@ class _PublishedCoursesTabState extends State<PublishedCoursesTab> {
         // Courses List
         Expanded(
           child: _isLoading
-              ? const Center(child: CircularProgressIndicator())
+              ? _buildSkeletonCourseList()
               : _error != null
               ? Center(
                   child: Padding(
@@ -420,6 +419,71 @@ class _PublishedCoursesTabState extends State<PublishedCoursesTab> {
     if (created == true) {
       await _loadPublishedCourses();
     }
+  }
+
+  Widget _buildSkeletonCourseList() {
+    return ListView.builder(
+      padding: const EdgeInsets.all(16.0),
+      itemCount: 4,
+      itemBuilder: (context, index) {
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 16.0),
+          child: Row(
+            children: [
+              // Image skeleton
+              SkeletonContainer(
+                width: 100,
+                height: 80,
+                borderRadius: 12,
+                isLoading: true,
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Title skeleton
+                    SkeletonContainer(
+                      width: double.infinity,
+                      height: 18,
+                      borderRadius: 4,
+                      isLoading: true,
+                    ),
+                    const SizedBox(height: 8),
+                    // Subtitle skeleton
+                    SkeletonContainer(
+                      width: 120,
+                      height: 14,
+                      borderRadius: 4,
+                      isLoading: true,
+                    ),
+                    const SizedBox(height: 8),
+                    // Stats row skeleton
+                    Row(
+                      children: [
+                        SkeletonContainer(
+                          width: 60,
+                          height: 12,
+                          borderRadius: 4,
+                          isLoading: true,
+                        ),
+                        const SizedBox(width: 16),
+                        SkeletonContainer(
+                          width: 50,
+                          height: 12,
+                          borderRadius: 4,
+                          isLoading: true,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   void _showCourseOptionsBottomSheet(

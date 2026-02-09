@@ -1,4 +1,5 @@
 import 'package:courses_app/main_pages/home/presentation/side%20pages/university_pages/faculties_page.dart';
+import 'package:courses_app/presentation/widgets/skeleton_widgets.dart';
 import 'package:courses_app/theme_cubit/theme_cubit.dart';
 import 'package:courses_app/theme_cubit/theme_state.dart';
 import 'package:flutter/material.dart';
@@ -29,8 +30,9 @@ class _UniversitiesPageBody extends StatelessWidget {
         final isDarkMode = themeState.isDarkMode;
 
         return Scaffold(
-          backgroundColor:
-              isDarkMode ? const Color(0xFF121212) : const Color(0xFFF9FAFB),
+          backgroundColor: isDarkMode
+              ? const Color(0xFF121212)
+              : const Color(0xFFF9FAFB),
           body: BlocBuilder<UniversityBloc, UniversityState>(
             builder: (context, uniState) {
               final universities = uniState.universities;
@@ -47,14 +49,17 @@ class _UniversitiesPageBody extends StatelessWidget {
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withOpacity(
-                                isDarkMode ? 0.2 : 0.05),
+                              isDarkMode ? 0.2 : 0.05,
+                            ),
                             blurRadius: 8,
                             offset: const Offset(0, 2),
                           ),
                         ],
                       ),
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 16),
+                        horizontal: 20,
+                        vertical: 16,
+                      ),
                       child: SafeArea(
                         bottom: false,
                         child: Row(
@@ -105,47 +110,99 @@ class _UniversitiesPageBody extends StatelessWidget {
                   ),
 
                   if (uniState.isLoading)
-                    const SliverToBoxAdapter(
+                    SliverToBoxAdapter(
+                      child: SkeletonList(
+                        itemCount: 5,
+                        isDarkMode: isDarkMode,
+                        padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
+                      ),
+                    )
+                  else if (uniState.error != null)
+                    SliverToBoxAdapter(
                       child: Padding(
-                        padding: EdgeInsets.all(24),
+                        padding: const EdgeInsets.all(24),
                         child: Center(
-                          child: CircularProgressIndicator(),
+                          child: Column(
+                            children: [
+                              Icon(
+                                Icons.error_outline,
+                                size: 48,
+                                color: Colors.red,
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                'حدث خطأ: ${uniState.error}',
+                                style: GoogleFonts.tajawal(
+                                  fontSize: 16,
+                                  color: isDarkMode
+                                      ? Colors.white
+                                      : Colors.black,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    )
+                  else if (universities.isEmpty)
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Center(
+                          child: Column(
+                            children: [
+                              Icon(
+                                Icons.school_outlined,
+                                size: 48,
+                                color: isDarkMode
+                                    ? Colors.white54
+                                    : Colors.grey,
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                'لا توجد جامعات',
+                                style: GoogleFonts.tajawal(
+                                  fontSize: 16,
+                                  color: isDarkMode
+                                      ? Colors.white
+                                      : Colors.black,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     )
                   else
-                    // Universities List (fallback to old static list if backend empty)
+                    // Universities List from backend only
                     SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                        (context, index) {
-                          final uni = universities.isNotEmpty
-                              ? universities[index]
-                              : syrianUniversities[index];
+                      delegate: SliverChildBuilderDelegate((context, index) {
+                        final uni = universities[index] as Map<String, dynamic>;
+                        final mappedUniversity = {
+                          'id': (uni['id'] ?? '').toString(),
+                          'name': (uni['name'] ?? '').toString(),
+                          'city': (uni['city'] ?? '').toString(),
+                          'type': (uni['type'] ?? 'حكومية').toString(),
+                          'faculties': uni['faculties_count'] ?? 'غير معروف',
+                          'image':
+                              (uni['logo_url'] ??
+                                      'https://via.placeholder.com/200x200/4B5563/FFFFFF?text=University')
+                                  .toString(),
+                        };
 
-                          return Padding(
-                            padding: EdgeInsets.fromLTRB(
-                                20, index == 0 ? 20 : 0, 20, 16),
-                            child: UniversityListItem(
-                              university: universities.isNotEmpty
-                                  ? {
-                                      // Map backend fields into existing UI shape
-                                      'id': uni['id'] ?? '',
-                                      'name': uni['name'] ?? '',
-                                      'city': uni['city'] ?? '',
-                                      'type': uni['type'] ?? 'حكومية',
-                                      'faculties':
-                                          uni['faculties_count'] ?? 'غير معروف',
-                                      'image': uni['logo_url'] ??
-                                          'https://picsum.photos/seed/university${index}/200/200',
-                                    }
-                                  : syrianUniversities[index],
-                            ),
-                          );
-                        },
-                        childCount: universities.isNotEmpty
-                            ? universities.length
-                            : syrianUniversities.length,
-                      ),
+                        return Padding(
+                          padding: EdgeInsets.fromLTRB(
+                            20,
+                            index == 0 ? 20 : 0,
+                            20,
+                            16,
+                          ),
+                          child: UniversityListItem(
+                            university: mappedUniversity,
+                          ),
+                        );
+                      }, childCount: universities.length),
                     ),
 
                   const SliverToBoxAdapter(child: SizedBox(height: 40)),
@@ -169,11 +226,15 @@ class UniversityListItem extends StatelessWidget {
     return BlocBuilder<ThemeCubit, ThemeState>(
       builder: (context, themeState) {
         final isDarkMode = themeState.isDarkMode;
-        
+
         return Material(
           elevation: 2,
           borderRadius: BorderRadius.circular(16),
           child: Container(
+            width: double.infinity,
+            constraints: const BoxConstraints(
+              maxWidth: 400,
+            ), // Prevent overflow
             decoration: BoxDecoration(
               color: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
               borderRadius: BorderRadius.circular(16),
@@ -209,13 +270,34 @@ class UniversityListItem extends StatelessWidget {
                           return Container(
                             width: 80,
                             height: 80,
-                            color: isDarkMode ? const Color(0xFF2D2D2D) : const Color(0xFFF3F4F6),
+                            color: isDarkMode
+                                ? const Color(0xFF2D2D2D)
+                                : const Color(0xFFF3F4F6),
                             child: Center(
                               child: CircularProgressIndicator(
                                 valueColor: AlwaysStoppedAnimation<Color>(
-                                  isDarkMode ? Colors.white70 : const Color(0xFF2563EB),
+                                  isDarkMode
+                                      ? Colors.white70
+                                      : const Color(0xFF2563EB),
                                 ),
                               ),
+                            ),
+                          );
+                        },
+                        errorBuilder: (context, error, stackTrace) {
+                          // Avoid showing long HTTP error text; show simple fallback instead
+                          return Container(
+                            width: 80,
+                            height: 80,
+                            color: isDarkMode
+                                ? const Color(0xFF2D2D2D)
+                                : const Color(0xFFF3F4F6),
+                            child: Icon(
+                              Icons.school,
+                              color: isDarkMode
+                                  ? Colors.white70
+                                  : const Color(0xFF9CA3AF),
+                              size: 32,
                             ),
                           );
                         },
@@ -235,7 +317,9 @@ class UniversityListItem extends StatelessWidget {
                             style: GoogleFonts.tajawal(
                               fontSize: 18,
                               fontWeight: FontWeight.w800,
-                              color: isDarkMode ? Colors.white : const Color(0xFF1F2937),
+                              color: isDarkMode
+                                  ? Colors.white
+                                  : const Color(0xFF1F2937),
                             ),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
@@ -244,75 +328,106 @@ class UniversityListItem extends StatelessWidget {
                           const SizedBox(height: 8),
 
                           // University Info (Location, Type, Faculties)
-                          Wrap(
-                            spacing: 12,
-                            runSpacing: 6,
-                            children: [
-                              // Location
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.location_on,
-                                    size: 14,
-                                    color: isDarkMode ? Colors.white70 : const Color(0xFFEF4444),
+                          SizedBox(
+                            width: double.infinity,
+                            child: Wrap(
+                              spacing: 12,
+                              runSpacing: 6,
+                              alignment: WrapAlignment.start,
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              children: [
+                                // Location
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.location_on,
+                                      size: 14,
+                                      color: isDarkMode
+                                          ? Colors.white70
+                                          : const Color(0xFFEF4444),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Flexible(
+                                      child: Text(
+                                        university['city'],
+                                        style: GoogleFonts.tajawal(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600,
+                                          color: isDarkMode
+                                              ? Colors.white70
+                                              : const Color(0xFF6B7280),
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+
+                                // University Type
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 2,
                                   ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    university['city'],
-                                    style: GoogleFonts.tajawal(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                      color: isDarkMode ? Colors.white70 : const Color(0xFF6B7280),
+                                  constraints: const BoxConstraints(
+                                    maxWidth: 80,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: _getTypeColor(
+                                      university['type'],
+                                    ).withOpacity(isDarkMode ? 0.2 : 0.1),
+                                    borderRadius: BorderRadius.circular(6),
+                                    border: Border.all(
+                                      color: _getTypeColor(
+                                        university['type'],
+                                      ).withOpacity(isDarkMode ? 0.4 : 0.3),
                                     ),
                                   ),
-                                ],
-                              ),
-
-                              // University Type
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 2,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: _getTypeColor(university['type']).withOpacity(isDarkMode ? 0.2 : 0.1),
-                                  borderRadius: BorderRadius.circular(6),
-                                  border: Border.all(
-                                    color: _getTypeColor(university['type']).withOpacity(isDarkMode ? 0.4 : 0.3),
-                                  ),
-                                ),
-                                child: Text(
-                                  university['type'],
-                                  style: GoogleFonts.tajawal(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w700,
-                                    color: _getTypeColor(university['type']),
-                                  ),
-                                ),
-                              ),
-
-                              // Faculties Count
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.school_outlined,
-                                    size: 14,
-                                    color: isDarkMode ? Colors.white70 : const Color(0xFF6B7280),
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    '${university['faculties']} كلية',
+                                  child: Text(
+                                    university['type'],
                                     style: GoogleFonts.tajawal(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                      color: isDarkMode ? Colors.white70 : const Color(0xFF6B7280),
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w700,
+                                      color: _getTypeColor(university['type']),
                                     ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    textAlign: TextAlign.center,
                                   ),
-                                ],
-                              ),
-                            ],
+                                ),
+
+                                // Faculties Count
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.school_outlined,
+                                      size: 14,
+                                      color: isDarkMode
+                                          ? Colors.white70
+                                          : const Color(0xFF6B7280),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Flexible(
+                                      child: Text(
+                                        '${university['faculties']} كلية',
+                                        style: GoogleFonts.tajawal(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600,
+                                          color: isDarkMode
+                                              ? Colors.white70
+                                              : const Color(0xFF6B7280),
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
                           ),
 
                           const SizedBox(height: 12),
@@ -323,10 +438,7 @@ class UniversityListItem extends StatelessWidget {
                             height: 48,
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
-                                colors: [
-                                  Color(0xFF667EEA),
-                                  Color(0xFF764BA2),
-                                ],
+                                colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
                               ),
@@ -392,7 +504,10 @@ class UniversityListItem extends StatelessWidget {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => UniversityDetailsSheet(university: university, isDarkMode: isDarkMode),
+      builder: (context) => UniversityDetailsSheet(
+        university: university,
+        isDarkMode: isDarkMode,
+      ),
     );
   }
 }
@@ -401,7 +516,11 @@ class UniversityDetailsSheet extends StatelessWidget {
   final Map<String, dynamic> university;
   final bool isDarkMode;
 
-  const UniversityDetailsSheet({super.key, required this.university, required this.isDarkMode});
+  const UniversityDetailsSheet({
+    super.key,
+    required this.university,
+    required this.isDarkMode,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -438,6 +557,23 @@ class UniversityDetailsSheet extends StatelessWidget {
                   width: 80,
                   height: 80,
                   fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    // Same fallback here to avoid overflow from error text
+                    return Container(
+                      width: 80,
+                      height: 80,
+                      color: isDarkMode
+                          ? const Color(0xFF2D2D2D)
+                          : const Color(0xFFF3F4F6),
+                      child: Icon(
+                        Icons.school,
+                        color: isDarkMode
+                            ? Colors.white70
+                            : const Color(0xFF9CA3AF),
+                        size: 32,
+                      ),
+                    );
+                  },
                 ),
               ),
               const SizedBox(width: 16),
@@ -450,7 +586,9 @@ class UniversityDetailsSheet extends StatelessWidget {
                       style: GoogleFonts.tajawal(
                         fontSize: 20,
                         fontWeight: FontWeight.w800,
-                        color: isDarkMode ? Colors.white : const Color(0xFF1F2937),
+                        color: isDarkMode
+                            ? Colors.white
+                            : const Color(0xFF1F2937),
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -459,7 +597,9 @@ class UniversityDetailsSheet extends StatelessWidget {
                       style: GoogleFonts.tajawal(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
-                        color: isDarkMode ? Colors.white70 : const Color(0xFF6B7280),
+                        color: isDarkMode
+                            ? Colors.white70
+                            : const Color(0xFF6B7280),
                       ),
                     ),
                   ],
@@ -472,7 +612,11 @@ class UniversityDetailsSheet extends StatelessWidget {
 
           // University info
           _buildInfoRow('نوع الجامعة', university['type'], isDarkMode),
-          _buildInfoRow('عدد الكليات', '${university['faculties']} كلية', isDarkMode),
+          _buildInfoRow(
+            'عدد الكليات',
+            '${university['faculties']} كلية',
+            isDarkMode,
+          ),
 
           const SizedBox(height: 24),
 
@@ -484,10 +628,7 @@ class UniversityDetailsSheet extends StatelessWidget {
                   height: 48,
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
-                      colors: [
-                        Color(0xFF667EEA),
-                        Color(0xFF764BA2),
-                      ],
+                      colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
@@ -500,8 +641,10 @@ class UniversityDetailsSheet extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) =>
-                              FacultiesPage(universityName: university['name'], universityId: university['id'],),
+                          builder: (context) => FacultiesPage(
+                            universityName: university['name'],
+                            universityId: university['id'],
+                          ),
                         ),
                       );
                     },
@@ -524,7 +667,9 @@ class UniversityDetailsSheet extends StatelessWidget {
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: isDarkMode ? Colors.white30 : const Color(0xFFD1D5DB),
+                      color: isDarkMode
+                          ? Colors.white30
+                          : const Color(0xFFD1D5DB),
                     ),
                   ),
                   child: InkWell(
@@ -535,7 +680,9 @@ class UniversityDetailsSheet extends StatelessWidget {
                         'إلغاء',
                         style: GoogleFonts.tajawal(
                           fontWeight: FontWeight.w700,
-                          color: isDarkMode ? Colors.white70 : const Color(0xFF6B7280),
+                          color: isDarkMode
+                              ? Colors.white70
+                              : const Color(0xFF6B7280),
                         ),
                       ),
                     ),
@@ -576,71 +723,3 @@ class UniversityDetailsSheet extends StatelessWidget {
     );
   }
 }
-
-// Syrian universities data
-List<Map<String, dynamic>> syrianUniversities = [
-  {
-    'name': 'جامعة دمشق',
-    'city': 'دمشق',
-    'type': 'حكومية',
-    'faculties': 23,
-    'established': '1923',
-    'image': 'https://picsum.photos/seed/damascusuni/300/200',
-  },
-  {
-    'name': 'جامعة حلب',
-    'city': 'حلب',
-    'type': 'حكومية',
-    'faculties': 25,
-    'established': '1958',
-    'image': 'https://picsum.photos/seed/aleppouni/300/200',
-  },
-  {
-    'name': 'جامعة تشرين',
-    'city': 'اللاذقية',
-    'type': 'حكومية',
-    'faculties': 18,
-    'established': '1971',
-    'image': 'https://picsum.photos/seed/tishreenuni/300/200',
-  },
-  {
-    'name': 'جامعة البعث',
-    'city': 'حمص',
-    'type': 'حكومية',
-    'faculties': 15,
-    'established': '1979',
-    'image': 'https://picsum.photos/seed/baathuni/300/200',
-  },
-  {
-    'name': 'الجامعة الافتراضية السورية',
-    'city': 'دمشق',
-    'type': 'افتراضية',
-    'faculties': 8,
-    'established': '2002',
-    'image': 'https://picsum.photos/seed/svu/300/200',
-  },
-  {
-    'name': 'جامعة الوادي الدولية',
-    'city': 'دمشق',
-    'type': 'خاصة',
-    'faculties': 12,
-    'established': '2005',
-    'image': 'https://picsum.photos/seed/wadiuni/300/200',
-  },
-  {
-    'name': 'جامعة القلمون',
-    'city': 'دمشق',
-    'type': 'خاصة',
-    'faculties': 10,
-    'established': '2003',
-    'image': 'https://picsum.photos/seed/qalamoununi/300/200',
-  },
-  {
-    'name': 'جامعة الاتحاد',
-    'city': 'حلب',
-    'type': 'خاصة',
-    'faculties': 9,
-    'established': '2005',
-    'image': 'https://picsum.photos/seed/ittehaduni/300/200',
-  },
-];

@@ -1,4 +1,5 @@
 import 'package:courses_app/main_pages/home/presentation/side%20pages/university_pages/lectures_page.dart';
+import 'package:courses_app/presentation/widgets/skeleton_widgets.dart';
 import 'package:courses_app/theme_cubit/theme_cubit.dart';
 import 'package:courses_app/theme_cubit/theme_state.dart';
 import 'package:flutter/material.dart';
@@ -128,7 +129,7 @@ class _FacultiesPageBody extends StatelessWidget {
                     const SliverToBoxAdapter(
                       child: Padding(
                         padding: EdgeInsets.all(24),
-                        child: Center(child: CircularProgressIndicator()),
+                        child: SkeletonList(itemCount: 6),
                       ),
                     )
                   else
@@ -448,27 +449,26 @@ class FacultyListItem extends StatelessWidget {
   }
 
   void _showFacultyDetails(
-  BuildContext context,
-  String faculty,
-  String universityName,
-  String universityId,
-  String facultyId,
-  bool isDarkMode,
-) {
-  showModalBottomSheet(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    builder: (context) => FacultyDetailsSheet(
-      faculty: faculty,
-      universityName: universityName,
-      universityId: universityId,
-      facultyId: facultyId,
-      isDarkMode: isDarkMode,
-    ),
-  );
-}
-
+    BuildContext context,
+    String faculty,
+    String universityName,
+    String universityId,
+    String facultyId,
+    bool isDarkMode,
+  ) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => FacultyDetailsSheet(
+        faculty: faculty,
+        universityName: universityName,
+        universityId: universityId,
+        facultyId: facultyId,
+        isDarkMode: isDarkMode,
+      ),
+    );
+  }
 }
 
 class FacultyDetailsSheet extends StatelessWidget {
