@@ -174,11 +174,51 @@ class CourseManagementBloc extends Bloc<CourseManagementEvent, CourseManagementS
   ) async {
     emit(state.copyWith(isLoading: true));
 
-    // Skip backend API call for now - server crashes when fetching enrolled courses
-    // Just use local state
-    await Future.delayed(const Duration(milliseconds: 300));
-    
-    emit(state.copyWith(isLoading: false));
+    try {
+      // Fetch enrolled courses from backend
+      final result = await _api.getEnrolledCourses();
+      
+      if (result['success'] == true) {
+        final List<dynamic> courses = result['courses'] ?? [];
+        
+        // Map backend courses to local format
+        final mappedCourses = courses.map((course) => _mapEnrolledCourse(course)).toList();
+        
+        emit(state.copyWith(
+          enrolledCourses: mappedCourses,
+          isLoading: false,
+        ));
+      } else {
+        // If backend fails, keep existing courses
+        emit(state.copyWith(isLoading: false));
+      }
+    } catch (e) {
+      print('❌ Error loading user courses: $e');
+      emit(state.copyWith(isLoading: false));
+    }
+  }
+
+  // Helper to map backend enrolled course to local format
+  Map<String, dynamic> _mapEnrolledCourse(dynamic course) {
+    return {
+      'id': course['id'] ?? '',
+      'slug': course['slug'] ?? '',
+      'title': course['title'] ?? 'دورة بدون عنوان',
+      'description': course['description'] ?? '',
+      'image': course['image'] ?? '',
+      'price': course['price']?.toString() ?? '0',
+      'level': course['level'] ?? 'متوسط',
+      'rating': (course['rating'] ?? 0).toDouble(),
+      'teacher': course['instructor']?['name'] ?? 'مدرس',
+      'instructor': course['instructor'],
+      'category': course['category']?['name'] ?? 'عام',
+      'category_id': course['category']?['id'],
+      'progress': (course['progress'] ?? 0).toDouble(),
+      'total_lessons': course['total_lessons'] ?? 0,
+      'enrolled_at': course['enrolled_at'],
+      'sections': course['sections'] ?? [],
+      'lastAccessed': DateTime.now().toString(),
+    };
   }
 
   void _onUpdateCourseProgress(UpdateCourseProgressEvent event, Emitter<CourseManagementState> emit) {

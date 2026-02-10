@@ -1,7 +1,9 @@
 import 'package:courses_app/bloc/course_management_bloc.dart';
 import 'package:courses_app/main_pages/courses/presentation/widgets/courses_details_widgets.dart';
 import 'package:courses_app/main_pages/courses/presentation/widgets/enrolled_course_widgets.dart';
+import 'package:courses_app/main_pages/player/presentation/pages/video_player_page.dart';
 import 'package:courses_app/services/course_api.dart';
+import 'package:courses_app/services/review_service.dart';
 import 'package:courses_app/theme_cubit/theme_cubit.dart';
 import 'package:courses_app/theme_cubit/theme_state.dart';
 import 'package:flutter/material.dart';
@@ -19,8 +21,16 @@ class CourseDetailsPage extends StatefulWidget {
 
 class _CourseDetailsPageState extends State<CourseDetailsPage> {
   final CourseApi _courseApi = CourseApi();
+  final ReviewService _reviewService = ReviewService();
   List<Map<String, dynamic>> _relatedCourses = [];
   bool _isLoadingRelated = false;
+  
+  // Full course data from API
+  Map<String, dynamic>? _fullCourseData;
+  bool _isLoadingCourse = false;
+  final ValueNotifier<double?> _userRating = ValueNotifier<double?>(null);
+  Map<String, dynamic>? _ratingInfo;
+  bool _isSubmittingRating = false;
 
   @override
   void initState() {
@@ -29,6 +39,139 @@ class _CourseDetailsPageState extends State<CourseDetailsPage> {
       widget.course['id'] = 'course_${DateTime.now().millisecondsSinceEpoch}';
     }
     _fetchRelatedCourses();
+    _fetchFullCourseDetails();
+    _fetchUserRating();
+  }
+
+  Future<void> _fetchFullCourseDetails() async {
+    setState(() => _isLoadingCourse = true);
+    
+    try {
+      final slug = widget.course['slug']?.toString() ?? widget.course['id']?.toString();
+      if (slug == null || slug.isEmpty) return;
+      
+      final response = await _courseApi.getCourseDetails(slug);
+      
+      if (response['course'] != null) {
+        setState(() {
+          _fullCourseData = response['course'] as Map<String, dynamic>;
+          _ratingInfo = response['rating_info'] as Map<String, dynamic>?;
+        });
+      }
+    } catch (e) {
+      print('Error fetching course details: $e');
+    } finally {
+      setState(() => _isLoadingCourse = false);
+    }
+  }
+
+  Future<void> _fetchUserRating() async {
+    try {
+      final courseId = widget.course['id']?.toString();
+      print('>>> FLUTTER: _fetchUserRating called, courseId=$courseId');
+      if (courseId == null) {
+        print('>>> FLUTTER: courseId is null, returning');
+        return;
+      }
+      
+      print('>>> FLUTTER: Calling reviewService.getMyRating($courseId)');
+      final response = await _reviewService.getMyRating(courseId);
+      print('>>> FLUTTER: Rating response: $response');
+      
+      if (response['rating'] != null) {
+        _userRating.value = (response['rating'] as num).toDouble();
+      }
+    } catch (e) {
+      print('>>> FLUTTER: Error fetching user rating: $e');
+    }
+  }
+
+  Future<void> _submitRating(double rating) async {
+    // Prevent double submission
+    if (_isSubmittingRating) return;
+    
+    try {
+      setState(() => _isSubmittingRating = true);
+      
+      final courseId = widget.course['id']?.toString();
+      if (courseId == null) {
+        setState(() => _isSubmittingRating = false);
+        return;
+      }
+      
+      print('>>> SUBMIT: Starting submission for rating $rating');
+      
+      final response = await _reviewService.rateCourse(
+        courseId: courseId,
+        rating: rating.toInt(),
+      );
+      
+      print('>>> SUBMIT: API response: $response');
+      
+      if (response['success'] == true || response['message']?.toString().contains('success') == true) {
+        // Immediately update local state - must check mounted after async
+        if (!mounted) {
+          print('>>> SUBMIT: Widget not mounted, returning');
+          return;
+        }
+        
+        print('>>> SUBMIT: Setting _userRating to $rating');
+        _userRating.value = rating;
+        print('>>> SUBMIT: _userRating is now ${_userRating.value}');
+        
+        // Show snackbar
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'تم حفظ تقييمك بنجاح! لا يمكنك تغييره لاحقاً.',
+              style: GoogleFonts.tajawal(fontWeight: FontWeight.w600),
+            ),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        );
+        
+        // Re-fetch from API to confirm
+        await _fetchUserRating();
+        
+        // Refresh course details
+        await _fetchFullCourseDetails();
+      } else {
+        setState(() => _isSubmittingRating = false);
+        print('>>> SUBMIT: API returned failure: ${response['message']}');
+      }
+    } catch (e) {
+      print('Error submitting rating: $e');
+      setState(() => _isSubmittingRating = false);
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'فشل إرسال التقييم: $e',
+            style: GoogleFonts.tajawal(fontWeight: FontWeight.w600),
+          ),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  // Get merged course data (widget data + API data)
+  Map<String, dynamic> get _courseData {
+    if (_fullCourseData != null) {
+      return {
+        ...widget.course,
+        ..._fullCourseData!,
+        'sections': _fullCourseData!['sections'] ?? widget.course['sections'] ?? [],
+        'userRating': _userRating ?? widget.course['userRating'] ?? 0.0,
+      };
+    }
+    return {
+      ...widget.course,
+      'userRating': _userRating ?? widget.course['userRating'] ?? 0.0,
+    };
   }
 
   Future<void> _fetchRelatedCourses() async {
@@ -133,10 +276,17 @@ class _CourseDetailsPageState extends State<CourseDetailsPage> {
               );
 
               if (isEnrolled) {
+                // Get enrolled course from state
                 final enrolledCourse = courseState.enrolledCourses.firstWhere(
                   (course) => course['id'] == widget.course['id'],
                 );
-                return _buildEnrolledCourseView(context, enrolledCourse);
+                // Merge enrolled course data with full API data
+                final mergedCourse = {
+                  ...enrolledCourse,
+                  ..._courseData,
+                  'sections': _courseData['sections'] ?? enrolledCourse['sections'] ?? [],
+                };
+                return _buildEnrolledCourseView(context, mergedCourse);
               } else {
                 return _buildCoursePreviewView(context);
               }
@@ -150,9 +300,9 @@ class _CourseDetailsPageState extends State<CourseDetailsPage> {
   Widget _buildCoursePreviewView(BuildContext context) {
     return CustomScrollView(
       slivers: [
-        CourseHeader(course: widget.course),
-        CourseInfoCard(course: widget.course),
-        CourseTabs(course: widget.course),
+        CourseHeader(course: _courseData),
+        CourseInfoCard(course: _courseData),
+        CourseTabs(course: _courseData),
         RelatedCourses(
           relatedCourses: _getRelatedCourses(),
           onCourseTap: _navigateToCourseDetails,
@@ -176,7 +326,7 @@ class _CourseDetailsPageState extends State<CourseDetailsPage> {
         ),
         LessonsListWidget(
           course: enrolledCourse,
-          isEnrolled: true, // This unlocks all videos
+          isEnrolled: true,
         ),
         const SliverToBoxAdapter(child: SizedBox(height: 40)),
       ],
@@ -187,64 +337,71 @@ class _CourseDetailsPageState extends State<CourseDetailsPage> {
     BuildContext context,
     Map<String, dynamic> course,
   ) {
-    final currentRating = course['userRating'] ?? 0.0;
-    final hasRated = currentRating > 0;
+    return ValueListenableBuilder<double?>(
+      valueListenable: _userRating,
+      builder: (context, userRatingValue, child) {
+        final currentRating = userRatingValue ?? 0.0;
+        final hasRated = currentRating > 0;
+        
+        print('>>> RATING SECTION: _userRating=$userRatingValue, currentRating=$currentRating, hasRated=$hasRated');
 
-    return BlocBuilder<ThemeCubit, ThemeState>(
-      builder: (context, themeState) {
-        final isDarkMode = themeState.isDarkMode;
-        final screenWidth = MediaQuery.of(context).size.width;
-        final isMobile = screenWidth < 600;
+        return BlocBuilder<ThemeCubit, ThemeState>(
+          builder: (context, themeState) {
+            final isDarkMode = themeState.isDarkMode;
+            final screenWidth = MediaQuery.of(context).size.width;
+            final isMobile = screenWidth < 600;
 
-        return Directionality(
-          textDirection: TextDirection.rtl,
-          child: Container(
-            margin: EdgeInsets.symmetric(
-              horizontal: isMobile ? 16 : 24,
-              vertical: 8,
-            ),
-            padding: EdgeInsets.all(isMobile ? 16 : 20),
-            decoration: BoxDecoration(
-              color: isDarkMode ? Color(0xFF1E1E1E) : Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
+            return Directionality(
+              textDirection: TextDirection.rtl,
+              child: Container(
+                margin: EdgeInsets.symmetric(
+                  horizontal: isMobile ? 16 : 24,
+                  vertical: 8,
                 ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  hasRated ? 'تقييمك للدورة' : 'قيم هذه الدورة',
-                  style: GoogleFonts.tajawal(
-                    fontWeight: FontWeight.w700,
-                    fontSize: isMobile ? 18 : 20,
-                    color: isDarkMode ? Colors.white : Color(0xFF333333),
-                  ),
+                padding: EdgeInsets.all(isMobile ? 16 : 20),
+                decoration: BoxDecoration(
+                  color: isDarkMode ? Color(0xFF1E1E1E) : Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 12),
-                isMobile
-                    ? _buildMobileRatingLayout(
-                        context,
-                        course,
-                        currentRating,
-                        hasRated,
-                        isDarkMode,
-                      )
-                    : _buildDesktopRatingLayout(
-                        context,
-                        course,
-                        currentRating,
-                        hasRated,
-                        isDarkMode,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      hasRated ? 'تقييمك للدورة' : 'قيم هذه الدورة',
+                      style: GoogleFonts.tajawal(
+                        fontWeight: FontWeight.w700,
+                        fontSize: isMobile ? 18 : 20,
+                        color: isDarkMode ? Colors.white : Color(0xFF333333),
                       ),
-              ],
-            ),
-          ),
+                    ),
+                    const SizedBox(height: 12),
+                    isMobile
+                        ? _buildMobileRatingLayout(
+                            context,
+                            course,
+                            currentRating,
+                            hasRated,
+                            isDarkMode,
+                          )
+                        : _buildDesktopRatingLayout(
+                            context,
+                            course,
+                            currentRating,
+                            hasRated,
+                            isDarkMode,
+                          ),
+                  ],
+                ),
+              ),
+            );
+          },
         );
       },
     );
@@ -262,35 +419,50 @@ class _CourseDetailsPageState extends State<CourseDetailsPage> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            _buildStarRating(
-              currentRating,
-              onRatingChanged: (rating) {
-                _rateCourse(context, course['id'], rating);
-              },
-            ),
+            if (hasRated) ...[
+              // Show non-interactive stars with saved rating
+              _buildStarRatingDisplay(currentRating),
+            ] else ...[
+              // Show interactive stars for rating
+              _buildStarRating(
+                currentRating,
+                onRatingChanged: (rating) {
+                  _userRating.value = rating;
+                  _showRatingConfirmationDialog(context, rating);
+                },
+              ),
+            ],
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text(
-                    hasRated
-                        ? 'شكراً لتقييمك!'
-                        : 'كيف كانت تجربتك مع هذه الدورة؟',
-                    style: GoogleFonts.tajawal(
-                      fontWeight: FontWeight.w500,
-                      fontSize: 14,
-                      color: isDarkMode ? Colors.white70 : Color(0xFF666666),
-                    ),
-                    textAlign: TextAlign.right,
-                  ),
                   if (hasRated) ...[
-                    const SizedBox(height: 8),
                     Text(
-                      'قيمتها بـ ${currentRating.toStringAsFixed(1)}/5',
+                      'لقد قيّمت هذه الدورة مسبقاً',
                       style: GoogleFonts.tajawal(
                         fontWeight: FontWeight.w600,
                         fontSize: 14,
+                        color: Colors.green,
+                      ),
+                      textAlign: TextAlign.right,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'تقييمك: ${currentRating.toInt()}/5 نجوم',
+                      style: GoogleFonts.tajawal(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
                         color: Colors.amber,
+                      ),
+                      textAlign: TextAlign.right,
+                    ),
+                  ] else ...[
+                    Text(
+                      'كيف كانت تجربتك مع هذه الدورة؟',
+                      style: GoogleFonts.tajawal(
+                        fontWeight: FontWeight.w500,
+                        fontSize: 14,
+                        color: isDarkMode ? Colors.white70 : Color(0xFF666666),
                       ),
                       textAlign: TextAlign.right,
                     ),
@@ -302,30 +474,14 @@ class _CourseDetailsPageState extends State<CourseDetailsPage> {
         ),
         if (!hasRated) ...[
           const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () {
-                if (currentRating > 0) {
-                  _rateCourse(context, course['id'], currentRating);
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF667EEA),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                padding: const EdgeInsets.symmetric(vertical: 12),
-              ),
-              child: Text(
-                'تأكيد التقييم',
-                style: GoogleFonts.tajawal(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 14,
-                  color: Colors.white,
-                ),
-              ),
+          Text(
+            'اضغط على النجوم لتقييم الدورة',
+            style: GoogleFonts.tajawal(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: isDarkMode ? Colors.white60 : Colors.grey[500],
             ),
+            textAlign: TextAlign.center,
           ),
         ],
       ],
@@ -342,33 +498,50 @@ class _CourseDetailsPageState extends State<CourseDetailsPage> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        _buildStarRating(
-          currentRating,
-          onRatingChanged: (rating) {
-            _rateCourse(context, course['id'], rating);
-          },
-        ),
+        if (hasRated) ...[
+          // Show non-interactive stars with saved rating
+          _buildStarRatingDisplay(currentRating),
+        ] else ...[
+          // Show interactive stars for rating
+          _buildStarRating(
+            currentRating,
+            onRatingChanged: (rating) {
+              _userRating.value = rating;
+              _showRatingConfirmationDialog(context, rating);
+            },
+          ),
+        ],
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text(
-                hasRated ? 'شكراً لتقييمك!' : 'كيف كانت تجربتك مع هذه الدورة؟',
-                style: GoogleFonts.tajawal(
-                  fontWeight: FontWeight.w500,
-                  fontSize: 16,
-                  color: isDarkMode ? Colors.white70 : Color(0xFF666666),
-                ),
-                textAlign: TextAlign.right,
-              ),
               if (hasRated) ...[
-                const SizedBox(height: 8),
                 Text(
-                  'قيمتها بـ ${currentRating.toStringAsFixed(1)}/5',
+                  'لقد قيّمت هذه الدورة مسبقاً',
                   style: GoogleFonts.tajawal(
                     fontWeight: FontWeight.w600,
                     fontSize: 16,
+                    color: Colors.green,
+                  ),
+                  textAlign: TextAlign.right,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'تقييمك: ${currentRating.toInt()}/5 نجوم',
+                  style: GoogleFonts.tajawal(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 16,
                     color: Colors.amber,
+                  ),
+                  textAlign: TextAlign.right,
+                ),
+              ] else ...[
+                Text(
+                  'كيف كانت تجربتك مع هذه الدورة؟',
+                  style: GoogleFonts.tajawal(
+                    fontWeight: FontWeight.w500,
+                    fontSize: 16,
+                    color: isDarkMode ? Colors.white70 : Color(0xFF666666),
                   ),
                   textAlign: TextAlign.right,
                 ),
@@ -376,35 +549,94 @@ class _CourseDetailsPageState extends State<CourseDetailsPage> {
             ],
           ),
         ),
-        if (!hasRated) ...[
-          const SizedBox(width: 16),
-          SizedBox(
-            width: 120,
-            child: ElevatedButton(
-              onPressed: () {
-                if (currentRating > 0) {
-                  _rateCourse(context, course['id'], currentRating);
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF667EEA),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                padding: const EdgeInsets.symmetric(vertical: 12),
-              ),
+      ],
+    );
+  }
+
+  void _showRatingConfirmationDialog(BuildContext context, double rating) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        title: Row(
+          children: [
+            const Icon(
+              Icons.star,
+              color: Colors.amber,
+              size: 32,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
               child: Text(
                 'تأكيد التقييم',
                 style: GoogleFonts.tajawal(
+                  fontSize: 20,
                   fontWeight: FontWeight.w700,
-                  fontSize: 14,
-                  color: Colors.white,
+                  color: const Color(0xFF333333),
                 ),
               ),
             ),
+          ],
+        ),
+        content: Text(
+          'لقد قيّمت هذه الدورة بـ ${rating.toInt()}/5 نجوم. هل أنت متأكد؟',
+          style: GoogleFonts.tajawal(
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+            color: Colors.grey[700],
+          ),
+          textAlign: TextAlign.center,
+        ),
+        actionsAlignment: MainAxisAlignment.center,
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: Text(
+              'إلغاء',
+              style: GoogleFonts.tajawal(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey,
+              ),
+            ),
+          ),
+          Container(
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: TextButton(
+              onPressed: _isSubmittingRating ? null : () {
+                Navigator.of(dialogContext).pop();
+                _submitRating(rating);
+              },
+              child: _isSubmittingRating
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : Text(
+                      'تأكيد',
+                      style: GoogleFonts.tajawal(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
+            ),
           ),
         ],
-      ],
+      ),
     );
   }
 
@@ -429,6 +661,22 @@ class _CourseDetailsPageState extends State<CourseDetailsPage> {
             color: Colors.amber,
             size: 32,
           ),
+        );
+      }),
+    );
+  }
+
+  Widget _buildStarRatingDisplay(double rating) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: List.generate(5, (index) {
+        final starIndex = index + 1;
+        return Icon(
+          starIndex <= rating
+              ? Icons.star_rounded
+              : Icons.star_border_rounded,
+          color: Colors.amber,
+          size: 32,
         );
       }),
     );
@@ -566,16 +814,38 @@ class _CourseDetailsPageState extends State<CourseDetailsPage> {
     int lessonIndex,
     Map<String, dynamic> course,
   ) {
-    // Navigate to video player - all videos are unlocked for enrolled users
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'فتح مشغل الفيديو للمحاضرة ${lessonIndex + 1}',
-          style: GoogleFonts.tajawal(fontWeight: FontWeight.w600),
+    // Get sections and find the lesson
+    final sections = course['sections'] ?? [];
+    String? lessonId;
+    String? lessonTitle;
+    String? lessonDescription;
+    
+    // Find lesson across all sections
+    int currentIndex = 0;
+    for (var section in sections) {
+      final lessons = section['lessons'] ?? [];
+      for (var lesson in lessons) {
+        if (currentIndex == lessonIndex) {
+          lessonId = lesson['id']?.toString();
+          lessonTitle = lesson['title']?.toString();
+          lessonDescription = lesson['description']?.toString();
+          break;
+        }
+        currentIndex++;
+      }
+      if (lessonId != null) break;
+    }
+    
+    // Navigate to video player
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => VideoPlayerPage(
+          courseSlug: course['slug']?.toString() ?? course['id']?.toString() ?? '',
+          lessonId: lessonId ?? lessonIndex.toString(),
+          lessonTitle: lessonTitle ?? 'المحاضرة ${lessonIndex + 1}',
+          lessonDescription: lessonDescription,
         ),
-        backgroundColor: Colors.green,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
   }

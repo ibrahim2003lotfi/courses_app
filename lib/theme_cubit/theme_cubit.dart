@@ -4,6 +4,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/services.dart';
 import 'theme_state.dart';
 
+export 'theme_state.dart';
+
 class ThemeCubit extends Cubit<ThemeState> {
   ThemeCubit() : super(ThemeState.initial()) {
     _initSystemTheme();

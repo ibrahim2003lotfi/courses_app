@@ -10,7 +10,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class CoursesPage extends StatelessWidget {
-  const CoursesPage({super.key});
+  final int initialTabIndex;
+  
+  const CoursesPage({super.key, this.initialTabIndex = 0});
 
   @override
   Widget build(BuildContext context) {
@@ -20,6 +22,7 @@ class CoursesPage extends StatelessWidget {
         return _CoursesPageContent(
           key: ValueKey(roleState.isTeacher), // Force rebuild when role changes
           isTeacher: roleState.isTeacher,
+          initialTabIndex: initialTabIndex,
         );
       },
     );
@@ -28,8 +31,13 @@ class CoursesPage extends StatelessWidget {
 
 class _CoursesPageContent extends StatefulWidget {
   final bool isTeacher;
+  final int initialTabIndex;
 
-  const _CoursesPageContent({super.key, required this.isTeacher});
+  const _CoursesPageContent({
+    super.key, 
+    required this.isTeacher,
+    this.initialTabIndex = 0,
+  });
 
   @override
   State<_CoursesPageContent> createState() => _CoursesPageContentState();
@@ -45,6 +53,7 @@ class _CoursesPageContentState extends State<_CoursesPageContent>
     _tabController = TabController(
       length: widget.isTeacher ? 3 : 2,
       vsync: this,
+      initialIndex: widget.initialTabIndex,
     );
 
     // Load user courses when page initializes

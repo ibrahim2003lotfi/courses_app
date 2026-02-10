@@ -1,5 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:http/http.dart' as http;
+import 'package:path/path.dart' as path;
 
 import '../config/api.dart';
 import 'api_client.dart';
@@ -471,7 +473,19 @@ class CourseApi {
     String courseSlug,
     String lessonId,
   ) async {
-    final response = await _client.get("/courses/$courseSlug/stream/$lessonId");
+    // Get user ID for header
+    final authService = AuthService();
+    final userId = await authService.getUserId();
+    final token = await authService.getToken();
+    
+    final headers = {
+      'Authorization': 'Bearer $token',
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      if (userId != null) 'X-User-Id': userId,
+    };
+    
+    final response = await _client.getWithHeaders("/courses/$courseSlug/stream/$lessonId", headers);
 
     return jsonDecode(response.body) as Map<String, dynamic>;
   }
@@ -483,37 +497,67 @@ class CourseApi {
     required File videoFile,
     int? duration,
   }) async {
-    final fields = <String, String>{};
-    if (duration != null) {
-      fields['duration'] = duration.toString();
+    final authService = AuthService();
+    final token = await authService.getToken();
+    final userId = await authService.getUserId();
+    
+    // Create multipart request with headers
+    final uri = Uri.parse("${ApiConfig.baseUrl}/instructor/courses/$courseId/lessons/$lessonId/video");
+    final request = http.MultipartRequest('POST', uri);
+    
+    // Add headers
+    request.headers['Authorization'] = 'Bearer $token';
+    request.headers['Accept'] = 'application/json';
+    if (userId != null) {
+      request.headers['X-User-Id'] = userId;
     }
-
-    final files = <String, File>{'video': videoFile};
-
-    final response = await _client.postMultipart(
-      "/instructor/courses/$courseId/lessons/$lessonId/video",
-      fields: fields,
-      files: files,
+    
+    // Add video file
+    final fileStream = http.ByteStream(videoFile.openRead());
+    final length = await videoFile.length();
+    final multipartFile = http.MultipartFile(
+      'video',
+      fileStream,
+      length,
+      filename: path.basename(videoFile.path),
     );
-
-    // Handle empty or invalid response
-    if (response.body.isEmpty) {
-      return {
-        'success': false,
-        'error': 'empty_response',
-        'message': 'استجابة فارغة من الخادم',
-      };
+    request.files.add(multipartFile);
+    
+    // Add duration field if provided
+    if (duration != null) {
+      request.fields['duration'] = duration.toString();
     }
-
+    
+    print('🔵 [CourseApi] Uploading video to $uri');
+    
     try {
+      final streamedResponse = await request.send().timeout(
+        const Duration(minutes: 5),
+        onTimeout: () {
+          print('🔴 [CourseApi] Video upload timed out');
+          throw Exception('Upload timed out');
+        },
+      );
+      
+      final response = await http.Response.fromStream(streamedResponse);
+      print('🟢 [CourseApi] Upload response: ${response.statusCode}');
+      
+      // Handle empty or invalid response
+      if (response.body.isEmpty) {
+        return {
+          'success': false,
+          'error': 'empty_response',
+          'message': 'استجابة فارغة من الخادم',
+        };
+      }
+      
       return jsonDecode(response.body) as Map<String, dynamic>;
     } catch (e) {
+      print('🔴 [CourseApi] Upload error: $e');
       return {
         'success': false,
-        'error': 'invalid_response',
-        'message': 'استجابة غير صالحة من الخادم',
-        'raw_response': response.body,
-        'status_code': response.statusCode,
+        'error': 'upload_error',
+        'message': 'فشل رفع الفيديو: $e',
       };
     }
   }

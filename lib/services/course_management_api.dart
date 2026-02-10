@@ -10,7 +10,9 @@ class CourseManagementApi {
   Future<Map<String, dynamic>> enrollInCourse(String courseId) async {
     try {
       final token = await _authService.getToken();
-      if (token == null) {
+      final userId = await _authService.getUserId(); // Get user ID
+      
+      if (token == null || userId == null) {
         return {'success': false, 'message': 'Not authenticated'};
       }
 
@@ -20,6 +22,7 @@ class CourseManagementApi {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
           'Accept': 'application/json',
+          'X-User-Id': userId, // Send user ID in header
         },
       );
 
@@ -46,7 +49,9 @@ class CourseManagementApi {
   Future<Map<String, dynamic>> getEnrolledCourses() async {
     try {
       final token = await _authService.getToken();
-      if (token == null) {
+      final userId = await _authService.getUserId();
+      
+      if (token == null || userId == null) {
         return {'success': false, 'message': 'Not authenticated', 'courses': []};
       }
 
@@ -55,6 +60,7 @@ class CourseManagementApi {
         headers: {
           'Authorization': 'Bearer $token',
           'Accept': 'application/json',
+          'X-User-Id': userId,
         },
       );
 

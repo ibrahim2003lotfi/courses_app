@@ -233,8 +233,7 @@ class _SearchPageState extends State<SearchPage> {
         'duration': fullCourseData['duration_hours'] ?? course['duration'] ?? 0,
         'lessons': fullCourseData['lessons_count'] ?? course['lessons'] ?? 0,
         'level': fullCourseData['level'] ?? course['level'] ?? 'متوسط',
-        'lastUpdated':
-            fullCourseData['updated_at']?.toString().substring(0, 4) ?? '2026',
+        'lastUpdated': _extractYear(fullCourseData['updated_at']) ?? '2026',
         'price':
             fullCourseData['price']?.toString() ??
             course['price']?.toString() ??
@@ -246,13 +245,20 @@ class _SearchPageState extends State<SearchPage> {
       };
 
       if (context.mounted) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => CourseDetailsPage(course: enhancedCourse),
-          ),
-        );
+        Navigator.of(context).pop();
       }
+
+      // Defer navigation to next frame to avoid _dependents.isEmpty error
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (context.mounted) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => CourseDetailsPage(course: enhancedCourse),
+            ),
+          );
+        }
+      });
     } catch (e) {
       if (context.mounted) {
         Navigator.of(context).pop();
@@ -646,7 +652,7 @@ class _SearchPageState extends State<SearchPage> {
                           Icon(Icons.star, size: 14, color: Colors.amber[700]),
                           const SizedBox(width: 4),
                           Text(
-                            course['rating'].toStringAsFixed(1),
+                            (course['rating'] ?? 0.0).toStringAsFixed(1),
                             style: GoogleFonts.tajawal(
                               fontWeight: FontWeight.w600,
                               fontSize: 12,
@@ -873,5 +879,23 @@ class _SearchPageState extends State<SearchPage> {
         ],
       ),
     );
+  }
+
+  String? _extractYear(dynamic dateValue) {
+    if (dateValue == null) return null;
+    try {
+      final dateStr = dateValue.toString();
+      // Try to extract year from ISO date format (2024-01-15T10:30:00.000000Z)
+      if (dateStr.contains('T')) {
+        return dateStr.split('T')[0].split('-')[0];
+      }
+      // Try to extract year from date format (2024-01-15)
+      if (dateStr.contains('-')) {
+        return dateStr.split('-')[0];
+      }
+      return dateStr;
+    } catch (e) {
+      return null;
+    }
   }
 }

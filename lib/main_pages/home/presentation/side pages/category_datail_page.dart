@@ -38,6 +38,7 @@ class _CategoryDetailPageState extends State<CategoryDetailPage> {
   void initState() {
     super.initState();
     _scrollController.addListener(() {
+      if (!mounted) return;
       if (_scrollController.offset > 200 && !_showAppBarTitle) {
         setState(() {
           _showAppBarTitle = true;
@@ -246,10 +247,9 @@ class _CategoryDetailPageState extends State<CategoryDetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    // ✅ Only read theme state here (no full rebuild from BlocBuilder!)
-    final isDarkMode = context.select<ThemeCubit, bool>(
-      (cubit) => cubit.state.isDarkMode,
-    );
+    // Get theme directly without creating BLoC dependencies
+    final brightness = MediaQuery.platformBrightnessOf(context);
+    final isDarkMode = brightness == Brightness.dark;
     final themeData = isDarkMode
         ? ThemeManager.darkTheme
         : ThemeManager.lightTheme;
@@ -1451,7 +1451,7 @@ class _CategoryDetailPageState extends State<CategoryDetailPage> {
       'duration': durationHours > 0 ? durationHours : (fullCourseData['duration_hours'] ?? course['duration'] ?? 0),
       'lessons': totalLessons > 0 ? totalLessons : (fullCourseData['lessons_count'] ?? course['lessons'] ?? 0),
       'level': fullCourseData['level'] ?? course['level'] ?? 'متوسط',
-      'lastUpdated': fullCourseData['updated_at']?.toString().substring(0, 4) ?? course['lastUpdated']?.toString().substring(0, 4) ?? '2026',
+      'lastUpdated': _extractYear(fullCourseData['updated_at']) ?? _extractYear(course['lastUpdated']) ?? '2026',
       'price': fullCourseData['price']?.toString() ?? course['price']?.toString() ?? '0',
       'description': fullCourseData['description'] ?? course['description'] ?? '',
       'tags': fullCourseData['category']?['name'] != null ? [fullCourseData['category']['name']] : (course['tags'] ?? []),
@@ -1460,13 +1460,34 @@ class _CategoryDetailPageState extends State<CategoryDetailPage> {
       'category_id': fullCourseData['category_id'] ?? course['category_id'],
     };
 
-    if (context.mounted) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => CourseDetailsPage(course: enhancedCourse),
-        ),
-      );
+    // Defer navigation to next frame to avoid _dependents.isEmpty error
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (context.mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => CourseDetailsPage(course: enhancedCourse),
+          ),
+        );
+      }
+    });
+  }
+
+  String? _extractYear(dynamic dateValue) {
+    if (dateValue == null) return null;
+    try {
+      final dateStr = dateValue.toString();
+      // Try to extract year from ISO date format (2024-01-15T10:30:00.000000Z)
+      if (dateStr.contains('T')) {
+        return dateStr.split('T')[0].split('-')[0];
+      }
+      // Try to extract year from date format (2024-01-15)
+      if (dateStr.contains('-')) {
+        return dateStr.split('-')[0];
+      }
+      return dateStr;
+    } catch (e) {
+      return null;
     }
   }
 }

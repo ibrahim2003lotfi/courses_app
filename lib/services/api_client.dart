@@ -159,4 +159,19 @@ class ApiClient {
       },
     );
   }
+
+  Future<http.Response> getWithHeaders(String endpoint, Map<String, String> headers) async {
+    return http.get(
+      Uri.parse("${ApiConfig.baseUrl}$endpoint"),
+      headers: headers,
+    );
+  }
+
+  Future<http.Response> postWithHeaders(String endpoint, Map body, Map<String, String> headers) async {
+    return http.post(
+      Uri.parse("${ApiConfig.baseUrl}$endpoint"),
+      headers: headers,
+      body: jsonEncode(body),
+    );
+  }
 }

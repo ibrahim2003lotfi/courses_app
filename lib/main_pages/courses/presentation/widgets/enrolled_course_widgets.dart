@@ -1,4 +1,5 @@
 import 'package:courses_app/bloc/course_management_bloc.dart';
+import 'package:courses_app/main_pages/player/presentation/pages/video_player_page.dart';
 import 'package:courses_app/theme_cubit/theme_cubit.dart';
 import 'package:courses_app/theme_cubit/theme_state.dart';
 import 'package:flutter/material.dart';
@@ -220,7 +221,7 @@ class CourseProgressWidget extends StatelessWidget {
   }
 }
 
-// Lessons List Widget
+// Lessons List Widget - Shows real sections and lessons from backend
 class LessonsListWidget extends StatelessWidget {
   final Map<String, dynamic> course;
   final bool isEnrolled;
@@ -233,6 +234,201 @@ class LessonsListWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Get sections from course data (from backend)
+    final sections = (course['sections'] as List?) ?? [];
+    
+    if (sections.isEmpty) {
+      // Fallback: show placeholder lessons if no sections data
+      return _buildPlaceholderLessons(context);
+    }
+
+    // Build sections with lessons from backend
+    return SliverList(
+      delegate: SliverChildBuilderDelegate(
+        (context, index) {
+          final section = sections[index];
+          return _buildSectionItem(context, section, index);
+        },
+        childCount: sections.length,
+      ),
+    );
+  }
+
+  Widget _buildSectionItem(BuildContext context, dynamic section, int sectionIndex) {
+    return BlocBuilder<ThemeCubit, ThemeState>(
+      builder: (context, themeState) {
+        final isDarkMode = themeState.isDarkMode;
+        final lessons = (section['lessons'] as List?) ?? [];
+        
+        return Directionality(
+          textDirection: TextDirection.rtl,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Section Header
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: isDarkMode ? const Color(0xFF2D2D2D) : const Color(0xFFF3F4F6),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: isDarkMode ? Colors.grey[700]! : Colors.grey[300]!,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.folder_open,
+                      color: isDarkMode ? Colors.white70 : const Color(0xFF6B7280),
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        section['title'] ?? 'قسم ${sectionIndex + 1}',
+                        style: GoogleFonts.tajawal(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: isDarkMode ? Colors.white : const Color(0xFF374151),
+                        ),
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        '${lessons.length} درس',
+                        style: GoogleFonts.tajawal(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: isDarkMode ? Colors.white70 : const Color(0xFF6B7280),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // Lessons in this section
+              ...lessons.asMap().entries.map((entry) {
+                final lessonIndex = entry.key;
+                final lesson = entry.value;
+                return _buildLessonItem(context, lesson, sectionIndex, lessonIndex);
+              }).toList(),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildLessonItem(BuildContext context, dynamic lesson, int sectionIndex, int lessonIndex) {
+    return BlocBuilder<ThemeCubit, ThemeState>(
+      builder: (context, themeState) {
+        final isDarkMode = themeState.isDarkMode;
+        final isCompleted = false; // TODO: Track completed lessons
+        final isCurrent = sectionIndex == 0 && lessonIndex == 0; // First lesson is current
+        
+        return Directionality(
+          textDirection: TextDirection.rtl,
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            decoration: BoxDecoration(
+              color: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(isDarkMode ? 0.1 : 0.05),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+              border: isCurrent ? Border.all(
+                color: const Color(0xFF3B82F6),
+                width: 2,
+              ) : null,
+            ),
+            child: ListTile(
+              leading: Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: isCompleted ? const Color(0xFF10B981) : 
+                         isCurrent ? const Color(0xFF3B82F6) : 
+                         Colors.grey[300],
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  isCompleted ? Icons.check : 
+                  isCurrent ? Icons.play_arrow : 
+                  Icons.play_circle_outline,
+                  color: Colors.white,
+                  size: 22,
+                ),
+              ),
+              title: Text(
+                lesson['title'] ?? 'درس ${lessonIndex + 1}',
+                style: GoogleFonts.tajawal(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: isDarkMode ? Colors.white : const Color(0xFF374151),
+                ),
+              ),
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  if (lesson['duration_seconds'] != null) ...[
+                    Text(
+                      _formatDuration(lesson['duration_seconds']),
+                      style: GoogleFonts.tajawal(
+                        fontSize: 12,
+                        color: isDarkMode ? Colors.white70 : const Color(0xFF6B7280),
+                      ),
+                    ),
+                  ],
+                  if (isCompleted) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      'مكتملة',
+                      style: GoogleFonts.tajawal(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF10B981),
+                      ),
+                    ),
+                  ] else if (isCurrent) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      'ابدأ هنا',
+                      style: GoogleFonts.tajawal(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF3B82F6),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+              trailing: Icon(
+                Icons.play_circle_filled,
+                color: const Color(0xFF10B981),
+                size: 32,
+              ),
+              onTap: () {
+                _playVideoLesson(context, lesson, course['slug'] ?? course['id'].toString());
+              },
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildPlaceholderLessons(BuildContext context) {
+    // Fallback when no sections data available
     final totalLessons = course['lessons'] ?? 10;
     final currentLesson = course['currentLesson'] ?? 0;
     final progress = course['progress'] ?? 0.0;
@@ -240,21 +436,19 @@ class LessonsListWidget extends StatelessWidget {
     return SliverList(
       delegate: SliverChildBuilderDelegate(
         (context, index) {
-          return _buildLessonItem(context, index, totalLessons, currentLesson, progress);
+          return _buildOldLessonItem(context, index, totalLessons, currentLesson, progress);
         },
         childCount: totalLessons,
       ),
     );
   }
 
-  Widget _buildLessonItem(BuildContext context, int index, int totalLessons, int currentLesson, double progress) {
+  Widget _buildOldLessonItem(BuildContext context, int index, int totalLessons, int currentLesson, double progress) {
     return BlocBuilder<ThemeCubit, ThemeState>(
       builder: (context, themeState) {
         final isDarkMode = themeState.isDarkMode;
         final isCompleted = index < (progress * totalLessons);
         final isCurrent = index == currentLesson;
-        // For enrolled users, all videos are unlocked
-        final isLocked = !isEnrolled && index > currentLesson && !isCompleted;
 
         return Directionality(
           textDirection: TextDirection.rtl,
@@ -282,13 +476,13 @@ class LessonsListWidget extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: isCompleted ? const Color(0xFF10B981) : 
                          isCurrent ? const Color(0xFF3B82F6) : 
-                         isLocked ? Colors.grey[400] : Colors.grey[300],
+                         Colors.grey[300],
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
                   isCompleted ? Icons.check : 
-                             isCurrent ? Icons.play_arrow : 
-                             isLocked ? Icons.lock_outline : Icons.play_circle_outline,
+                  isCurrent ? Icons.play_arrow : 
+                  Icons.play_circle_outline,
                   color: Colors.white,
                   size: 22,
                 ),
@@ -336,18 +530,75 @@ class LessonsListWidget extends StatelessWidget {
               ),
               trailing: Icon(
                 Icons.play_circle_filled,
-                color: isLocked ? 
-                      (isDarkMode ? Colors.grey[500] : Colors.grey[400]) : 
-                      const Color(0xFF10B981),
+                color: const Color(0xFF10B981),
                 size: 32,
               ),
-              onTap: isLocked ? null : () {
-                _playLesson(context, index, course);
+              onTap: () {
+                _playLesson(context, index);
               },
             ),
           ),
         );
       },
+    );
+  }
+
+  String _formatDuration(int seconds) {
+    final minutes = (seconds / 60).floor();
+    final remainingSeconds = seconds % 60;
+    if (minutes > 0) {
+      return '$minutes:${remainingSeconds.toString().padLeft(2, '0')} دقيقة';
+    }
+    return '$seconds ثانية';
+  }
+
+  void _playVideoLesson(BuildContext context, dynamic lesson, String courseSlug) {
+    final lessonId = lesson['id']?.toString() ?? '';
+    final lessonTitle = lesson['title'] ?? 'درس';
+    
+    print('>>> VIDEO: courseSlug=$courseSlug, lessonId=$lessonId');
+    print('>>> VIDEO: lesson data=$lesson');
+    print('>>> VIDEO: course data=$course');
+    
+    // Navigate to video player page
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => VideoPlayerPage(
+          courseSlug: courseSlug,
+          lessonId: lessonId,
+          lessonTitle: lessonTitle,
+          lessonDescription: lesson['description'],
+        ),
+      ),
+    );
+  }
+
+  void _playLesson(BuildContext context, int lessonIndex) {
+    // Fallback for placeholder lessons
+    final totalLessons = course['lessons'] ?? 1;
+    final newProgress = ((lessonIndex + 1) / totalLessons).clamp(0.0, 1.0);
+    
+    context.read<CourseManagementBloc>().add(
+      UpdateCourseProgressEvent(
+        courseId: course['id'],
+        progress: newProgress,
+        currentLesson: lessonIndex,
+      ),
+    );
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'تشغيل المحاضرة ${lessonIndex + 1}: ${_getLessonTitle(lessonIndex, totalLessons)}',
+          style: GoogleFonts.tajawal(fontWeight: FontWeight.w600),
+        ),
+        backgroundColor: Colors.green,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
     );
   }
 
@@ -369,37 +620,7 @@ class LessonsListWidget extends StatelessWidget {
   }
 
   String _getLessonDuration(int index) {
-    // Vary duration between 15-45 minutes
     final baseDuration = 15 + (index % 3) * 10;
     return (baseDuration + (index ~/ 5) * 5).toString();
-  }
-
-  void _playLesson(BuildContext context, int lessonIndex, Map<String, dynamic> course) {
-    // Update progress
-    final totalLessons = course['lessons'] ?? 1;
-    final newProgress = ((lessonIndex + 1) / totalLessons).clamp(0.0, 1.0);
-    
-    context.read<CourseManagementBloc>().add(
-      UpdateCourseProgressEvent(
-        courseId: course['id'],
-        progress: newProgress,
-        currentLesson: lessonIndex,
-      ),
-    );
-    
-    // Show video player (simulated)
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'تشغيل المحاضرة ${lessonIndex + 1}: ${_getLessonTitle(lessonIndex, totalLessons)}',
-          style: GoogleFonts.tajawal(fontWeight: FontWeight.w600),
-        ),
-        backgroundColor: Colors.green,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-      ),
-    );
   }
 }

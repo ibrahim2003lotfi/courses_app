@@ -1,4 +1,8 @@
+import 'dart:async';
+
 import 'package:courses_app/bloc/course_management_bloc.dart';
+import 'package:courses_app/main_pages/courses/presentation/pages/favorite_courses_page.dart';
+import 'package:courses_app/services/course_management_api.dart';
 import 'package:courses_app/services/review_service.dart';
 import 'package:courses_app/theme_cubit/theme_cubit.dart';
 import 'package:courses_app/theme_cubit/theme_state.dart';
@@ -143,6 +147,255 @@ class CourseInfoCard extends StatelessWidget {
 
   const CourseInfoCard({super.key, required this.course});
 
+  // Helper to check if course is free
+  bool get _isFreeCourse {
+    final priceString = course['price']?.toString() ?? '';
+    // Check for various free indicators
+    if (priceString.toLowerCase().contains('مجاني') ||
+        priceString.toLowerCase().contains('free') ||
+        priceString == '0' ||
+        priceString == '0.0' ||
+        priceString == '0.00' ||
+        priceString == '0 S.P' ||
+        priceString == '0 S.P.') {
+      return true;
+    }
+    // Check if price is numeric and equals 0
+    try {
+      final cleanPrice = priceString
+          .replaceAll('S.P', '')
+          .replaceAll('S.P.', '')
+          .replaceAll(',', '')
+          .trim();
+      final price = double.parse(cleanPrice);
+      return price == 0;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  void _showEnrollmentDialog(BuildContext context) {
+    // Store the original context before showing dialog
+    final originalContext = context;
+    
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        title: Column(
+          children: [
+            const Icon(
+              Icons.celebration,
+              color: Color(0xFF10B981),
+              size: 48,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'كورس مجاني!',
+              style: GoogleFonts.tajawal(
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+                color: const Color(0xFF065F46),
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+        content: Text(
+          'هذا الكورس مجاني بالكامل. هل تريد التسجيل فيه الآن؟',
+          style: GoogleFonts.tajawal(
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+            color: Colors.grey[700],
+          ),
+          textAlign: TextAlign.center,
+        ),
+        actionsAlignment: MainAxisAlignment.center,
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: Text(
+              'إلغاء',
+              style: GoogleFonts.tajawal(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey,
+              ),
+            ),
+          ),
+          Container(
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF10B981), Color(0xFF059669)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+                // Use the original context, not dialog context
+                _enrollFreeCourse(originalContext);
+              },
+              child: Text(
+                'نعم، سجلني',
+                style: GoogleFonts.tajawal(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _enrollFreeCourse(BuildContext context) {
+    // Show loading dialog and capture its state
+    final dialogContext = Completer<BuildContext>();
+    
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      useRootNavigator: true,
+      builder: (ctx) {
+        if (!dialogContext.isCompleted) {
+          dialogContext.complete(ctx);
+        }
+        return const PopScope(
+          canPop: false,
+          child: Center(
+            child: CircularProgressIndicator(
+              color: Color(0xFF10B981),
+            ),
+          ),
+        );
+      },
+    );
+
+    _performEnrollment(context, dialogContext);
+  }
+
+  void _performEnrollment(BuildContext context, Completer<BuildContext> dialogContext) async {
+    print('>>> _performEnrollment START');
+    try {
+      final courseId = course['id']?.toString() ?? '';
+      print('>>> Enrolling courseId: $courseId');
+      
+      final api = CourseManagementApi();
+      final result = await api.enrollInCourse(courseId);
+      print('>>> API result: $result');
+      
+      // Close dialog using captured context
+      if (dialogContext.isCompleted) {
+        final ctx = await dialogContext.future;
+        print('>>> Closing dialog, ctx.mounted: ${ctx.mounted}');
+        if (ctx.mounted && Navigator.canPop(ctx)) {
+          Navigator.of(ctx).pop();
+          print('>>> Dialog closed');
+        }
+      }
+      
+      print('>>> context.mounted: ${context.mounted}, result[success]: ${result['success']}');
+      
+      if (result['success'] == true) {
+        print('>>> Enrollment SUCCESS');
+        if (context.mounted) {
+          print('>>> Context mounted, showing snackbar');
+          context.read<CourseManagementBloc>().add(
+            EnrollCourseEvent(course),
+          );
+          
+          // Show success message
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                '🎉 مبروك! لقد تم تسجيلك في الدورة بنجاح',
+                style: GoogleFonts.tajawal(fontWeight: FontWeight.w600),
+                textAlign: TextAlign.center,
+              ),
+              backgroundColor: Colors.green,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          );
+          print('>>> Snackbar shown');
+          
+          // Navigate to mycourses page after a short delay
+          print('>>> Waiting 1 second before navigation');
+          await Future.delayed(const Duration(seconds: 1));
+          print('>>> Delay complete, context.mounted: ${context.mounted}');
+          if (context.mounted) {
+            print('>>> Navigating to CoursesPage');
+            Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(
+                builder: (_) => const CoursesPage(initialTabIndex: 0),
+              ),
+              (route) => route.isFirst, // Keep only the first route (main navigation)
+            );
+          } else {
+            print('>>> Context not mounted, cannot navigate');
+          }
+        } else {
+          print('>>> Context NOT mounted after success');
+        }
+      } else {
+        print('>>> Enrollment FAILED: ${result['message']}');
+        if (context.mounted) {
+          final errorMsg = result['message'] ?? 'فشل التسجيل';
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                errorMsg,
+                style: GoogleFonts.tajawal(fontWeight: FontWeight.w600),
+                textAlign: TextAlign.center,
+              ),
+              backgroundColor: Colors.red,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      print('>>> ERROR in _performEnrollment: $e');
+      // Close dialog
+      if (dialogContext.isCompleted) {
+        final ctx = await dialogContext.future;
+        if (ctx.mounted && Navigator.canPop(ctx)) {
+          Navigator.of(ctx).pop();
+        }
+      }
+      
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'حدث خطأ: $e',
+              style: GoogleFonts.tajawal(fontWeight: FontWeight.w600),
+              textAlign: TextAlign.center,
+            ),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        );
+      }
+    }
+    print('>>> _performEnrollment END');
+  }
+
   void _showPaymentBottomSheet(BuildContext context) {
     showModalBottomSheet(
       context: context,
@@ -158,6 +411,16 @@ class CourseInfoCard extends StatelessWidget {
         },
       ),
     );
+  }
+
+  void _handleEnrollTap(BuildContext context) {
+    if (_isFreeCourse) {
+      // For free courses, show simple confirmation dialog
+      _showEnrollmentDialog(context);
+    } else {
+      // For paid courses, show payment bottom sheet
+      _showPaymentBottomSheet(context);
+    }
   }
 
   @override
@@ -355,7 +618,7 @@ class CourseInfoCard extends StatelessWidget {
               ),
             ),
             Text(
-              course['rating'].toStringAsFixed(1),
+              (course['rating'] ?? 0.0).toStringAsFixed(1),
               style: GoogleFonts.tajawal(
                 fontSize: 18,
                 fontWeight: FontWeight.w800,
@@ -384,6 +647,20 @@ class CourseInfoCard extends StatelessWidget {
     final duration = course['duration'] ?? 0;
     final lessons = course['lessons'] ?? 0;
     
+    // Safely extract year from lastUpdated
+    String lastUpdatedYear = '2026';
+    final rawLastUpdated = course['lastUpdated'];
+    if (rawLastUpdated != null) {
+      final dateStr = rawLastUpdated.toString();
+      if (dateStr.contains('T')) {
+        lastUpdatedYear = dateStr.split('T')[0].split('-')[0];
+      } else if (dateStr.contains('-')) {
+        lastUpdatedYear = dateStr.split('-')[0];
+      } else if (dateStr.length >= 4) {
+        lastUpdatedYear = dateStr.substring(0, 4);
+      }
+    }
+    
     return GridView.count(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -405,7 +682,7 @@ class CourseInfoCard extends StatelessWidget {
         _buildInfoItem(Icons.bar_chart, course['level'] ?? 'متوسط', isDarkMode),
         _buildInfoItem(
           Icons.update,
-          'محدث ${course['lastUpdated'] ?? '2026'}',
+          'محدث $lastUpdatedYear',
           isDarkMode,
         ),
       ],
@@ -544,7 +821,7 @@ class CourseInfoCard extends StatelessWidget {
               ),
               child: InkWell(
                 borderRadius: BorderRadius.circular(12),
-                onTap: () => _showPaymentBottomSheet(context),
+                onTap: () => _handleEnrollTap(context),
                 child: Center(
                   child: Text(
                     'اشترك الآن',
@@ -1891,7 +2168,7 @@ Widget _buildReviews(bool isDarkMode, bool isMobile) {
             Column(
               children: [
                 Text(
-                  avgRating.toStringAsFixed(1),
+                  (avgRating ?? 0.0).toStringAsFixed(1),
                   style: GoogleFonts.tajawal(
                     fontSize: isMobile ? 36 : 42,
                     fontWeight: FontWeight.w900,
@@ -1901,7 +2178,7 @@ Widget _buildReviews(bool isDarkMode, bool isMobile) {
                 Row(
                   children: List.generate(5, (index) {
                     return Icon(
-                      index < avgRating.round()
+                      index < (avgRating ?? 0.0).round()
                           ? Icons.star
                           : Icons.star_border,
                       color: Colors.amber,
