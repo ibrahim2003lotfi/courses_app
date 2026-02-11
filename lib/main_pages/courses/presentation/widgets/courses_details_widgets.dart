@@ -19,10 +19,38 @@ class PaymentData {
   String confirmPhoneNumber = '';
 }
 
-class CourseHeader extends StatelessWidget {
+class CourseHeader extends StatefulWidget {
   final Map<String, dynamic> course;
 
   const CourseHeader({super.key, required this.course});
+
+  @override
+  State<CourseHeader> createState() => _CourseHeaderState();
+}
+
+class _CourseHeaderState extends State<CourseHeader> {
+  // Getter to access course data
+  Map<String, dynamic> get course => widget.course;
+
+  // Helper method to extract category name
+  String _getCategoryName(dynamic category) {
+    if (category == null) return 'عام';
+    
+    if (category is String) {
+      return category;
+    }
+    
+    if (category is Map<String, dynamic>) {
+      return category['name']?.toString() ?? 'عام';
+    }
+    
+    return category.toString();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -44,7 +72,9 @@ class CourseHeader extends StatelessWidget {
                 fit: StackFit.expand,
                 children: [
                   Image.network(
-                    course['image'],
+                    widget.course['image']?.toString().isNotEmpty == true 
+                        ? widget.course['image']
+                        : 'https://picsum.photos/seed/course/400/300',
                     fit: BoxFit.cover,
                     loadingBuilder: (context, child, loadingProgress) {
                       if (loadingProgress == null) return child;
@@ -98,7 +128,7 @@ class CourseHeader extends StatelessWidget {
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
-                            course['category'] ?? 'عام',
+                            _getCategoryName(widget.course['category']),
                             style: GoogleFonts.tajawal(
                               color: Colors.white,
                               fontSize: 12,
@@ -108,7 +138,7 @@ class CourseHeader extends StatelessWidget {
                         ),
                         const SizedBox(height: 12),
                         Text(
-                          course['title'],
+                          widget.course['title']?.toString() ?? 'دورة تعليمية',
                           style: GoogleFonts.tajawal(
                             color: Colors.white,
                             fontSize: 24,
@@ -121,7 +151,7 @@ class CourseHeader extends StatelessWidget {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          course['teacher'],
+                          widget.course['teacher']?.toString() ?? 'مدرس متخصص',
                           style: GoogleFonts.tajawal(
                             color: Colors.white.withOpacity(0.9),
                             fontSize: 16,
@@ -142,33 +172,47 @@ class CourseHeader extends StatelessWidget {
   }
 }
 
-class CourseInfoCard extends StatelessWidget {
+class CourseInfoCard extends StatefulWidget {
   final Map<String, dynamic> course;
 
-  const CourseInfoCard({super.key, required this.course});
+  const CourseInfoCard({
+    Key? key,
+    required this.course,
+  });
 
-  // Helper to check if course is free
+  @override
+  State<CourseInfoCard> createState() => _CourseInfoCardState();
+}
+
+class _CourseInfoCardState extends State<CourseInfoCard> {
+  // Getter to access course data
+  Map<String, dynamic> get course => widget.course;
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
   bool get _isFreeCourse {
-    final priceString = course['price']?.toString() ?? '';
+    final priceString = widget.course['price']?.toString() ?? '';
     // Check for various free indicators
     if (priceString.toLowerCase().contains('مجاني') ||
         priceString.toLowerCase().contains('free') ||
         priceString == '0' ||
         priceString == '0.0' ||
-        priceString == '0.00' ||
         priceString == '0 S.P' ||
-        priceString == '0 S.P.') {
+        priceString == '0.00') {
       return true;
     }
     // Check if price is numeric and equals 0
     try {
       final cleanPrice = priceString
           .replaceAll('S.P', '')
-          .replaceAll('S.P.', '')
-          .replaceAll(',', '')
-          .trim();
-      final price = double.parse(cleanPrice);
-      return price == 0;
+          .replaceAll(',', '');
+      if (cleanPrice == '0' || double.parse(cleanPrice) == 0.0) {
+        return true;
+      }
+      return false;
     } catch (e) {
       return false;
     }
@@ -402,6 +446,7 @@ class CourseInfoCard extends StatelessWidget {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => PaymentBottomSheet(
+        key: ValueKey('payment_sheet_${course['id']?.toString() ?? ''}'),
         course: course,
         onEnrollmentSuccess: () {
           // This will trigger the BLoC to enroll the user
@@ -611,14 +656,14 @@ class CourseInfoCard extends StatelessWidget {
           textDirection: TextDirection.rtl,
           children: [
             Text(
-              '(${course['reviews'] ?? 0} تقييم) ',
+              '${(course['reviews']?.toString() ?? '0')} تقييم) ',
               style: GoogleFonts.tajawal(
                 color: isDarkMode ? Colors.white70 : const Color(0xFF6B7280),
                 fontWeight: FontWeight.w500,
               ),
             ),
             Text(
-              (course['rating'] ?? 0.0).toStringAsFixed(1),
+              double.tryParse(course['rating']?.toString() ?? '0.0')?.toStringAsFixed(1) ?? '0.0',
               style: GoogleFonts.tajawal(
                 fontSize: 18,
                 fontWeight: FontWeight.w800,
@@ -631,7 +676,7 @@ class CourseInfoCard extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          '${course['students']} طالب مسجل',
+          '${course['students']?.toString() ?? '0'} طالب مسجل',
           style: GoogleFonts.tajawal(
             color: isDarkMode ? Colors.white70 : const Color(0xFF6B7280),
             fontWeight: FontWeight.w500,
@@ -847,10 +892,10 @@ class PaymentBottomSheet extends StatefulWidget {
   final VoidCallback onEnrollmentSuccess;
 
   const PaymentBottomSheet({
-    super.key, 
+    Key? key,
     required this.course,
     required this.onEnrollmentSuccess,
-  });
+  }) : super(key: key);
 
   @override
   State<PaymentBottomSheet> createState() => _PaymentBottomSheetState();
@@ -858,7 +903,6 @@ class PaymentBottomSheet extends StatefulWidget {
 
 class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
   final PaymentData _paymentData = PaymentData();
-  final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
   final String _orderNumber = 'ORD${DateTime.now().millisecondsSinceEpoch}';
 
@@ -1074,39 +1118,36 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
                           horizontal: isMobile ? 20 : 32,
                           vertical: 8,
                         ),
-                        child: Form(
-                          key: _formKey,
-                          child: SingleChildScrollView(
-                            physics: const BouncingScrollPhysics(),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                _buildCourseInfo(isMobile, isDarkMode),
+                        child: SingleChildScrollView(
+                          physics: const BouncingScrollPhysics(),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              _buildCourseInfo(isMobile, isDarkMode),
+                              const SizedBox(height: 24),
+
+                              if (_isFreeCourse) ...[
+                                _buildFreeCourseEnrollment(
+                                  isMobile,
+                                  isDarkMode,
+                                ),
+                                const SizedBox(height: 24),
+                              ] else ...[
+                                _buildPaymentMethods(isMobile, isDarkMode),
                                 const SizedBox(height: 24),
 
-                                if (_isFreeCourse) ...[
-                                  _buildFreeCourseEnrollment(
-                                    isMobile,
-                                    isDarkMode,
-                                  ),
-                                  const SizedBox(height: 24),
-                                ] else ...[
-                                  _buildPaymentMethods(isMobile, isDarkMode),
-                                  const SizedBox(height: 24),
+                                _buildPaymentSummary(isMobile, isDarkMode),
+                                const SizedBox(height: 24),
 
-                                  _buildPaymentSummary(isMobile, isDarkMode),
-                                  const SizedBox(height: 24),
-
-                                  _buildPaymentInfo(isMobile, isDarkMode),
-                                  const SizedBox(height: 32),
-                                ],
-
-                                _buildActionButtons(isMobile, isDarkMode),
-                                SizedBox(
-                                  height: MediaQuery.of(context).padding.bottom,
-                                ),
+                                _buildPaymentInfo(isMobile, isDarkMode),
+                                const SizedBox(height: 32),
                               ],
-                            ),
+
+                              _buildActionButtons(isMobile, isDarkMode),
+                              SizedBox(
+                                height: MediaQuery.of(context).padding.bottom,
+                              ),
+                            ],
                           ),
                         ),
                       ),
@@ -1648,7 +1689,10 @@ class SubscriptionType {
 class CourseTabs extends StatefulWidget {
   final Map<String, dynamic> course;
 
-  const CourseTabs({super.key, required this.course});
+  const CourseTabs({
+    Key? key,
+    required this.course,
+  }) : super(key: key);
 
   @override
   State<CourseTabs> createState() => _CourseTabsState();
@@ -1659,6 +1703,21 @@ class _CourseTabsState extends State<CourseTabs> {
   final ReviewService _reviewService = ReviewService();
   Map<String, dynamic>? _ratingInfo;
   bool _isLoadingRatings = false;
+
+  // Helper method to extract category name
+  String _getCategoryName(dynamic category) {
+    if (category == null) return 'عام';
+    
+    if (category is String) {
+      return category;
+    }
+    
+    if (category is Map<String, dynamic>) {
+      return category['name']?.toString() ?? 'عام';
+    }
+    
+    return category.toString();
+  }
 
   @override
   void initState() {
@@ -1880,7 +1939,7 @@ class _CourseTabsState extends State<CourseTabs> {
   final description = widget.course['description']?.toString();
   final hasDescription = description != null && description.isNotEmpty;
   // Get category name for tag
-  final categoryName = widget.course['category']?.toString();
+  final categoryName = _getCategoryName(widget.course['category']);
   final hasCategory = categoryName != null && categoryName.isNotEmpty;
   
   return Column(
@@ -2050,7 +2109,7 @@ Widget _buildCurriculum(bool isDarkMode, bool isMobile) {
                         // Duration on the far right
                         if (duration > 0)
                           Text(
-                            '$durationMinutes دقيقة',
+                            '${widget.course['duration']?.toString() ?? '0'} ساعة',
                             style: GoogleFonts.tajawal(
                               fontSize: isMobile ? 11 : 12,
                               fontWeight: FontWeight.w500,
@@ -2365,7 +2424,7 @@ Widget _buildInstructor(bool isDarkMode, bool isMobile) {
                     Align(
                       alignment: Alignment.centerRight,
                       child: Text(
-                        widget.course['category']?.toString() ?? '',
+                        _getCategoryName(widget.course['category']),
                         style: GoogleFonts.tajawal(
                           fontSize: isMobile ? 14 : 16,
                           fontWeight: FontWeight.w500,
@@ -2486,15 +2545,34 @@ Widget _buildInstructor(bool isDarkMode, bool isMobile) {
   }
 }
 
-class RelatedCourses extends StatelessWidget {
+class RelatedCourses extends StatefulWidget {
+  final Map<String, dynamic> course;
   final List<Map<String, dynamic>> relatedCourses;
   final Function(Map<String, dynamic>) onCourseTap;
 
   const RelatedCourses({
     super.key,
+    required this.course,
     required this.relatedCourses,
     required this.onCourseTap,
   });
+
+  @override
+  State<RelatedCourses> createState() => _RelatedCoursesState();
+}
+
+class _RelatedCoursesState extends State<RelatedCourses> {
+  // Getter to access course data
+  Map<String, dynamic> get course => widget.course;
+  List<Map<String, dynamic>>? relatedCourses;
+  Function(Map<String, dynamic>)? onCourseTap;
+
+  @override
+  void initState() {
+    super.initState();
+    relatedCourses = widget.relatedCourses;
+    onCourseTap = widget.onCourseTap;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -2507,9 +2585,7 @@ class RelatedCourses extends StatelessWidget {
         final courseHeight = isMobile ? 200.0 : 220.0;
 
         // Create a reversed list for RTL display
-        final reversedCourses = List<Map<String, dynamic>>.from(
-          relatedCourses.reversed,
-        );
+        final reversedCourses = relatedCourses?.reversed.toList() ?? [];
 
         return Directionality(
           textDirection: TextDirection.rtl,
@@ -2556,7 +2632,7 @@ class RelatedCourses extends StatelessWidget {
                         return SizedBox(
                           width: courseWidth,
                           child: GestureDetector(
-                            onTap: () => onCourseTap(course),
+                            onTap: () => onCourseTap?.call(course),
                             child: MouseRegion(
                               cursor: SystemMouseCursors.click,
                               child: Container(
@@ -2587,7 +2663,9 @@ class RelatedCourses extends StatelessWidget {
                                         top: Radius.circular(16),
                                       ),
                                       child: Image.network(
-                                        course['image'],
+                                        course['image']?.toString().isNotEmpty == true 
+                                            ? course['image']
+                                            : 'https://picsum.photos/seed/course/400/300',
                                         width: courseWidth,
                                         height: courseHeight * 0.6,
                                         fit: BoxFit.cover,

@@ -244,21 +244,15 @@ class _SearchPageState extends State<SearchPage> {
         'category_id': fullCourseData['category_id'] ?? course['category_id'],
       };
 
+      // Navigate directly without postFrameCallback to avoid RenderViewport errors
       if (context.mounted) {
-        Navigator.of(context).pop();
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => CourseDetailsPage(course: enhancedCourse),
+          ),
+        );
       }
-
-      // Defer navigation to next frame to avoid _dependents.isEmpty error
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (context.mounted) {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => CourseDetailsPage(course: enhancedCourse),
-            ),
-          );
-        }
-      });
     } catch (e) {
       if (context.mounted) {
         Navigator.of(context).pop();

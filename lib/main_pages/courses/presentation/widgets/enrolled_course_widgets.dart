@@ -30,7 +30,9 @@ class EnrolledCourseHeader extends StatelessWidget {
                 fit: StackFit.expand,
                 children: [
                   Image.network(
-                    course['image'],
+                    course['image']?.toString().isNotEmpty == true 
+                        ? course['image']
+                        : 'https://picsum.photos/seed/course/400/300',
                     fit: BoxFit.cover,
                     loadingBuilder: (context, child, loadingProgress) {
                       if (loadingProgress == null) return child;

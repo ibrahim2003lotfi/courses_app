@@ -618,7 +618,9 @@ class PublishedCourseCard extends StatelessWidget {
           child: Stack(
             children: [
               Image.network(
-                course['image'],
+                course['image']?.toString().isNotEmpty == true 
+                    ? course['image']
+                    : 'https://picsum.photos/seed/course/400/300',
                 width: double.infinity,
                 height: 120,
                 fit: BoxFit.cover,
@@ -733,7 +735,9 @@ class PublishedCourseCard extends StatelessWidget {
               ClipRRect(
                 borderRadius: BorderRadius.circular(12),
                 child: Image.network(
-                  course['image'],
+                  course['image']?.toString().isNotEmpty == true 
+                      ? course['image']
+                      : 'https://picsum.photos/seed/course/400/300',
                   width: 100,
                   height: 80,
                   fit: BoxFit.cover,
@@ -887,7 +891,9 @@ class CourseOptionsBottomSheet extends StatelessWidget {
                   ClipRRect(
                     borderRadius: BorderRadius.circular(12),
                     child: Image.network(
-                      course['image'],
+                      course['image']?.toString().isNotEmpty == true 
+                          ? course['image']
+                          : 'https://picsum.photos/seed/course/400/300',
                       width: 60,
                       height: 60,
                       fit: BoxFit.cover,
@@ -1342,7 +1348,9 @@ class CourseCard extends StatelessWidget {
         ClipRRect(
           borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
           child: Image.network(
-            course['image'],
+            course['image']?.toString().isNotEmpty == true 
+                ? course['image']
+                : 'https://picsum.photos/seed/course/400/300',
             width: double.infinity,
             height: 120,
             fit: BoxFit.cover,
@@ -1442,7 +1450,9 @@ class CourseCard extends StatelessWidget {
           ClipRRect(
             borderRadius: BorderRadius.circular(12),
             child: Image.network(
-              course['image'],
+              course['image']?.toString().isNotEmpty == true 
+                  ? course['image']
+                  : 'https://picsum.photos/seed/course/400/300',
               width: 100,
               height: 80,
               fit: BoxFit.cover,

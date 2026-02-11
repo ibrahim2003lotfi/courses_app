@@ -1381,87 +1381,85 @@ class _CategoryDetailPageState extends State<CategoryDetailPage> {
   }
 
   Future<void> _navigateToCourseDetails(Map<String, dynamic> course) async {
-    // Show loading indicator
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => const Center(
-        child: CircularProgressIndicator(),
-      ),
-    );
+    try {
+      // Show loading indicator
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(child: CircularProgressIndicator()),
+      );
 
-    // Fetch full course details with sections and lessons
-    Map<String, dynamic> fullCourseData = {};
-    int totalDuration = 0;
-    int totalLessons = 0;
+      // Fetch full course details with sections and lessons
+      Map<String, dynamic> fullCourseData = {};
+      int totalDuration = 0;
+      int totalLessons = 0;
 
-    // Try to fetch course details using the course slug or id
-    final slug = (course['slug']?.toString().isNotEmpty == true) 
-        ? course['slug'] 
-        : course['id'];
-    
-    if (slug != null && slug.toString().isNotEmpty) {
-      try {
-        final response = await _courseApi.getCourseDetails(slug.toString());
-        
-        // Handle different response formats
-        if (response['course'] != null) {
-          fullCourseData = response['course'] as Map<String, dynamic>;
-        } else if (response['data'] != null) {
-          fullCourseData = response['data'] as Map<String, dynamic>;
-        } else if (response['id'] != null) {
-          fullCourseData = response;
-        }
-
-        // Calculate total duration and lessons from sections
-        final sections = fullCourseData['sections'] as List? ?? [];
-        for (final section in sections) {
-          final lessons = section['lessons'] as List? ?? [];
-          totalLessons += lessons.length;
-          for (final lesson in lessons) {
-            final duration = lesson['duration'] as int? ?? 0;
-            totalDuration += duration;
+      // Try to fetch course details using course slug or id
+      final slug = (course['slug']?.toString().isNotEmpty == true) 
+          ? course['slug'] 
+          : course['id'];
+      
+      if (slug != null && slug.toString().isNotEmpty) {
+        try {
+          final response = await _courseApi.getCourseDetails(slug.toString());
+          
+          // Handle different response formats
+          if (response['course'] != null) {
+            fullCourseData = response['course'] as Map<String, dynamic>;
+          } else if (response['data'] != null) {
+            fullCourseData = response['data'] as Map<String, dynamic>;
+          } else if (response['id'] != null) {
+            fullCourseData = response;
           }
+
+          // Calculate total duration and lessons from sections
+          final sections = fullCourseData['sections'] as List? ?? [];
+          for (final section in sections) {
+            final lessons = section['lessons'] as List? ?? [];
+            totalLessons += lessons.length;
+            for (final lesson in lessons) {
+              final duration = lesson['duration'] as int? ?? 0;
+              totalDuration += duration;
+            }
+          }
+        } catch (e) {
+          print('Error fetching course details from category page: $e');
         }
-      } catch (e) {
-        print('Error fetching course details from category page: $e');
       }
-    }
 
-    // Close loading dialog
-    if (context.mounted) {
-      Navigator.of(context).pop();
-    }
+      // Close loading dialog
+      if (context.mounted) {
+        Navigator.of(context).pop();
+      }
 
-    // Convert duration from seconds to hours (round up)
-    final durationHours = totalDuration > 0 ? (totalDuration / 3600).ceil() : 0;
+      // Convert duration from seconds to hours (round up)
+      final durationHours = totalDuration > 0 ? (totalDuration / 3600).ceil() : 0;
 
-    // Build enhanced course data from API response
-    Map<String, dynamic> enhancedCourse = {
-      'id': fullCourseData['id'] ?? course['id'] ?? '',
-      'slug': fullCourseData['slug'] ?? course['slug'] ?? '',
-      'title': fullCourseData['title'] ?? course['title'] ?? 'دورة تعليمية',
-      'image': fullCourseData['course_image_url'] ?? course['image'] ?? 'https://picsum.photos/400/300',
-      'teacher': fullCourseData['instructor']?['name'] ?? course['teacher'] ?? 'مدرس متخصص',
-      'instructor': fullCourseData['instructor'] ?? course['instructor'],
-      'category': fullCourseData['category']?['name'] ?? course['category'] ?? 'عام',
-      'rating': (fullCourseData['rating'] ?? course['rating'] ?? 4.5).toDouble(),
-      'reviews': fullCourseData['total_ratings'] ?? course['reviews'] ?? 0,
-      'students': (fullCourseData['total_students'] ?? course['students'] ?? 0).toString(),
-      'duration': durationHours > 0 ? durationHours : (fullCourseData['duration_hours'] ?? course['duration'] ?? 0),
-      'lessons': totalLessons > 0 ? totalLessons : (fullCourseData['lessons_count'] ?? course['lessons'] ?? 0),
-      'level': fullCourseData['level'] ?? course['level'] ?? 'متوسط',
-      'lastUpdated': _extractYear(fullCourseData['updated_at']) ?? _extractYear(course['lastUpdated']) ?? '2026',
-      'price': fullCourseData['price']?.toString() ?? course['price']?.toString() ?? '0',
-      'description': fullCourseData['description'] ?? course['description'] ?? '',
-      'tags': fullCourseData['category']?['name'] != null ? [fullCourseData['category']['name']] : (course['tags'] ?? []),
-      'instructorImage': fullCourseData['instructor']?['avatar'] ?? course['instructorImage'] ?? 'https://picsum.photos/200/200',
-      'sections': fullCourseData['sections'] ?? course['sections'] ?? [],
-      'category_id': fullCourseData['category_id'] ?? course['category_id'],
-    };
+      // Build enhanced course data from API response
+      Map<String, dynamic> enhancedCourse = {
+        'id': fullCourseData['id'] ?? course['id'] ?? '',
+        'slug': fullCourseData['slug'] ?? course['slug'] ?? '',
+        'title': fullCourseData['title'] ?? course['title'] ?? 'دورة تعليمية',
+        'image': fullCourseData['course_image_url'] ?? course['image'] ?? 'https://picsum.photos/400/300',
+        'teacher': fullCourseData['instructor']?['name'] ?? course['teacher'] ?? 'مدرس متخصص',
+        'instructor': fullCourseData['instructor'] ?? course['instructor'],
+        'category': fullCourseData['category']?['name'] ?? course['category'] ?? 'عام',
+        'rating': (fullCourseData['rating'] ?? course['rating'] ?? 4.5).toDouble(),
+        'reviews': fullCourseData['total_ratings'] ?? course['reviews'] ?? 0,
+        'students': (fullCourseData['total_students'] ?? course['students'] ?? 0).toString(),
+        'duration': durationHours > 0 ? durationHours : (fullCourseData['duration_hours'] ?? course['duration'] ?? 0),
+        'lessons': totalLessons > 0 ? totalLessons : (fullCourseData['lessons_count'] ?? course['lessons'] ?? 0),
+        'level': fullCourseData['level'] ?? course['level'] ?? 'متوسط',
+        'lastUpdated': _extractYear(fullCourseData['updated_at']) ?? _extractYear(course['lastUpdated']) ?? '2026',
+        'price': fullCourseData['price']?.toString() ?? course['price']?.toString() ?? '0',
+        'description': fullCourseData['description'] ?? course['description'] ?? '',
+        'tags': fullCourseData['category']?['name'] != null ? [fullCourseData['category']['name']] : (course['tags'] ?? []),
+        'instructorImage': fullCourseData['instructor']?['avatar'] ?? course['instructorImage'] ?? 'https://picsum.photos/200/200',
+        'sections': fullCourseData['sections'] ?? course['sections'] ?? [],
+        'category_id': fullCourseData['category_id'] ?? course['category_id'],
+      };
 
-    // Defer navigation to next frame to avoid _dependents.isEmpty error
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Navigate to course details page
       if (context.mounted) {
         Navigator.push(
           context,
@@ -1470,7 +1468,25 @@ class _CategoryDetailPageState extends State<CategoryDetailPage> {
           ),
         );
       }
-    });
+    } catch (e) {
+      // Close loading dialog if it's still open
+      if (context.mounted) {
+        Navigator.of(context).pop();
+      }
+      print('Navigation error from category page: $e');
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'فشل فتح الدورة: $e',
+              style: GoogleFonts.tajawal(fontWeight: FontWeight.w600),
+            ),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
   }
 
   String? _extractYear(dynamic dateValue) {

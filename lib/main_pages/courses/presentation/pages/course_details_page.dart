@@ -300,10 +300,21 @@ class _CourseDetailsPageState extends State<CourseDetailsPage> {
   Widget _buildCoursePreviewView(BuildContext context) {
     return CustomScrollView(
       slivers: [
-        CourseHeader(course: _courseData),
-        CourseInfoCard(course: _courseData),
-        CourseTabs(course: _courseData),
+        CourseHeader(
+          key: ValueKey('course_header_${widget.course['id']}'),
+          course: _courseData,
+        ),
+        CourseInfoCard(
+          key: ValueKey('course_info_${widget.course['id']}'),
+          course: _courseData,
+        ),
+        CourseTabs(
+          key: ValueKey('course_tabs_${widget.course['id']}'),
+          course: _courseData,
+        ),
         RelatedCourses(
+          key: ValueKey('related_courses_${widget.course['id']}'),
+          course: widget.course,
           relatedCourses: _getRelatedCourses(),
           onCourseTap: _navigateToCourseDetails,
         ),
@@ -318,13 +329,24 @@ class _CourseDetailsPageState extends State<CourseDetailsPage> {
   ) {
     return CustomScrollView(
       slivers: [
-        EnrolledCourseHeader(course: enrolledCourse),
-        CourseProgressWidget(course: enrolledCourse),
-        SliverToBoxAdapter(child: _buildRatingSection(context, enrolledCourse)),
+        EnrolledCourseHeader(
+          key: ValueKey('enrolled_header_${widget.course['id']}'),
+          course: enrolledCourse,
+        ),
+        CourseProgressWidget(
+          key: ValueKey('course_progress_${widget.course['id']}'),
+          course: enrolledCourse,
+        ),
         SliverToBoxAdapter(
+          key: ValueKey('rating_section_${widget.course['id']}'),
+          child: _buildRatingSection(context, enrolledCourse),
+        ),
+        SliverToBoxAdapter(
+          key: ValueKey('continue_button_${widget.course['id']}'),
           child: _buildContinueLearningButton(context, enrolledCourse),
         ),
         LessonsListWidget(
+          key: ValueKey('lessons_list_${widget.course['id']}'),
           course: enrolledCourse,
           isEnrolled: true,
         ),
