@@ -1,6 +1,7 @@
 import 'package:courses_app/core/utils/theme_manager.dart';
 import 'package:courses_app/main_pages/home/presentation/side%20pages/category_datail_page.dart';
 import 'package:courses_app/main_pages/courses/presentation/pages/course_details_page.dart';
+import 'package:courses_app/presentation/widgets/course_image_widget.dart';
 import 'package:courses_app/presentation/widgets/skeleton_widgets.dart';
 import 'package:courses_app/services/course_api.dart';
 import 'package:courses_app/services/home_api.dart';
@@ -32,6 +33,8 @@ class _SearchPageState extends State<SearchPage> {
   bool _isLoadingCourses = true;
   bool _isSearching = false;
   bool _hasSearched = false;
+
+  bool get _isInitialLoading => _isLoadingCategories || _isLoadingCourses;
 
   @override
   void initState() {
@@ -272,7 +275,9 @@ class _SearchPageState extends State<SearchPage> {
 
         return Scaffold(
           backgroundColor: theme.scaffoldBackgroundColor,
-          body: CustomScrollView(
+          body: _isInitialLoading && !_hasSearched
+              ? _buildFullPageSkeleton(isDarkMode)
+              : CustomScrollView(
             slivers: [
               // Top Search Bar
               SliverAppBar(
@@ -595,20 +600,12 @@ class _SearchPageState extends State<SearchPage> {
                 borderRadius: const BorderRadius.horizontal(
                   right: Radius.circular(12),
                 ),
-                child: Image.network(
-                  course['image'],
+                child: CourseImageWidget(
+                  imageUrl: course['image']?.toString(),
                   width: 100,
                   height: 80,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Container(
-                    width: 100,
-                    height: 80,
-                    color: isDarkMode ? Colors.grey[700] : Colors.grey[300],
-                    child: Icon(
-                      Icons.image_not_supported,
-                      color: isDarkMode ? Colors.grey[500] : Colors.grey[600],
-                    ),
-                  ),
+                  borderRadius: BorderRadius.zero,
+                  placeholderIcon: Icons.school_outlined,
                 ),
               ),
 
@@ -872,6 +869,68 @@ class _SearchPageState extends State<SearchPage> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildFullPageSkeleton(bool isDarkMode) {
+    return CustomScrollView(
+      slivers: [
+        // AppBar skeleton
+        SliverAppBar(
+          automaticallyImplyLeading: false,
+          backgroundColor: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
+          elevation: 2,
+          pinned: true,
+          flexibleSpace: Container(
+            height: 70,
+            decoration: BoxDecoration(
+              color: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: SafeArea(
+              child: Row(
+                children: [
+                  SkeletonContainer(
+                    width: 43,
+                    height: 43,
+                    borderRadius: 8,
+                    isLoading: true,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: SkeletonContainer(
+                      width: 100,
+                      height: 24,
+                      borderRadius: 4,
+                      isLoading: true,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        // Search field skeleton
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: SkeletonContainer(
+              width: double.infinity,
+              height: 50,
+              borderRadius: 16,
+              isLoading: true,
+            ),
+          ),
+        ),
+        // Categories skeleton
+        SliverToBoxAdapter(
+          child: _buildSkeletonCategories(isDarkMode),
+        ),
+        // Courses skeleton
+        SliverToBoxAdapter(
+          child: _buildSkeletonCourses(isDarkMode),
+        ),
+      ],
     );
   }
 

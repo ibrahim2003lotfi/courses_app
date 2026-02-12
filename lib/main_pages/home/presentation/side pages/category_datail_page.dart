@@ -1,6 +1,8 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:courses_app/core/utils/theme_manager.dart';
 import 'package:courses_app/main_pages/courses/presentation/pages/course_details_page.dart';
+import 'package:courses_app/presentation/widgets/course_image_widget.dart';
+import 'package:courses_app/presentation/widgets/skeleton_widgets.dart';
 import 'package:courses_app/services/course_api.dart';
 import 'package:courses_app/services/home_api.dart';
 import 'package:courses_app/theme_cubit/theme_cubit.dart';
@@ -245,6 +247,155 @@ class _CategoryDetailPageState extends State<CategoryDetailPage> {
     super.dispose();
   }
 
+  Widget _buildSkeletonLoading(bool isDarkMode) {
+    return CustomScrollView(
+      slivers: [
+        // AppBar skeleton
+        SliverAppBar(
+          expandedHeight: 250,
+          floating: false,
+          pinned: true,
+          backgroundColor: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
+          flexibleSpace: FlexibleSpaceBar(
+            background: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: widget.category['gradient'] ??
+                      [const Color(0xFF667EEA), const Color(0xFF764BA2)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+              ),
+            ),
+          ),
+        ),
+        // Beginner courses skeleton
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 32, 20, 16),
+            child: SkeletonContainer(
+              width: 150,
+              height: 24,
+              borderRadius: 4,
+              isLoading: true,
+            ),
+          ),
+        ),
+        SliverToBoxAdapter(
+          child: SizedBox(
+            height: 200,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              itemCount: 3,
+              itemBuilder: (context, index) {
+                return Padding(
+                  padding: const EdgeInsets.only(right: 16),
+                  child: SizedBox(
+                    width: 160,
+                    child: SkeletonCourseCard(isDarkMode: isDarkMode),
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
+        // Featured courses skeleton
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 40, 20, 16),
+            child: SkeletonContainer(
+              width: 150,
+              height: 24,
+              borderRadius: 4,
+              isLoading: true,
+            ),
+          ),
+        ),
+        SliverToBoxAdapter(
+          child: SizedBox(
+            height: 280,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              itemCount: 3,
+              itemBuilder: (context, index) {
+                return Padding(
+                  padding: const EdgeInsets.only(right: 16),
+                  child: SizedBox(
+                    width: 220,
+                    child: SkeletonCourseCard(isDarkMode: isDarkMode),
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
+        // Subcategories skeleton
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 40, 20, 16),
+            child: SkeletonContainer(
+              width: 150,
+              height: 24,
+              borderRadius: 4,
+              isLoading: true,
+            ),
+          ),
+        ),
+        SliverToBoxAdapter(
+          child: GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              childAspectRatio: 1.2,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+            ),
+            itemCount: 4,
+            itemBuilder: (context, index) {
+              return SkeletonContainer(
+                width: double.infinity,
+                height: double.infinity,
+                borderRadius: 16,
+                isLoading: true,
+              );
+            },
+          ),
+        ),
+        // All courses skeleton
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 40, 20, 16),
+            child: SkeletonContainer(
+              width: 150,
+              height: 24,
+              borderRadius: 4,
+              isLoading: true,
+            ),
+          ),
+        ),
+        SliverToBoxAdapter(
+          child: ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            itemCount: 3,
+            itemBuilder: (context, index) {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: SkeletonUniversityItem(isDarkMode: isDarkMode),
+              );
+            },
+          ),
+        ),
+        const SliverToBoxAdapter(child: SizedBox(height: 40)),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     // Get theme directly without creating BLoC dependencies
@@ -256,7 +407,9 @@ class _CategoryDetailPageState extends State<CategoryDetailPage> {
 
     return Scaffold(
       backgroundColor: themeData.scaffoldBackgroundColor,
-      body: CustomScrollView(
+      body: _isLoading
+          ? _buildSkeletonLoading(isDarkMode)
+          : CustomScrollView(
         controller: _scrollController,
         slivers: [
           // ✅ Optimized SliverAppBar
@@ -717,11 +870,12 @@ class _CategoryDetailPageState extends State<CategoryDetailPage> {
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(16),
               ),
-              child: Image.network(
-                imageUrl,
+              child: CourseImageWidget(
+                imageUrl: imageUrl.isNotEmpty ? imageUrl : null,
                 width: 160,
                 height: 90,
-                fit: BoxFit.cover,
+                borderRadius: BorderRadius.zero,
+                placeholderIcon: Icons.school_outlined,
               ),
             ),
             Expanded(
@@ -820,10 +974,19 @@ class _CategoryDetailPageState extends State<CategoryDetailPage> {
               child: Stack(
                 children: [
                   Image.network(
-                    course['image'],
+                    course['image']?.toString() ?? '',
                     width: double.infinity,
                     height: 140,
                     fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return CourseImageWidget(
+                        imageUrl: null,
+                        width: double.infinity,
+                        height: 140,
+                        borderRadius: BorderRadius.zero,
+                        placeholderIcon: Icons.school_outlined,
+                      );
+                    },
                   ),
                   if (course['badge'] != null)
                     Positioned(
@@ -1070,11 +1233,12 @@ class _CategoryDetailPageState extends State<CategoryDetailPage> {
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(16),
               ),
-              child: Image.network(
-                course['image'],
+              child: CourseImageWidget(
+                imageUrl: course['image']?.toString(),
                 width: double.infinity,
                 height: 120,
-                fit: BoxFit.cover,
+                borderRadius: BorderRadius.zero,
+                placeholderIcon: Icons.school_outlined,
               ),
             ),
             Expanded(
@@ -1180,11 +1344,12 @@ class _CategoryDetailPageState extends State<CategoryDetailPage> {
 
         Widget image = ClipRRect(
           borderRadius: BorderRadius.circular(12),
-          child: Image.network(
-            course['image'],
+          child: CourseImageWidget(
+            imageUrl: course['image']?.toString(),
             width: isNarrow ? double.infinity : 96,
             height: isNarrow ? 160 : 80,
-            fit: BoxFit.cover,
+            borderRadius: BorderRadius.zero,
+            placeholderIcon: Icons.school_outlined,
           ),
         );
 

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:courses_app/bloc/course_management_bloc.dart';
 import 'package:courses_app/main_pages/courses/presentation/pages/favorite_courses_page.dart';
+import 'package:courses_app/presentation/widgets/course_image_widget.dart';
 import 'package:courses_app/services/course_management_api.dart';
 import 'package:courses_app/services/review_service.dart';
 import 'package:courses_app/theme_cubit/theme_cubit.dart';
@@ -71,28 +72,14 @@ class _CourseHeaderState extends State<CourseHeader> {
               background: Stack(
                 fit: StackFit.expand,
                 children: [
-                  Image.network(
-                    widget.course['image']?.toString().isNotEmpty == true 
-                        ? widget.course['image']
-                        : 'https://picsum.photos/seed/course/400/300',
+                  CourseImageWidget(
+                    imageUrl: widget.course['image']?.toString(),
+                    width: double.infinity,
+                    height: double.infinity,
                     fit: BoxFit.cover,
-                    loadingBuilder: (context, child, loadingProgress) {
-                      if (loadingProgress == null) return child;
-                      return Container(
-                        color: isDarkMode
-                            ? const Color(0xFF2D2D2D)
-                            : const Color(0xFFF3F4F6),
-                        child: Center(
-                          child: CircularProgressIndicator(
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              isDarkMode
-                                  ? Colors.white70
-                                  : const Color(0xFF2563EB),
-                            ),
-                          ),
-                        ),
-                      );
-                    },
+                    placeholderIcon: Icons.play_circle_outline,
+                    showPlaceholderText: true,
+                    placeholderText: 'صورة الدورة غير متوفرة',
                   ),
                   Container(
                     decoration: BoxDecoration(

@@ -1,4 +1,5 @@
 import 'package:courses_app/main_pages/home/presentation/side%20pages/university_pages/faculties_page.dart';
+import 'package:courses_app/presentation/widgets/course_image_widget.dart';
 import 'package:courses_app/presentation/widgets/skeleton_widgets.dart';
 import 'package:courses_app/theme_cubit/theme_cubit.dart';
 import 'package:courses_app/theme_cubit/theme_state.dart';
@@ -36,6 +37,14 @@ class _UniversitiesPageBody extends StatelessWidget {
           body: BlocBuilder<UniversityBloc, UniversityState>(
             builder: (context, uniState) {
               final universities = uniState.universities;
+
+              if (uniState.isLoading) {
+                return SkeletonList(
+                  itemCount: 6,
+                  isDarkMode: isDarkMode,
+                  padding: const EdgeInsets.all(16),
+                );
+              }
 
               return CustomScrollView(
                 slivers: [
@@ -260,47 +269,12 @@ class UniversityListItem extends StatelessWidget {
                     // University Image (Bigger size)
                     ClipRRect(
                       borderRadius: BorderRadius.circular(12),
-                      child: Image.network(
-                        university['image'],
+                      child: CourseImageWidget(
+                        imageUrl: university['image']?.toString(),
                         width: 80,
                         height: 80,
-                        fit: BoxFit.cover,
-                        loadingBuilder: (context, child, loadingProgress) {
-                          if (loadingProgress == null) return child;
-                          return Container(
-                            width: 80,
-                            height: 80,
-                            color: isDarkMode
-                                ? const Color(0xFF2D2D2D)
-                                : const Color(0xFFF3F4F6),
-                            child: Center(
-                              child: CircularProgressIndicator(
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  isDarkMode
-                                      ? Colors.white70
-                                      : const Color(0xFF2563EB),
-                                ),
-                              ),
-                            ),
-                          );
-                        },
-                        errorBuilder: (context, error, stackTrace) {
-                          // Avoid showing long HTTP error text; show simple fallback instead
-                          return Container(
-                            width: 80,
-                            height: 80,
-                            color: isDarkMode
-                                ? const Color(0xFF2D2D2D)
-                                : const Color(0xFFF3F4F6),
-                            child: Icon(
-                              Icons.school,
-                              color: isDarkMode
-                                  ? Colors.white70
-                                  : const Color(0xFF9CA3AF),
-                              size: 32,
-                            ),
-                          );
-                        },
+                        borderRadius: BorderRadius.zero,
+                        placeholderIcon: Icons.account_balance,
                       ),
                     ),
 
@@ -552,28 +526,12 @@ class UniversityDetailsSheet extends StatelessWidget {
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(12),
-                child: Image.network(
-                  university['image'],
+                child: CourseImageWidget(
+                  imageUrl: university['image']?.toString(),
                   width: 80,
                   height: 80,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    // Same fallback here to avoid overflow from error text
-                    return Container(
-                      width: 80,
-                      height: 80,
-                      color: isDarkMode
-                          ? const Color(0xFF2D2D2D)
-                          : const Color(0xFFF3F4F6),
-                      child: Icon(
-                        Icons.school,
-                        color: isDarkMode
-                            ? Colors.white70
-                            : const Color(0xFF9CA3AF),
-                        size: 32,
-                      ),
-                    );
-                  },
+                  borderRadius: BorderRadius.zero,
+                  placeholderIcon: Icons.account_balance,
                 ),
               ),
               const SizedBox(width: 16),

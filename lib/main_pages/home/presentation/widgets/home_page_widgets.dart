@@ -6,6 +6,7 @@ import 'package:courses_app/main_pages/home/presentation/side%20pages/category_p
 import 'package:courses_app/main_pages/home/presentation/side%20pages/university_pages/univiersities_page.dart';
 import 'package:courses_app/main_pages/home/presentation/widgets/notifications_page.dart';
 import 'package:courses_app/main_pages/search/presentation/pages/search_page.dart';
+import 'package:courses_app/presentation/widgets/course_image_widget.dart';
 import 'package:courses_app/services/course_api.dart';
 import 'package:courses_app/theme_cubit/theme_cubit.dart';
 import 'package:courses_app/theme_cubit/theme_state.dart';
@@ -901,35 +902,12 @@ class _RecommendedCoursesState extends State<RecommendedCourses> {
                 child: Container(
                   width: double.infinity,
                   height: constraints.maxHeight * 0.5,
-                  child: Image.network(
-                    item['image'],
-                    fit: BoxFit.cover,
-                    loadingBuilder: (context, child, loadingProgress) {
-                      if (loadingProgress == null) return child;
-                      return Container(
-                        color: isDarkMode ? Colors.grey[800] : Colors.grey[200],
-                        child: Center(
-                          child: CircularProgressIndicator(
-                            value: loadingProgress.expectedTotalBytes != null
-                                ? loadingProgress.cumulativeBytesLoaded /
-                                      loadingProgress.expectedTotalBytes!
-                                : null,
-                          ),
-                        ),
-                      );
-                    },
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        color: isDarkMode ? Colors.grey[800] : Colors.grey[200],
-                        child: Icon(
-                          Icons.image_not_supported,
-                          color: isDarkMode
-                              ? Colors.grey[600]
-                              : Colors.grey[400],
-                          size: 40,
-                        ),
-                      );
-                    },
+                  child: CourseImageWidget(
+                    imageUrl: item['image']?.toString(),
+                    width: double.infinity,
+                    height: constraints.maxHeight * 0.5,
+                    borderRadius: BorderRadius.circular(12),
+                    placeholderIcon: Icons.school_outlined,
                   ),
                 ),
               ),
@@ -1419,27 +1397,11 @@ class _TrendingCoursesState extends State<TrendingCourses> {
                 left: Radius.circular(16),
                 right: Radius.circular(0),
               ),
-              child: Stack(
-                children: [
-                  Image.network(
-                    course['image'] ?? 'https://picsum.photos/400/300',
-                    width: double.infinity,
-                    height: double.infinity,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        color: isDarkMode ? Colors.grey[800] : Colors.grey[200],
-                        child: Icon(
-                          Icons.image_not_supported,
-                          color: isDarkMode
-                              ? Colors.grey[600]
-                              : Colors.grey[400],
-                          size: 30,
-                        ),
-                      );
-                    },
-                  ),
-                ],
+              child: CourseImageWidget(
+                imageUrl: course['image']?.toString(),
+                width: 100,
+                height: 100,
+                placeholderIcon: Icons.school_outlined,
               ),
             ),
           ),
@@ -1806,8 +1768,7 @@ class _ContinueLearningState extends State<ContinueLearning> {
     Map<String, dynamic> course,
     bool isDarkMode,
   ) {
-    final imageUrl = course['course_image_url'] ?? '';
-    final hasValidImage = imageUrl.isNotEmpty && imageUrl.startsWith('http');
+    final imageUrl = course['course_image_url'] ?? course['image'] ?? '';
 
     return SizedBox(
       width: 280,
@@ -1831,40 +1792,16 @@ class _ContinueLearningState extends State<ContinueLearning> {
             borderRadius: BorderRadius.circular(16),
             child: Stack(
               children: [
-                // Background Image
-                if (hasValidImage)
-                  Positioned.fill(
-                    child: Image.network(
-                      imageUrl,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          color: isDarkMode
-                              ? Colors.grey[800]
-                              : Colors.grey[200],
-                          child: Icon(
-                            Icons.image_not_supported,
-                            color: isDarkMode
-                                ? Colors.grey[600]
-                                : Colors.grey[400],
-                            size: 40,
-                          ),
-                        );
-                      },
-                    ),
-                  )
-                else
-                  Positioned.fill(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                      ),
-                    ),
+                // Background Image using CourseImageWidget
+                Positioned.fill(
+                  child: CourseImageWidget(
+                    imageUrl: imageUrl.isNotEmpty ? imageUrl : null,
+                    width: double.infinity,
+                    height: double.infinity,
+                    borderRadius: BorderRadius.zero,
+                    placeholderIcon: Icons.school_outlined,
                   ),
+                ),
                 // Gradient overlay for text readability
                 Positioned.fill(
                   child: Container(

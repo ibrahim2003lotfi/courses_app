@@ -1,3 +1,4 @@
+import 'package:courses_app/presentation/widgets/course_image_widget.dart';
 import 'package:courses_app/theme_cubit/theme_cubit.dart';
 import 'package:courses_app/theme_cubit/theme_state.dart';
 import 'package:flutter/material.dart';
@@ -50,11 +51,12 @@ class RecommendedCoursesWidget extends StatelessWidget {
                                 children: [
                                   ClipRRect(
                                     borderRadius: BorderRadius.circular(12),
-                                    child: Image.network(
-                                      item['image'],
+                                    child: CourseImageWidget(
+                                      imageUrl: item['image']?.toString(),
                                       width: 80,
                                       height: 60,
-                                      fit: BoxFit.cover,
+                                      borderRadius: BorderRadius.zero,
+                                      placeholderIcon: Icons.school_outlined,
                                     ),
                                   ),
                                   const SizedBox(width: 12),
@@ -160,11 +162,12 @@ class RecommendedCoursesWidget extends StatelessWidget {
                             children: [
                               ClipRRect(
                                 borderRadius: BorderRadius.circular(12),
-                                child: Image.network(
-                                  item['image'],
+                                child: CourseImageWidget(
+                                  imageUrl: item['image']?.toString(),
                                   width: constraints.maxWidth < 800 ? 80 : 100,
                                   height: constraints.maxWidth < 800 ? 60 : 80,
-                                  fit: BoxFit.cover,
+                                  borderRadius: BorderRadius.zero,
+                                  placeholderIcon: Icons.school_outlined,
                                 ),
                               ),
                               const SizedBox(width: 16),

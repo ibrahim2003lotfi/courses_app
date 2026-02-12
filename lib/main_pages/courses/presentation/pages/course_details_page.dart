@@ -2,6 +2,7 @@ import 'package:courses_app/bloc/course_management_bloc.dart';
 import 'package:courses_app/main_pages/courses/presentation/widgets/courses_details_widgets.dart';
 import 'package:courses_app/main_pages/courses/presentation/widgets/enrolled_course_widgets.dart';
 import 'package:courses_app/main_pages/player/presentation/pages/video_player_page.dart';
+import 'package:courses_app/presentation/widgets/skeleton_widgets.dart';
 import 'package:courses_app/services/course_api.dart';
 import 'package:courses_app/services/review_service.dart';
 import 'package:courses_app/theme_cubit/theme_cubit.dart';
@@ -24,17 +25,41 @@ class _CourseDetailsPageState extends State<CourseDetailsPage> {
   final ReviewService _reviewService = ReviewService();
   List<Map<String, dynamic>> _relatedCourses = [];
   bool _isLoadingRelated = false;
-  
-  // Full course data from API
+  bool _isLoading = true;
   Map<String, dynamic>? _fullCourseData;
-  bool _isLoadingCourse = false;
-  final ValueNotifier<double?> _userRating = ValueNotifier<double?>(null);
+  ValueNotifier<double?> _userRating = ValueNotifier<double?>(null);
   Map<String, dynamic>? _ratingInfo;
   bool _isSubmittingRating = false;
 
   @override
   void initState() {
     super.initState();
+    _loadCourseDetails();
+  }
+
+  Future<void> _loadCourseDetails() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      // Fetch course details
+      final response = await _courseApi.getCourseDetails(widget.course['slug'] ?? widget.course['id']);
+      if (response['course'] != null) {
+        setState(() {
+          _fullCourseData = response['course'];
+        });
+      }
+      // Fetch related courses
+      await _fetchRelatedCourses();
+    } catch (e) {
+      print('Error loading course details: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     if (widget.course['id'] == null) {
       widget.course['id'] = 'course_${DateTime.now().millisecondsSinceEpoch}';
     }
@@ -259,6 +284,154 @@ class _CourseDetailsPageState extends State<CourseDetailsPage> {
         : [];
   }
 
+  Widget _buildSkeletonLoading(bool isDarkMode) {
+    return CustomScrollView(
+      slivers: [
+        // Course Header skeleton
+        SliverAppBar(
+          expandedHeight: 250,
+          floating: false,
+          pinned: true,
+          backgroundColor: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
+          flexibleSpace: FlexibleSpaceBar(
+            background: Container(
+              color: isDarkMode ? const Color(0xFF2D2D2D) : Colors.grey[300],
+              child: Center(
+                child: SkeletonContainer(
+                  width: 80,
+                  height: 80,
+                  borderRadius: 40,
+                  isLoading: true,
+                ),
+              ),
+            ),
+          ),
+        ),
+        // Course Info skeleton
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SkeletonContainer(
+                  width: double.infinity,
+                  height: 24,
+                  borderRadius: 4,
+                  isLoading: true,
+                ),
+                const SizedBox(height: 12),
+                SkeletonContainer(
+                  width: 150,
+                  height: 16,
+                  borderRadius: 4,
+                  isLoading: true,
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    SkeletonContainer(
+                      width: 60,
+                      height: 32,
+                      borderRadius: 16,
+                      isLoading: true,
+                    ),
+                    const SizedBox(width: 8),
+                    SkeletonContainer(
+                      width: 80,
+                      height: 32,
+                      borderRadius: 16,
+                      isLoading: true,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+        // Tabs skeleton
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              children: [
+                Expanded(
+                  child: SkeletonContainer(
+                    width: double.infinity,
+                    height: 40,
+                    borderRadius: 8,
+                    isLoading: true,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: SkeletonContainer(
+                    width: double.infinity,
+                    height: 40,
+                    borderRadius: 8,
+                    isLoading: true,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        // Content skeleton
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              children: [
+                SkeletonContainer(
+                  width: double.infinity,
+                  height: 100,
+                  borderRadius: 12,
+                  isLoading: true,
+                ),
+                const SizedBox(height: 16),
+                SkeletonContainer(
+                  width: double.infinity,
+                  height: 60,
+                  borderRadius: 12,
+                  isLoading: true,
+                ),
+              ],
+            ),
+          ),
+        ),
+        // Related courses skeleton
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 24, 16, 12),
+            child: SkeletonContainer(
+              width: 150,
+              height: 24,
+              borderRadius: 4,
+              isLoading: true,
+            ),
+          ),
+        ),
+        SliverToBoxAdapter(
+          child: SizedBox(
+            height: 220,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: 3,
+              itemBuilder: (context, index) {
+                return Padding(
+                  padding: const EdgeInsets.only(right: 12),
+                  child: SkeletonCourseCard(isDarkMode: isDarkMode),
+                );
+              },
+            ),
+          ),
+        ),
+        const SliverToBoxAdapter(child: SizedBox(height: 40)),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<ThemeCubit, ThemeState>(
@@ -269,7 +442,9 @@ class _CourseDetailsPageState extends State<CourseDetailsPage> {
           backgroundColor: isDarkMode
               ? const Color(0xFF121212)
               : const Color(0xFFF8FAFC),
-          body: BlocBuilder<CourseManagementBloc, CourseManagementState>(
+          body: _isLoading
+              ? _buildSkeletonLoading(isDarkMode)
+              : BlocBuilder<CourseManagementBloc, CourseManagementState>(
             builder: (context, courseState) {
               final isEnrolled = courseState.enrolledCourses.any(
                 (course) => course['id'] == widget.course['id'],

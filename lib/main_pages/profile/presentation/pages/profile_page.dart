@@ -250,7 +250,9 @@ class _ProfilePageState extends State<ProfilePage> {
                   : ThemeManager.lightTheme,
               child: Scaffold(
                 backgroundColor: _getBackgroundColor(isDarkMode),
-                body: SafeArea(
+                body: _isLoading
+                    ? SkeletonProfile(isDarkMode: isDarkMode)
+                    : SafeArea(
                   child: CustomScrollView(
                     slivers: [
                       // Header with Cover and Profile Image

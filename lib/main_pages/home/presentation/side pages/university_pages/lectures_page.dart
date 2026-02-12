@@ -1,4 +1,5 @@
 import 'package:courses_app/main_pages/courses/presentation/pages/course_details_page.dart';
+import 'package:courses_app/presentation/widgets/course_image_widget.dart';
 import 'package:courses_app/presentation/widgets/skeleton_widgets.dart';
 import 'package:courses_app/theme_cubit/theme_cubit.dart';
 import 'package:courses_app/theme_cubit/theme_state.dart';
@@ -366,14 +367,12 @@ class LectureListItem extends StatelessWidget {
     final imageUrl = course['course_image_url'] ?? course['image'] ?? '';
 
     if (imageUrl.isNotEmpty) {
-      return Image.network(
-        imageUrl,
+      return CourseImageWidget(
+        imageUrl: imageUrl,
         width: 100,
         height: 80,
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) {
-          return _buildPlaceholderImage();
-        },
+        borderRadius: BorderRadius.circular(12),
+        placeholderIcon: Icons.school_outlined,
       );
     }
     return _buildPlaceholderImage();

@@ -1,6 +1,7 @@
 import 'package:courses_app/core/utils/theme_manager.dart';
 import 'package:courses_app/main_pages/courses/presentation/widgets/favorite_courses_widgets.dart';
 import 'package:courses_app/main_pages/home/presentation/widgets/home_page_widgets.dart';
+import 'package:courses_app/presentation/widgets/skeleton_widgets.dart';
 import 'package:courses_app/theme_cubit/theme_cubit.dart';
 import 'package:courses_app/theme_cubit/theme_state.dart';
 import 'package:courses_app/bloc/user_role_bloc.dart';
@@ -34,7 +35,7 @@ class _CoursesPageContent extends StatefulWidget {
   final int initialTabIndex;
 
   const _CoursesPageContent({
-    super.key, 
+    super.key,
     required this.isTeacher,
     this.initialTabIndex = 0,
   });
@@ -46,6 +47,7 @@ class _CoursesPageContent extends StatefulWidget {
 class _CoursesPageContentState extends State<_CoursesPageContent>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -55,17 +57,35 @@ class _CoursesPageContentState extends State<_CoursesPageContent>
       vsync: this,
       initialIndex: widget.initialTabIndex,
     );
+    _simulateLoading();
+  }
 
-    // Load user courses when page initializes
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<CourseManagementBloc>().add(LoadUserCoursesEvent());
-    });
+  Future<void> _simulateLoading() async {
+    await Future.delayed(const Duration(milliseconds: 500));
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
   @override
   void dispose() {
     _tabController.dispose();
     super.dispose();
+  }
+
+  Widget _buildSkeletonLoading(bool isDarkMode) {
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: 5,
+      itemBuilder: (context, index) {
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 16),
+          child: SkeletonUniversityItem(isDarkMode: isDarkMode),
+        );
+      },
+    );
   }
 
   // Helper method to get responsive font size
@@ -134,22 +154,23 @@ class _CoursesPageContentState extends State<_CoursesPageContent>
 
                 // TabBarView - Wrapped with BlocBuilder for course management state
                 Expanded(
-                  child:
-                      BlocBuilder<CourseManagementBloc, CourseManagementState>(
-                        builder: (context, courseState) {
-                          return TabBarView(
-                            controller: _tabController,
-                            children: _buildTabViews(
-                              context,
-                              widget.isTeacher,
-                              baseFontSize,
-                              smallFontSize,
-                              isDarkMode,
-                              courseState, // Pass the course state
-                            ),
-                          );
-                        },
-                      ),
+                  child: _isLoading
+                      ? _buildSkeletonLoading(isDarkMode)
+                      : BlocBuilder<CourseManagementBloc, CourseManagementState>(
+                          builder: (context, courseState) {
+                            return TabBarView(
+                              controller: _tabController,
+                              children: _buildTabViews(
+                                context,
+                                widget.isTeacher,
+                                baseFontSize,
+                                smallFontSize,
+                                isDarkMode,
+                                courseState,
+                              ),
+                            );
+                          },
+                        ),
                 ),
               ],
             ),

@@ -2,6 +2,7 @@
 import 'package:courses_app/core/utils/theme_manager.dart';
 import 'package:courses_app/main_pages/courses/presentation/pages/course_details_page.dart';
 import 'package:courses_app/main_pages/courses/presentation/widgets/add_courses.dart';
+import 'package:courses_app/presentation/widgets/course_image_widget.dart';
 import 'package:courses_app/services/course_api.dart';
 import 'package:courses_app/presentation/widgets/skeleton_widgets.dart';
 import 'package:flutter/material.dart';
@@ -617,24 +618,12 @@ class PublishedCourseCard extends StatelessWidget {
           borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
           child: Stack(
             children: [
-              Image.network(
-                course['image']?.toString().isNotEmpty == true 
-                    ? course['image']
-                    : 'https://picsum.photos/seed/course/400/300',
+              CourseImageWidget(
+                imageUrl: course['image']?.toString(),
                 width: double.infinity,
                 height: 120,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    height: 120,
-                    color: isDarkMode ? Colors.grey[800] : Colors.grey[200],
-                    child: Icon(
-                      Icons.image,
-                      size: 40,
-                      color: isDarkMode ? Colors.grey[400] : Colors.grey,
-                    ),
-                  );
-                },
+                borderRadius: BorderRadius.zero,
+                placeholderIcon: Icons.school_outlined,
               ),
               // Status Badge
               Positioned(
@@ -734,25 +723,12 @@ class PublishedCourseCard extends StatelessWidget {
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(12),
-                child: Image.network(
-                  course['image']?.toString().isNotEmpty == true 
-                      ? course['image']
-                      : 'https://picsum.photos/seed/course/400/300',
+                child: CourseImageWidget(
+                  imageUrl: course['image']?.toString(),
                   width: 100,
                   height: 80,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      width: 100,
-                      height: 80,
-                      color: isDarkMode ? Colors.grey[800] : Colors.grey[200],
-                      child: Icon(
-                        Icons.image,
-                        size: 30,
-                        color: isDarkMode ? Colors.grey[400] : Colors.grey,
-                      ),
-                    );
-                  },
+                  borderRadius: BorderRadius.zero,
+                  placeholderIcon: Icons.school_outlined,
                 ),
               ),
               // Status Badge
@@ -890,27 +866,12 @@ class CourseOptionsBottomSheet extends StatelessWidget {
                 children: [
                   ClipRRect(
                     borderRadius: BorderRadius.circular(12),
-                    child: Image.network(
-                      course['image']?.toString().isNotEmpty == true 
-                          ? course['image']
-                          : 'https://picsum.photos/seed/course/400/300',
+                    child: CourseImageWidget(
+                      imageUrl: course['image']?.toString(),
                       width: 60,
                       height: 60,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          width: 60,
-                          height: 60,
-                          color: isDarkMode
-                              ? Colors.grey[800]
-                              : Colors.grey[200],
-                          child: Icon(
-                            Icons.image,
-                            size: 24,
-                            color: isDarkMode ? Colors.grey[400] : Colors.grey,
-                          ),
-                        );
-                      },
+                      borderRadius: BorderRadius.zero,
+                      placeholderIcon: Icons.school_outlined,
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -1347,24 +1308,12 @@ class CourseCard extends StatelessWidget {
         // Course Image
         ClipRRect(
           borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-          child: Image.network(
-            course['image']?.toString().isNotEmpty == true 
-                ? course['image']
-                : 'https://picsum.photos/seed/course/400/300',
+          child: CourseImageWidget(
+            imageUrl: course['image']?.toString(),
             width: double.infinity,
             height: 120,
-            fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) {
-              return Container(
-                height: 120,
-                color: isDarkMode ? Colors.grey[800] : Colors.grey[200],
-                child: Icon(
-                  Icons.image,
-                  size: 40,
-                  color: isDarkMode ? Colors.grey[400] : Colors.grey,
-                ),
-              );
-            },
+            borderRadius: BorderRadius.zero,
+            placeholderIcon: Icons.school_outlined,
           ),
         ),
 
@@ -1449,25 +1398,12 @@ class CourseCard extends StatelessWidget {
           // Course Image
           ClipRRect(
             borderRadius: BorderRadius.circular(12),
-            child: Image.network(
-              course['image']?.toString().isNotEmpty == true 
-                  ? course['image']
-                  : 'https://picsum.photos/seed/course/400/300',
+            child: CourseImageWidget(
+              imageUrl: course['image']?.toString(),
               width: 100,
               height: 80,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) {
-                return Container(
-                  width: 100,
-                  height: 80,
-                  color: isDarkMode ? Colors.grey[800] : Colors.grey[200],
-                  child: Icon(
-                    Icons.image,
-                    size: 30,
-                    color: isDarkMode ? Colors.grey[400] : Colors.grey,
-                  ),
-                );
-              },
+              borderRadius: BorderRadius.zero,
+              placeholderIcon: Icons.school_outlined,
             ),
           ),
 
