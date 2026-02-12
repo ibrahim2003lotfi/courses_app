@@ -60,16 +60,20 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       List<String> interests = [];
       try {
         final profileResponse = await _profileService.getMe();
+        print('🔍 Profile response: $profileResponse');
         if (profileResponse['status'] == 200 &&
             profileResponse['data'] != null) {
           final userData =
               profileResponse['data']['user'] as Map<String, dynamic>?;
+          print('🔍 User data: $userData');
+          print('🔍 Interests raw: ${userData?['interests']}');
           if (userData != null && userData['interests'] != null) {
             interests = List<String>.from(userData['interests']);
           }
         }
-      } catch (e) {
+      } catch (e, stackTrace) {
         print('⚠️ Profile fetch failed: $e');
+        print('⚠️ Stack trace: $stackTrace');
       }
 
       print('🎯 User interests loaded: $interests');

@@ -10,13 +10,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'bloc/user_role_bloc.dart';
+import 'bloc/course_management_bloc.dart';
 
 /// All main app pages
 final List<Widget> pages = [
-  const HomePage(),
-  const SearchPage(),
-  const CoursesPage(),
-  const ProfilePage(),
+  const KeepAliveWrapper(child: HomePage()),
+  const KeepAliveWrapper(child: SearchPage()),
+  const KeepAliveWrapper(child: CoursesPage()),
+  const KeepAliveWrapper(child: ProfilePage()),
 ];
 
 class WidgetTree extends StatefulWidget {
@@ -38,6 +39,9 @@ class _WidgetTreeState extends State<WidgetTree>
 
   Future<void> _bootstrapRole() async {
     try {
+      // Load user courses first
+      context.read<CourseManagementBloc>().add(LoadUserCoursesEvent());
+      
       // 1) Get role from backend
       final result = await _profileService.getMe();
       if (!mounted) return;
@@ -75,28 +79,9 @@ class _WidgetTreeState extends State<WidgetTree>
       body: ValueListenableBuilder<int>(
         valueListenable: selectedPageNotifier,
         builder: (context, selectedPage, _) {
-          return AnimatedSwitcher(
-            duration: const Duration(milliseconds: 400),
-            switchInCurve: Curves.easeOutCubic,
-            switchOutCurve: Curves.easeInCubic,
-            transitionBuilder: (Widget child, Animation<double> animation) {
-              return FadeTransition(
-                opacity: animation,
-                child: ScaleTransition(
-                  scale: Tween<double>(begin: 0.92, end: 1.0).animate(
-                    CurvedAnimation(
-                      parent: animation,
-                      curve: Curves.easeOutCubic,
-                    ),
-                  ),
-                  child: child,
-                ),
-              );
-            },
-            child: KeyedSubtree(
-              key: ValueKey<int>(selectedPage),
-              child: pages[selectedPage],
-            ),
+          return IndexedStack(
+            index: selectedPage,
+            children: pages,
           );
         },
       ),

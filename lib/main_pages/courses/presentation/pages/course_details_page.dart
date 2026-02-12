@@ -30,6 +30,7 @@ class _CourseDetailsPageState extends State<CourseDetailsPage> {
   ValueNotifier<double?> _userRating = ValueNotifier<double?>(null);
   Map<String, dynamic>? _ratingInfo;
   bool _isSubmittingRating = false;
+  bool _isLoadingCourse = false;
 
   @override
   void initState() {
@@ -60,10 +61,10 @@ class _CourseDetailsPageState extends State<CourseDetailsPage> {
           _isLoading = false;
         });
       }
+    }
     if (widget.course['id'] == null) {
       widget.course['id'] = 'course_${DateTime.now().millisecondsSinceEpoch}';
     }
-    _fetchRelatedCourses();
     _fetchFullCourseDetails();
     _fetchUserRating();
   }

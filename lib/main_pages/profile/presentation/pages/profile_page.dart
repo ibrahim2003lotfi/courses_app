@@ -12,6 +12,7 @@ import 'package:courses_app/services/profile_service.dart';
 import 'package:courses_app/theme_cubit/theme_cubit.dart';
 import 'package:courses_app/theme_cubit/theme_state.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -33,6 +34,11 @@ class _ProfilePageState extends State<ProfilePage> {
   List<Map<String, dynamic>>? _certificates;
   bool _isLoading = true;
   String? _errorMessage;
+
+  Future<void> _onRefresh() async {
+    HapticFeedback.lightImpact();
+    await _loadProfile();
+  }
 
   @override
   void initState() {
@@ -252,8 +258,15 @@ class _ProfilePageState extends State<ProfilePage> {
                 backgroundColor: _getBackgroundColor(isDarkMode),
                 body: _isLoading
                     ? SkeletonProfile(isDarkMode: isDarkMode)
-                    : SafeArea(
-                  child: CustomScrollView(
+                    : RefreshIndicator(
+                        onRefresh: _onRefresh,
+                        color: const Color(0xFF667EEA),
+                        backgroundColor: Colors.white,
+                        displacement: 40,
+                        strokeWidth: 3,
+                        child: SafeArea(
+                          child: CustomScrollView(
+                            physics: const AlwaysScrollableScrollPhysics(),
                     slivers: [
                       // Header with Cover and Profile Image
                       SliverToBoxAdapter(
@@ -297,7 +310,8 @@ class _ProfilePageState extends State<ProfilePage> {
                   ),
                 ),
               ),
-            );
+            ),
+          );
           },
         );
       },

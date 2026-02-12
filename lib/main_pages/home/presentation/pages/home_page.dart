@@ -2,6 +2,7 @@ import 'package:courses_app/main_pages/home/presentation/widgets/home_page_widge
 import 'package:courses_app/config/api.dart';
 import 'package:courses_app/presentation/widgets/skeleton_widgets.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../bloc/home_bloc.dart';
@@ -18,8 +19,18 @@ class HomePage extends StatelessWidget {
   }
 }
 
-class _HomePageBody extends StatelessWidget {
+class _HomePageBody extends StatefulWidget {
   const _HomePageBody();
+
+  @override
+  State<_HomePageBody> createState() => _HomePageBodyState();
+}
+
+class _HomePageBodyState extends State<_HomePageBody> {
+  Future<void> _onRefresh() async {
+    HapticFeedback.lightImpact();
+    context.read<HomeBloc>().add(LoadHomeEvent());
+  }
 
   List<String> _buildHeroImages(Map<String, dynamic>? data) {
     // For now keep the same style: use static images if backend doesn't provide
@@ -287,10 +298,15 @@ class _HomePageBody extends StatelessWidget {
           .toSet();
 
       print('🎯 Filtering courses for categories: $targetCategories');
+      print('🎯 Total courses to filter: ${allCourses.length}');
+      if (allCourses.isNotEmpty) {
+        print('🎯 Sample course category: ${allCourses.first['category']}');
+      }
 
       // Filter courses that match user interests
       filteredCourses = allCourses.where((course) {
         final categoryName = course['category']?['name']?.toString() ?? '';
+        print('🎯 Checking course: ${course['title']}, category: $categoryName');
         return targetCategories.any(
           (interest) =>
               categoryName.toLowerCase().contains(interest.toLowerCase()),
@@ -538,8 +554,15 @@ class _HomePageBody extends StatelessWidget {
             final recommended = _buildRecommended(data, state.userInterests);
             final trending = _buildTrending(data);
 
-            return CustomScrollView(
-              slivers: [
+            return RefreshIndicator(
+              onRefresh: _onRefresh,
+              color: const Color(0xFF667EEA),
+              backgroundColor: Colors.white,
+              displacement: 40,
+              strokeWidth: 3,
+              child: CustomScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                slivers: [
                 SliverToBoxAdapter(child: SearchField()),
                 SliverToBoxAdapter(child: HeroCarousel(heroImages: heroImages)),
                 SliverToBoxAdapter(
@@ -593,7 +616,8 @@ class _HomePageBody extends StatelessWidget {
                 const SliverToBoxAdapter(child: SizedBox(height: 20)),
                 const SliverToBoxAdapter(child: Footer()),
               ],
-            );
+            ),
+          );
           },
         ),
       ),
