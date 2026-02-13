@@ -1,6 +1,9 @@
 import 'package:courses_app/bloc/course_management_bloc.dart';
 import 'package:courses_app/main_pages/player/presentation/pages/video_player_page.dart';
 import 'package:courses_app/presentation/widgets/course_image_widget.dart';
+import 'package:courses_app/services/connectivity_service.dart';
+import 'package:courses_app/services/course_api.dart';
+import 'package:courses_app/services/video_download_service.dart';
 import 'package:courses_app/theme_cubit/theme_cubit.dart';
 import 'package:courses_app/theme_cubit/theme_state.dart';
 import 'package:flutter/material.dart';
@@ -72,7 +75,6 @@ class EnrolledCourseHeader extends StatelessWidget {
                         ToggleWatchLaterEvent(course),
                       );
                       
-                      // Show snackbar feedback
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text(
@@ -214,8 +216,8 @@ class CourseProgressWidget extends StatelessWidget {
   }
 }
 
-// Lessons List Widget - Shows real sections and lessons from backend
-class LessonsListWidget extends StatelessWidget {
+// Lessons List Widget
+class LessonsListWidget extends StatefulWidget {
   final Map<String, dynamic> course;
   final bool isEnrolled;
 
@@ -226,16 +228,270 @@ class LessonsListWidget extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    // Get sections from course data (from backend)
-    final sections = (course['sections'] as List?) ?? [];
-    
-    if (sections.isEmpty) {
-      // Fallback: show placeholder lessons if no sections data
-      return _buildPlaceholderLessons(context);
+  State<LessonsListWidget> createState() => _LessonsListWidgetState();
+}
+
+class _LessonsListWidgetState extends State<LessonsListWidget> {
+  final VideoDownloadService _downloadService = VideoDownloadService();
+  final ConnectivityService _connectivityService = ConnectivityService();
+  final Map<String, bool> _isDownloaded = {};
+  final Map<String, bool> _isDownloading = {};
+  final Map<String, double> _downloadProgress = {};
+  bool _isOffline = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkConnectivity();
+    _checkDownloadedVideos();
+    _loadDownloadedVideosInfo();
+  }
+
+  Future<void> _loadDownloadedVideosInfo() async {
+    final courseId = widget.course['id']?.toString() ?? '';
+    if (courseId.isNotEmpty) {
+      final downloadedVideos = await _downloadService.getDownloadedVideosForCourse(courseId);
+      if (mounted) {
+        setState(() {
+          _downloadedVideosInfo = downloadedVideos;
+        });
+      }
+    }
+  }
+
+  List<Map<String, dynamic>> _downloadedVideosInfo = [];
+
+  Future<void> _checkConnectivity() async {
+    final isOnline = await _connectivityService.checkConnectivity();
+    if (mounted) {
+      setState(() {
+        _isOffline = !isOnline;
+      });
+    }
+  }
+
+  Future<void> _checkDownloadedVideos() async {
+    final sections = (widget.course['sections'] as List?) ?? [];
+    final courseId = widget.course['id']?.toString() ?? '';
+
+    for (final section in sections) {
+      final lessons = (section['lessons'] as List?) ?? [];
+      for (final lesson in lessons) {
+        final lessonId = lesson['id']?.toString() ?? '';
+        if (lessonId.isNotEmpty) {
+          final isDownloaded = await _downloadService.isVideoDownloaded(courseId, lessonId);
+          if (mounted) {
+            setState(() {
+              _isDownloaded['${courseId}_$lessonId'] = isDownloaded;
+            });
+          }
+        }
+      }
+    }
+  }
+
+  Future<void> _downloadVideo(dynamic lesson) async {
+    final courseId = widget.course['id']?.toString() ?? '';
+    final lessonId = lesson['id']?.toString() ?? '';
+    final lessonTitle = lesson['title']?.toString() ?? 'درس';
+    final courseSlug = widget.course['slug']?.toString() ?? courseId;
+
+    if (courseId.isEmpty || lessonId.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'معلومات الدرس غير كاملة',
+              style: GoogleFonts.tajawal(fontWeight: FontWeight.w600),
+            ),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        );
+      }
+      return;
     }
 
-    // Build sections with lessons from backend
+    final key = '${courseId}_$lessonId';
+    
+    setState(() {
+      _isDownloading[key] = true;
+      _downloadProgress[key] = 0.0;
+    });
+
+    String? videoUrl;
+    try {
+      final courseApi = CourseApi();
+      final result = await courseApi.getLessonStream(courseSlug, lessonId);
+      
+      if (result['stream_url'] != null) {
+        videoUrl = result['stream_url'] as String;
+      } else if (result['video_url'] != null) {
+        videoUrl = result['video_url'] as String;
+      }
+    } catch (e) {
+      print('>>> Error fetching stream URL: $e');
+    }
+
+    if (videoUrl == null || videoUrl.isEmpty) {
+      if (mounted) {
+        setState(() {
+          _isDownloading[key] = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'لا يمكن الوصول إلى الفيديو',
+              style: GoogleFonts.tajawal(fontWeight: FontWeight.w600),
+            ),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        );
+      }
+      return;
+    }
+
+    final success = await _downloadService.downloadVideo(
+      videoUrl: videoUrl,
+      courseId: courseId,
+      lessonId: lessonId,
+      lessonTitle: lessonTitle,
+      onProgress: (progress) {
+        if (mounted) {
+          setState(() {
+            _downloadProgress[key] = progress;
+          });
+        }
+      },
+    );
+
+    if (mounted) {
+      setState(() {
+        _isDownloading[key] = false;
+        _isDownloaded[key] = success;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            success ? 'تم تحميل "$lessonTitle" بنجاح' : 'فشل تحميل "$lessonTitle"',
+            style: GoogleFonts.tajawal(fontWeight: FontWeight.w600),
+          ),
+          backgroundColor: success ? Colors.green : Colors.red,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      );
+    }
+  }
+
+  Future<void> _deleteVideo(dynamic lesson) async {
+    final courseId = widget.course['id']?.toString() ?? '';
+    final lessonId = lesson['id']?.toString() ?? '';
+    final lessonTitle = lesson['title']?.toString() ?? 'درس';
+
+    if (courseId.isEmpty || lessonId.isEmpty) return;
+
+    final key = '${courseId}_$lessonId';
+    
+    final success = await _downloadService.deleteVideo(courseId, lessonId);
+    
+    if (mounted && success) {
+      setState(() {
+        _isDownloaded[key] = false;
+        _downloadProgress[key] = 0.0;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'تم حذف "$lessonTitle"',
+            style: GoogleFonts.tajawal(fontWeight: FontWeight.w600),
+          ),
+          backgroundColor: Colors.orange,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      );
+    }
+  }
+
+  void _showDeleteConfirmation(dynamic lesson) {
+    final lessonTitle = lesson['title']?.toString() ?? 'درس';
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            const Icon(Icons.delete_outline, color: Colors.orange, size: 28),
+            const SizedBox(width: 8),
+            Text(
+              'حذف الفيديو',
+              style: GoogleFonts.tajawal(
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          'هل تريد حذف "$lessonTitle" من التنزيلات؟',
+          style: GoogleFonts.tajawal(fontSize: 16),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'إلغاء',
+              style: GoogleFonts.tajawal(fontWeight: FontWeight.w600),
+            ),
+          ),
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.orange,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _deleteVideo(lesson);
+              },
+              child: Text(
+                'حذف',
+                style: GoogleFonts.tajawal(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final sections = (widget.course['sections'] as List?) ?? [];
+
+    if (_isOffline) {
+      // Offline: show downloaded videos only
+      if (_downloadedVideosInfo.isNotEmpty) {
+        return _buildDownloadedVideosList(context);
+      }
+      return _buildNoOfflineContentMessage(context);
+    }
+
+    // Online: show real sections from API or empty state
+    if (sections.isEmpty) {
+      return _buildNoContentMessage(context);
+    }
+
     return SliverList(
       delegate: SliverChildBuilderDelegate(
         (context, index) {
@@ -243,6 +499,62 @@ class LessonsListWidget extends StatelessWidget {
           return _buildSectionItem(context, section, index);
         },
         childCount: sections.length,
+      ),
+    );
+  }
+
+  Widget _buildNoContentMessage(BuildContext context) {
+    return SliverToBoxAdapter(
+      child: BlocBuilder<ThemeCubit, ThemeState>(
+        builder: (context, themeState) {
+          final isDarkMode = themeState.isDarkMode;
+          return Directionality(
+            textDirection: TextDirection.rtl,
+            child: Container(
+              margin: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(isDarkMode ? 0.1 : 0.05),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  Icon(
+                    Icons.video_library_outlined,
+                    size: 64,
+                    color: Colors.grey[400],
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'لا يوجد محتوى متاح حالياً',
+                    style: GoogleFonts.tajawal(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: isDarkMode ? Colors.white : const Color(0xFF374151),
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'سيتم إضافة الدروس قريباً',
+                    style: GoogleFonts.tajawal(
+                      fontSize: 14,
+                      color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -258,7 +570,6 @@ class LessonsListWidget extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Section Header
               Container(
                 margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -305,7 +616,6 @@ class LessonsListWidget extends StatelessWidget {
                   ],
                 ),
               ),
-              // Lessons in this section
               ...lessons.asMap().entries.map((entry) {
                 final lessonIndex = entry.key;
                 final lesson = entry.value;
@@ -322,15 +632,78 @@ class LessonsListWidget extends StatelessWidget {
     return BlocBuilder<ThemeCubit, ThemeState>(
       builder: (context, themeState) {
         final isDarkMode = themeState.isDarkMode;
-        final isCompleted = false; // TODO: Track completed lessons
-        final isCurrent = sectionIndex == 0 && lessonIndex == 0; // First lesson is current
+        final isCompleted = false;
+        final isCurrent = sectionIndex == 0 && lessonIndex == 0;
+        
+        final courseId = widget.course['id']?.toString() ?? '';
+        final lessonId = lesson['id']?.toString() ?? '';
+        final key = '${courseId}_$lessonId';
+        final downloaded = _isDownloaded[key] ?? false;
+        final downloading = _isDownloading[key] ?? false;
+        final progress = _downloadProgress[key] ?? 0.0;
+        
+        final isOfflineUndownloaded = _isOffline && !downloaded;
+        final canPlay = !isOfflineUndownloaded;
+        
+        Widget downloadIcon;
+        if (downloading) {
+          downloadIcon = SizedBox(
+            width: 24,
+            height: 24,
+            child: CircularProgressIndicator(
+              value: progress > 0 ? progress : null,
+              strokeWidth: 2,
+              color: const Color(0xFF3B82F6),
+            ),
+          );
+        } else if (downloaded) {
+          downloadIcon = GestureDetector(
+            onTap: () => _showDeleteConfirmation(lesson),
+            child: Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: const Color(0xFF10B981).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(
+                Icons.check_circle,
+                color: Color(0xFF10B981),
+                size: 22,
+              ),
+            ),
+          );
+        } else if (!isOfflineUndownloaded) {
+          downloadIcon = GestureDetector(
+            onTap: () => _downloadVideo(lesson),
+            child: Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: const Color(0xFF3B82F6).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(
+                Icons.download_outlined,
+                color: Color(0xFF3B82F6),
+                size: 22,
+              ),
+            ),
+          );
+        } else {
+          downloadIcon = const Icon(
+            Icons.download_outlined,
+            color: Colors.grey,
+            size: 22,
+          );
+        }
         
         return Directionality(
           textDirection: TextDirection.rtl,
           child: Container(
             margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             decoration: BoxDecoration(
-              color: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
+              color: isOfflineUndownloaded 
+                  ? (isDarkMode ? const Color(0xFF1E1E1E) : Colors.grey[200])
+                  : (isDarkMode ? const Color(0xFF1E1E1E) : Colors.white),
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
@@ -351,13 +724,13 @@ class LessonsListWidget extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: isCompleted ? const Color(0xFF10B981) : 
                          isCurrent ? const Color(0xFF3B82F6) : 
-                         Colors.grey[300],
+                         (isOfflineUndownloaded ? Colors.grey[400] : Colors.grey[300]),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
                   isCompleted ? Icons.check : 
                   isCurrent ? Icons.play_arrow : 
-                  Icons.play_circle_outline,
+                  (isOfflineUndownloaded ? Icons.wifi_off : Icons.play_circle_outline),
                   color: Colors.white,
                   size: 22,
                 ),
@@ -367,7 +740,9 @@ class LessonsListWidget extends StatelessWidget {
                 style: GoogleFonts.tajawal(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
-                  color: isDarkMode ? Colors.white : const Color(0xFF374151),
+                  color: isOfflineUndownloaded 
+                      ? (isDarkMode ? Colors.grey[600] : Colors.grey[500])
+                      : (isDarkMode ? Colors.white : const Color(0xFF374151)),
                 ),
               ),
               subtitle: Column(
@@ -378,11 +753,23 @@ class LessonsListWidget extends StatelessWidget {
                       _formatDuration(lesson['duration_seconds']),
                       style: GoogleFonts.tajawal(
                         fontSize: 12,
-                        color: isDarkMode ? Colors.white70 : const Color(0xFF6B7280),
+                        color: isOfflineUndownloaded
+                            ? (isDarkMode ? Colors.grey[700] : Colors.grey[400])
+                            : (isDarkMode ? Colors.white70 : const Color(0xFF6B7280)),
                       ),
                     ),
                   ],
-                  if (isCompleted) ...[
+                  if (isOfflineUndownloaded) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      'غير متوفر بدون إنترنت',
+                      style: GoogleFonts.tajawal(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.grey[500],
+                      ),
+                    ),
+                  ] else if (isCompleted) ...[
                     const SizedBox(height: 2),
                     Text(
                       'مكتملة',
@@ -405,14 +792,21 @@ class LessonsListWidget extends StatelessWidget {
                   ],
                 ],
               ),
-              trailing: Icon(
-                Icons.play_circle_filled,
-                color: const Color(0xFF10B981),
-                size: 32,
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  downloadIcon,
+                  const SizedBox(width: 8),
+                  Icon(
+                    Icons.play_circle_filled,
+                    color: canPlay ? const Color(0xFF10B981) : Colors.grey[400],
+                    size: 32,
+                  ),
+                ],
               ),
-              onTap: () {
-                _playVideoLesson(context, lesson, course['slug'] ?? course['id'].toString());
-              },
+              onTap: canPlay ? () {
+                _playVideoLesson(context, lesson, widget.course['slug'] ?? widget.course['id'].toString());
+              } : null,
             ),
           ),
         );
@@ -420,28 +814,25 @@ class LessonsListWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildPlaceholderLessons(BuildContext context) {
-    // Fallback when no sections data available
-    final totalLessons = course['lessons'] ?? 10;
-    final currentLesson = course['currentLesson'] ?? 0;
-    final progress = course['progress'] ?? 0.0;
-
+  Widget _buildDownloadedVideosList(BuildContext context) {
     return SliverList(
       delegate: SliverChildBuilderDelegate(
         (context, index) {
-          return _buildOldLessonItem(context, index, totalLessons, currentLesson, progress);
+          final video = _downloadedVideosInfo[index];
+          return _buildDownloadedVideoItem(context, video, index);
         },
-        childCount: totalLessons,
+        childCount: _downloadedVideosInfo.length,
       ),
     );
   }
 
-  Widget _buildOldLessonItem(BuildContext context, int index, int totalLessons, int currentLesson, double progress) {
+  Widget _buildDownloadedVideoItem(BuildContext context, Map<String, dynamic> video, int index) {
     return BlocBuilder<ThemeCubit, ThemeState>(
       builder: (context, themeState) {
         final isDarkMode = themeState.isDarkMode;
-        final isCompleted = index < (progress * totalLessons);
-        final isCurrent = index == currentLesson;
+        final lessonTitle = video['lessonTitle'] ?? 'درس ${index + 1}';
+        final lessonId = video['lessonId']?.toString() ?? '';
+        final courseId = widget.course['id']?.toString() ?? '';
 
         return Directionality(
           textDirection: TextDirection.rtl,
@@ -457,7 +848,7 @@ class LessonsListWidget extends StatelessWidget {
                   offset: const Offset(0, 2),
                 ),
               ],
-              border: isCurrent ? Border.all(
+              border: index == 0 ? Border.all(
                 color: const Color(0xFF3B82F6),
                 width: 2,
               ) : null,
@@ -467,21 +858,17 @@ class LessonsListWidget extends StatelessWidget {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: isCompleted ? const Color(0xFF10B981) : 
-                         isCurrent ? const Color(0xFF3B82F6) : 
-                         Colors.grey[300],
+                  color: index == 0 ? const Color(0xFF3B82F6) : const Color(0xFF10B981),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
-                  isCompleted ? Icons.check : 
-                  isCurrent ? Icons.play_arrow : 
-                  Icons.play_circle_outline,
+                  index == 0 ? Icons.play_arrow : Icons.check,
                   color: Colors.white,
                   size: 22,
                 ),
               ),
               title: Text(
-                'المحاضرة ${index + 1}: ${_getLessonTitle(index, totalLessons)}',
+                lessonTitle,
                 style: GoogleFonts.tajawal(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -492,26 +879,17 @@ class LessonsListWidget extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    '${_getLessonDuration(index)} دقيقة',
+                    'محمل للعرض بدون إنترنت',
                     style: GoogleFonts.tajawal(
                       fontSize: 12,
-                      color: isDarkMode ? Colors.white70 : const Color(0xFF6B7280),
+                      color: const Color(0xFF10B981),
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
-                  if (isCompleted) ...[
+                  if (index == 0) ...[
                     const SizedBox(height: 2),
                     Text(
-                      'مكتملة',
-                      style: GoogleFonts.tajawal(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: const Color(0xFF10B981),
-                      ),
-                    ),
-                  ] else if (isCurrent) ...[
-                    const SizedBox(height: 2),
-                    Text(
-                      'المحاضرة الحالية',
+                      'ابدأ هنا',
                       style: GoogleFonts.tajawal(
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
@@ -521,13 +899,34 @@ class LessonsListWidget extends StatelessWidget {
                   ],
                 ],
               ),
-              trailing: Icon(
-                Icons.play_circle_filled,
-                color: const Color(0xFF10B981),
-                size: 32,
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  GestureDetector(
+                    onTap: () => _showDeleteConfirmationForVideo(video),
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF10B981).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(
+                        Icons.check_circle,
+                        color: Color(0xFF10B981),
+                        size: 22,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  const Icon(
+                    Icons.play_circle_filled,
+                    color: Color(0xFF10B981),
+                    size: 32,
+                  ),
+                ],
               ),
               onTap: () {
-                _playLesson(context, index);
+                _playDownloadedVideo(context, video);
               },
             ),
           ),
@@ -535,6 +934,169 @@ class LessonsListWidget extends StatelessWidget {
       },
     );
   }
+
+  void _showDeleteConfirmationForVideo(Map<String, dynamic> video) {
+    final lessonTitle = video['lessonTitle']?.toString() ?? 'درس';
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            const Icon(Icons.delete_outline, color: Colors.orange, size: 28),
+            const SizedBox(width: 8),
+            Text(
+              'حذف الفيديو',
+              style: GoogleFonts.tajawal(
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          'هل تريد حذف "$lessonTitle" من التنزيلات؟',
+          style: GoogleFonts.tajawal(fontSize: 16),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'إلغاء',
+              style: GoogleFonts.tajawal(fontWeight: FontWeight.w600),
+            ),
+          ),
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.orange,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _deleteDownloadedVideo(video);
+              },
+              child: Text(
+                'حذف',
+                style: GoogleFonts.tajawal(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _deleteDownloadedVideo(Map<String, dynamic> video) async {
+    final courseId = video['courseId']?.toString() ?? '';
+    final lessonId = video['lessonId']?.toString() ?? '';
+    final lessonTitle = video['lessonTitle']?.toString() ?? 'درس';
+
+    if (courseId.isEmpty || lessonId.isEmpty) return;
+
+    final success = await _downloadService.deleteVideo(courseId, lessonId);
+
+    if (mounted && success) {
+      setState(() {
+        _downloadedVideosInfo.removeWhere((v) => v['lessonId'] == lessonId);
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'تم حذف "$lessonTitle"',
+            style: GoogleFonts.tajawal(fontWeight: FontWeight.w600),
+          ),
+          backgroundColor: Colors.orange,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      );
+    }
+  }
+
+  void _playDownloadedVideo(BuildContext context, Map<String, dynamic> video) {
+    final lessonId = video['lessonId']?.toString() ?? '';
+    final lessonTitle = video['lessonTitle'] ?? 'درس';
+    final localPath = video['filePath']?.toString() ?? '';
+    final courseSlug = widget.course['slug']?.toString() ?? widget.course['id']?.toString() ?? '';
+
+    print('>>> PLAY DOWNLOADED: lessonId=$lessonId, localPath=$localPath');
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => VideoPlayerPage(
+          courseSlug: courseSlug,
+          lessonId: lessonId,
+          lessonTitle: lessonTitle,
+          lessonDescription: null,
+          localVideoPath: localPath.isNotEmpty ? localPath : null,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNoOfflineContentMessage(BuildContext context) {
+    return SliverToBoxAdapter(
+      child: BlocBuilder<ThemeCubit, ThemeState>(
+        builder: (context, themeState) {
+          final isDarkMode = themeState.isDarkMode;
+          return Directionality(
+            textDirection: TextDirection.rtl,
+            child: Container(
+              margin: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(isDarkMode ? 0.1 : 0.05),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  Icon(
+                    Icons.wifi_off,
+                    size: 64,
+                    color: Colors.grey[400],
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'لا يوجد محتوى متوفر بدون إنترنت',
+                    style: GoogleFonts.tajawal(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: isDarkMode ? Colors.white : const Color(0xFF374151),
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'قم بتحميل الفيديوهات عندما تكون متصلاً بالإنترنت للوصول إليها لاحقاً بدون اتصال',
+                    style: GoogleFonts.tajawal(
+                      fontSize: 14,
+                      color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
 
   String _formatDuration(int seconds) {
     final minutes = (seconds / 60).floor();
@@ -545,15 +1107,16 @@ class LessonsListWidget extends StatelessWidget {
     return '$seconds ثانية';
   }
 
-  void _playVideoLesson(BuildContext context, dynamic lesson, String courseSlug) {
+  void _playVideoLesson(BuildContext context, dynamic lesson, String courseSlug) async {
     final lessonId = lesson['id']?.toString() ?? '';
     final lessonTitle = lesson['title'] ?? 'درس';
-    
+
+    final courseId = widget.course['id']?.toString() ?? '';
+    final localPath = await _downloadService.getLocalVideoPath(courseId, lessonId);
+
     print('>>> VIDEO: courseSlug=$courseSlug, lessonId=$lessonId');
-    print('>>> VIDEO: lesson data=$lesson');
-    print('>>> VIDEO: course data=$course');
-    
-    // Navigate to video player page
+    print('>>> VIDEO: localPath=$localPath');
+
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -562,58 +1125,9 @@ class LessonsListWidget extends StatelessWidget {
           lessonId: lessonId,
           lessonTitle: lessonTitle,
           lessonDescription: lesson['description'],
+          localVideoPath: localPath,
         ),
       ),
     );
-  }
-
-  void _playLesson(BuildContext context, int lessonIndex) {
-    // Fallback for placeholder lessons
-    final totalLessons = course['lessons'] ?? 1;
-    final newProgress = ((lessonIndex + 1) / totalLessons).clamp(0.0, 1.0);
-    
-    context.read<CourseManagementBloc>().add(
-      UpdateCourseProgressEvent(
-        courseId: course['id'],
-        progress: newProgress,
-        currentLesson: lessonIndex,
-      ),
-    );
-    
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'تشغيل المحاضرة ${lessonIndex + 1}: ${_getLessonTitle(lessonIndex, totalLessons)}',
-          style: GoogleFonts.tajawal(fontWeight: FontWeight.w600),
-        ),
-        backgroundColor: Colors.green,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-      ),
-    );
-  }
-
-  String _getLessonTitle(int index, int totalLessons) {
-    final titles = [
-      'مقدمة في الكورس وأهداف التعلم',
-      'الأساسيات والمفاهيم الرئيسية',
-      'التطبيق العملي والمشاريع',
-      'تقنيات متقدمة واستراتيجيات',
-      'نصائح الخبراء والتطبيقات العملية',
-      'مراجعة شاملة وتقييم النتائج',
-    ];
-    
-    if (index == 0) return titles[0];
-    if (index == totalLessons - 1) return titles[5];
-    if (index < totalLessons / 3) return titles[1];
-    if (index < (totalLessons * 2) / 3) return titles[2];
-    return titles[3];
-  }
-
-  String _getLessonDuration(int index) {
-    final baseDuration = 15 + (index % 3) * 10;
-    return (baseDuration + (index ~/ 5) * 5).toString();
   }
 }

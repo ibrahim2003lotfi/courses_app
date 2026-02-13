@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../services/course_management_api.dart';
 
 // Events
@@ -70,6 +72,7 @@ class CourseManagementState {
 // BLoC
 class CourseManagementBloc extends Bloc<CourseManagementEvent, CourseManagementState> {
   final CourseManagementApi _api = CourseManagementApi();
+  static const String _enrolledCoursesKey = 'cached_enrolled_courses';
 
   CourseManagementBloc()
       : super(CourseManagementState(
@@ -98,6 +101,36 @@ class CourseManagementBloc extends Bloc<CourseManagementEvent, CourseManagementS
     }).toList();
 
     emit(state.copyWith(enrolledCourses: updatedEnrolledCourses));
+    _cacheEnrolledCourses(updatedEnrolledCourses);
+  }
+
+  // Cache enrolled courses to local storage
+  Future<void> _cacheEnrolledCourses(List<Map<String, dynamic>> courses) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final coursesJson = jsonEncode(courses);
+      await prefs.setString(_enrolledCoursesKey, coursesJson);
+      print('✅ Cached ${courses.length} enrolled courses');
+    } catch (e) {
+      print('❌ Error caching enrolled courses: $e');
+    }
+  }
+
+  // Load cached enrolled courses from local storage
+  Future<List<Map<String, dynamic>>> _loadCachedEnrolledCourses() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final coursesJson = prefs.getString(_enrolledCoursesKey);
+      if (coursesJson != null) {
+        final List<dynamic> decoded = jsonDecode(coursesJson);
+        final courses = decoded.map((c) => Map<String, dynamic>.from(c)).toList();
+        print('✅ Loaded ${courses.length} cached enrolled courses');
+        return courses;
+      }
+    } catch (e) {
+      print('❌ Error loading cached enrolled courses: $e');
+    }
+    return [];
   }
 
   void _onEnrollCourse(EnrollCourseEvent event, Emitter<CourseManagementState> emit) async {
@@ -146,6 +179,9 @@ class CourseManagementBloc extends Bloc<CourseManagementEvent, CourseManagementS
       isLoading: false,
       error: null,
     ));
+
+    // Cache the updated courses
+    await _cacheEnrolledCourses(updatedEnrolledCourses);
   }
 
   void _onToggleWatchLater(ToggleWatchLaterEvent event, Emitter<CourseManagementState> emit) {
@@ -174,6 +210,16 @@ class CourseManagementBloc extends Bloc<CourseManagementEvent, CourseManagementS
   ) async {
     emit(state.copyWith(isLoading: true));
 
+    // First, try to load cached courses
+    final cachedCourses = await _loadCachedEnrolledCourses();
+    if (cachedCourses.isNotEmpty) {
+      // Show cached courses immediately while fetching fresh data
+      emit(state.copyWith(
+        enrolledCourses: cachedCourses,
+        isLoading: true, // Still loading to fetch fresh data
+      ));
+    }
+
     try {
       // Fetch enrolled courses from backend
       final result = await _api.getEnrolledCourses();
@@ -188,12 +234,16 @@ class CourseManagementBloc extends Bloc<CourseManagementEvent, CourseManagementS
           enrolledCourses: mappedCourses,
           isLoading: false,
         ));
+
+        // Cache the fresh courses
+        await _cacheEnrolledCourses(mappedCourses);
       } else {
-        // If backend fails, keep existing courses
+        // If backend fails but we have cached courses, keep them
         emit(state.copyWith(isLoading: false));
       }
     } catch (e) {
       print('❌ Error loading user courses: $e');
+      // If error but we have cached courses, keep them
       emit(state.copyWith(isLoading: false));
     }
   }
@@ -235,6 +285,7 @@ class CourseManagementBloc extends Bloc<CourseManagementEvent, CourseManagementS
     }).toList();
 
     emit(state.copyWith(enrolledCourses: updatedEnrolledCourses));
+    _cacheEnrolledCourses(updatedEnrolledCourses);
   }
 
   // Helper methods

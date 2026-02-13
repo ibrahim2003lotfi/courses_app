@@ -1,4 +1,5 @@
 import 'package:courses_app/core/utils/onboarding_manager.dart';
+import 'package:courses_app/services/auth_service.dart';
 import 'package:courses_app/widget_tree.dart';
 import 'package:courses_app/welcome.dart';
 import 'package:flutter/material.dart';
@@ -93,12 +94,29 @@ class _SplashScreenState extends State<SplashScreen>
       final isOnboardingCompleted =
           await OnboardingManager.isOnboardingCompleted();
 
+      // Check if user is authenticated
+      final authService = AuthService();
+      final token = await authService.getToken();
+      final isAuthenticated = token != null && token.isNotEmpty;
+
+      if (!mounted) return;
+
+      // Determine destination:
+      // - Authenticated: WidgetTree (home) - always go home if logged in
+      // - Not Authenticated + Not onboarded: WelcomePage (onboarding)
+      // - Not Authenticated + Onboarded: WelcomePage (login/register)
+      final Widget destination;
+      if (isAuthenticated) {
+        destination = const WidgetTree();
+      } else if (!isOnboardingCompleted) {
+        destination = const WelcomePage();
+      } else {
+        destination = const WelcomePage();
+      }
+
       Navigator.of(context).pushReplacement(
         PageRouteBuilder(
-          pageBuilder: (context, animation, secondaryAnimation) =>
-              isOnboardingCompleted
-              ? const WidgetTree() // Your main app screen
-              : const WelcomePage(), // Go to WelcomePage first
+          pageBuilder: (context, animation, secondaryAnimation) => destination,
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
             return FadeTransition(opacity: animation, child: child);
           },

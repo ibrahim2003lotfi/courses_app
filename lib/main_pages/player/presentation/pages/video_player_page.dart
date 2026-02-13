@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:io';
+
 import 'package:courses_app/services/course_api.dart';
 import 'package:courses_app/services/auth_service.dart';
 import 'package:courses_app/theme_cubit/theme_cubit.dart';
@@ -8,13 +11,13 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:video_player/video_player.dart';
-import 'dart:async';
 
 class VideoPlayerPage extends StatefulWidget {
   final String courseSlug;
   final String lessonId;
   final String lessonTitle;
   final String? lessonDescription;
+  final String? localVideoPath;
 
   const VideoPlayerPage({
     super.key,
@@ -22,6 +25,7 @@ class VideoPlayerPage extends StatefulWidget {
     required this.lessonId,
     required this.lessonTitle,
     this.lessonDescription,
+    this.localVideoPath,
   });
 
   @override
@@ -58,6 +62,17 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
   }
 
   Future<void> _loadVideo() async {
+    // If we have a local downloaded video, use it directly
+    if (widget.localVideoPath != null && widget.localVideoPath!.isNotEmpty) {
+      try {
+        print('>>> Using local video: ${widget.localVideoPath}');
+        _initializePlayer(widget.localVideoPath!, isLocal: true);
+        return;
+      } catch (e) {
+        print('>>> Error loading local video: $e, falling back to stream');
+      }
+    }
+
     try {
       // Get video stream URL from backend
       final result = await _courseApi.getLessonStream(
@@ -103,19 +118,28 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
     }
   }
 
-  void _initializePlayer(String url) async {
-    print('🟡 [VideoPlayer] Initializing with URL: $url');
+  void _initializePlayer(String url, {bool isLocal = false}) async {
+    print('🟡 [VideoPlayer] Initializing with ${isLocal ? "LOCAL FILE" : "NETWORK URL"}: $url');
     
-    // Add auth headers to video request
-    final authService = AuthService();
-    final token = await authService.getToken();
+    if (isLocal) {
+      // For local files, no auth headers needed
+      _videoController = VideoPlayerController.file(
+        File(url),
+      );
+    } else {
+      // Add auth headers to video request
+      final authService = AuthService();
+      final token = await authService.getToken();
+      
+      print('🟡 [VideoPlayer] Token exists: ${token != null}');
+      
+      _videoController = VideoPlayerController.network(
+        url,
+        httpHeaders: token != null ? {'Authorization': 'Bearer $token'} : {},
+      );
+    }
     
-    print('🟡 [VideoPlayer] Token exists: ${token != null}');
-    
-    _videoController = VideoPlayerController.network(
-      url,
-      httpHeaders: token != null ? {'Authorization': 'Bearer $token'} : {},
-    )
+    _videoController!
       ..initialize().then((_) {
         print('🟢 [VideoPlayer] Initialized successfully');
         setState(() {

@@ -3,7 +3,9 @@ import 'package:courses_app/core/utils/theme_manager.dart';
 import 'package:courses_app/main_pages/courses/presentation/pages/course_details_page.dart';
 import 'package:courses_app/main_pages/courses/presentation/widgets/add_courses.dart';
 import 'package:courses_app/presentation/widgets/course_image_widget.dart';
+import 'package:courses_app/services/connectivity_service.dart';
 import 'package:courses_app/services/course_api.dart';
+import 'package:courses_app/services/video_download_service.dart';
 import 'package:courses_app/presentation/widgets/skeleton_widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -1156,8 +1158,8 @@ class DeleteConfirmationDialog extends StatelessWidget {
   }
 }
 
-// Existing CoursesListView Widget (keep as is)
-class CoursesListView extends StatelessWidget {
+// Existing CoursesListView Widget - Now with offline support
+class CoursesListView extends StatefulWidget {
   final List<Map<String, dynamic>> courses;
   final bool showProgress;
   final String emptyMessage;
@@ -1180,70 +1182,166 @@ class CoursesListView extends StatelessWidget {
   });
 
   @override
+  State<CoursesListView> createState() => _CoursesListViewState();
+}
+
+class _CoursesListViewState extends State<CoursesListView> {
+  final VideoDownloadService _downloadService = VideoDownloadService();
+  final ConnectivityService _connectivityService = ConnectivityService();
+  bool _isOffline = false;
+  List<Map<String, dynamic>> _offlineCourses = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _initConnectivity();
+  }
+
+  Future<void> _initConnectivity() async {
+    await _checkConnectivity();
+    await _filterOfflineCourses();
+  }
+
+  @override
+  void didUpdateWidget(covariant CoursesListView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // If courses changed (e.g., loaded from cache), re-filter
+    if (widget.courses.length != oldWidget.courses.length ||
+        widget.courses.isEmpty != oldWidget.courses.isEmpty) {
+      _filterOfflineCourses();
+    }
+  }
+
+  Future<void> _checkConnectivity() async {
+    final isOnline = await _connectivityService.checkConnectivity();
+    if (mounted) {
+      setState(() {
+        _isOffline = !isOnline;
+      });
+    }
+  }
+
+  Future<void> _filterOfflineCourses() async {
+    if (!_isOffline) {
+      setState(() {
+        _offlineCourses = widget.courses;
+      });
+      return;
+    }
+
+    // Filter only courses with downloaded videos
+    final List<Map<String, dynamic>> filtered = [];
+    for (final course in widget.courses) {
+      final courseId = course['id']?.toString() ?? '';
+      if (courseId.isNotEmpty) {
+        final hasDownloads = await _downloadService.courseHasDownloadedVideos(courseId);
+        if (hasDownloads) {
+          filtered.add(course);
+        }
+      }
+    }
+
+    if (mounted) {
+      setState(() {
+        _offlineCourses = filtered;
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // ignore: unused_local_variable
-    final themeData = isDarkMode
+    final coursesToShow = _isOffline ? _offlineCourses : widget.courses;
+    final themeData = widget.isDarkMode
         ? ThemeManager.darkTheme
         : ThemeManager.lightTheme;
 
-    return courses.isEmpty
-        ? EmptyState(
-            icon: emptyIcon,
-            message: emptyMessage,
-            description: emptyDescription,
-            baseFontSize: baseFontSize,
-            smallFontSize: smallFontSize,
-            isDarkMode: isDarkMode,
-          )
-        : LayoutBuilder(
-            builder: (context, constraints) {
-              final isTablet = constraints.maxWidth > 600;
-
-              if (isTablet) {
-                return Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: GridView.builder(
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          childAspectRatio: 1.3,
-                          crossAxisSpacing: 16,
-                          mainAxisSpacing: 16,
-                        ),
-                    itemCount: courses.length,
-                    itemBuilder: (context, index) {
-                      return CourseCard(
-                        course: courses[index],
-                        showProgress: showProgress,
-                        isGridView: true,
-                        baseFontSize: baseFontSize,
-                        smallFontSize: smallFontSize,
-                        isDarkMode: isDarkMode,
-                      );
-                    },
+    return Column(
+      children: [
+        if (_isOffline)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            color: Colors.orange.withOpacity(0.1),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.signal_wifi_off, color: Colors.orange, size: 18),
+                const SizedBox(width: 8),
+                Text(
+                  'وضع عدم الاتصال - عرض الدورات المحملة فقط',
+                  style: GoogleFonts.tajawal(
+                    fontSize: widget.smallFontSize,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.orange,
                   ),
-                );
-              } else {
-                return ListView.builder(
-                  padding: const EdgeInsets.all(16.0),
-                  itemCount: courses.length,
-                  itemBuilder: (context, index) {
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 16.0),
-                      child: CourseCard(
-                        course: courses[index],
-                        showProgress: showProgress,
-                        isGridView: false,
-                        baseFontSize: baseFontSize,
-                        smallFontSize: smallFontSize,
-                        isDarkMode: isDarkMode,
-                      ),
-                    );
+                ),
+              ],
+            ),
+          ),
+        Expanded(
+          child: coursesToShow.isEmpty
+              ? EmptyState(
+                  icon: widget.emptyIcon,
+                  message: _isOffline ? 'لا توجد دورات محملة' : widget.emptyMessage,
+                  description: _isOffline
+                      ? 'قم بتحميل فيديوهات من الدورات للوصول إليها بدون إنترنت'
+                      : widget.emptyDescription,
+                  baseFontSize: widget.baseFontSize,
+                  smallFontSize: widget.smallFontSize,
+                  isDarkMode: widget.isDarkMode,
+                )
+              : LayoutBuilder(
+                  builder: (context, constraints) {
+                    final isTablet = constraints.maxWidth > 600;
+
+                    if (isTablet) {
+                      return Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: GridView.builder(
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 2,
+                                childAspectRatio: 1.3,
+                                crossAxisSpacing: 16,
+                                mainAxisSpacing: 16,
+                              ),
+                          itemCount: coursesToShow.length,
+                          itemBuilder: (context, index) {
+                            return CourseCard(
+                              course: coursesToShow[index],
+                              showProgress: widget.showProgress,
+                              isGridView: true,
+                              baseFontSize: widget.baseFontSize,
+                              smallFontSize: widget.smallFontSize,
+                              isDarkMode: widget.isDarkMode,
+                            );
+                          },
+                        ),
+                      );
+                    } else {
+                      return ListView.builder(
+                        padding: const EdgeInsets.all(16.0),
+                        itemCount: coursesToShow.length,
+                        itemBuilder: (context, index) {
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 16.0),
+                            child: CourseCard(
+                              course: coursesToShow[index],
+                              showProgress: widget.showProgress,
+                              isGridView: false,
+                              baseFontSize: widget.baseFontSize,
+                              smallFontSize: widget.smallFontSize,
+                              isDarkMode: widget.isDarkMode,
+                            ),
+                          );
+                        },
+                      );
+                    }
                   },
-                );
-              }
-            },
-          );
+                ),
+        ),
+      ],
+    );
   }
 }
 
